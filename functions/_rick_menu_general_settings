@@ -1,0 +1,144 @@
+#!/usr/bin/env zsh
+# _rick_menu_general_settings - General settings menu for Rick Assistant
+#
+# Usage: _rick_menu_general_settings
+# Returns: 0 on success, 1 on error
+
+_rick_menu_general_settings() {
+  # Check terminal capabilities - needed for styling
+  _rick_menu_check_terminal || return 1
+  
+  # Calculate terminal width
+  local term_width=$(tput cols 2>/dev/null || echo 80)
+  local menu_width=$((term_width - 4))
+
+  # Menu title
+  local menu_title="⚙️ GENERAL OPTIONS ⚙️"
+  
+  # Loop until user returns to main menu
+  while true; do
+    # Get current settings
+    local enabled=$(_rick_get_config_value "enabled" || echo "true")
+    local log_level=$(_rick_get_config_value "log_level" || echo "info")
+    local startup_msg=$(_rick_get_config_value "startup_message" || echo "true")
+    local zsh_hooks=$(_rick_get_config_value "zsh_hooks.enabled" || echo "true")
+    local p10k_integration=$(_rick_get_config_value "p10k_integration.enabled" || echo "true")
+    
+    # Create status marks for each setting
+    local enabled_status="❌"
+    [[ "$enabled" == "true" ]] && enabled_status="✅"
+    
+    local startup_msg_status="❌"
+    [[ "$startup_msg" == "true" ]] && startup_msg_status="✅"
+    
+    local zsh_hooks_status="❌"
+    [[ "$zsh_hooks" == "true" ]] && zsh_hooks_status="✅"
+    
+    local p10k_status="❌"
+    [[ "$p10k_integration" == "true" ]] && p10k_status="✅"
+    
+    # Define menu items with current status
+    local -a menu_items=(
+      "🔌 Rick Assistant Enabled [$enabled_status]"
+      "📝 Log Level [$log_level]"
+      "👋 Startup Message [$startup_msg_status]"
+      "🪝 ZSH Hooks [$zsh_hooks_status]"
+      "💎 Powerlevel10k Integration [$p10k_status]"
+      "↩️ Back to Settings Menu"
+    )
+    
+    # Get system metrics for footer
+    local cpu_usage="N/A"
+    local ram_usage="N/A"
+    local temp="N/A"
+    
+    # Try to get metrics but don't fail if they can't be retrieved
+    cpu_usage=$(_rick_get_cpu_usage 2>/dev/null || echo "N/A")
+    ram_usage=$(_rick_get_ram_usage 2>/dev/null || echo "N/A")
+    temp=$(_rick_get_temperature 2>/dev/null || echo "N/A")
+    
+    # Build footer with Rick-themed commentary
+    local rick_comment="These settings control my *burp* existence, Morty!"
+    
+    # Use the navigation function to display and handle the menu
+    _rick_menu_navigate -t "$menu_title" -w $menu_width "${menu_items[@]}"
+    local choice=$?
+    
+    # Process selection
+    case $choice in
+      0) 
+        # Menu was cancelled - return to settings menu
+        return 0
+        ;;
+      1)
+        # Toggle Rick Assistant Enabled
+        if [[ "$enabled" == "true" ]]; then
+          _rick_set_config_value "enabled" "false"
+          print -P "%F{yellow}Rick Assistant disabled! I hope you know what you're doing!%f"
+        else
+          _rick_set_config_value "enabled" "true"
+          print -P "%F{green}Rick Assistant enabled! I'm back, baby!%f"
+        fi
+        read -k 1 -s
+        ;;
+      2)
+        # Cycle Log Level
+        local new_log_level
+        case "$log_level" in
+          "debug") new_log_level="info" ;;
+          "info") new_log_level="warn" ;;
+          "warn") new_log_level="error" ;;
+          "error") new_log_level="debug" ;;
+          *) new_log_level="info" ;;
+        esac
+        _rick_set_config_value "log_level" "$new_log_level"
+        print -P "%F{green}Log level set to ${new_log_level}!%f"
+        read -k 1 -s
+        ;;
+      3)
+        # Toggle Startup Message
+        if [[ "$startup_msg" == "true" ]]; then
+          _rick_set_config_value "startup_message" "false"
+          print -P "%F{green}Startup message disabled!%f"
+        else
+          _rick_set_config_value "startup_message" "true"
+          print -P "%F{green}Startup message enabled!%f"
+        fi
+        read -k 1 -s
+        ;;
+      4)
+        # Toggle ZSH Hooks
+        if [[ "$zsh_hooks" == "true" ]]; then
+          _rick_set_config_value "zsh_hooks.enabled" "false"
+          print -P "%F{yellow}ZSH hooks disabled! Functionality may be limited!%f"
+        else
+          _rick_set_config_value "zsh_hooks.enabled" "true"
+          print -P "%F{green}ZSH hooks enabled!%f"
+        fi
+        read -k 1 -s
+        ;;
+      5)
+        # Toggle Powerlevel10k Integration
+        if [[ "$p10k_integration" == "true" ]]; then
+          _rick_set_config_value "p10k_integration.enabled" "false"
+          print -P "%F{yellow}Powerlevel10k integration disabled!%f"
+        else
+          _rick_set_config_value "p10k_integration.enabled" "true"
+          print -P "%F{green}Powerlevel10k integration enabled!%f"
+        fi
+        read -k 1 -s
+        ;;
+      6)
+        # Back to Settings Menu
+        return 0
+        ;;
+    esac
+  done
+  
+  return 0
+}
+
+# Execute the function if called directly
+if [[ "${FUNCNAME[0]}" == '_rick_menu_general_settings' ]]; then
+  _rick_menu_general_settings "$@"
+fi 

@@ -1,0 +1,88 @@
+#!/usr/bin/env zsh
+# _rick_menu_simple - Display a simple numbered menu
+#
+# Usage: _rick_menu_simple "Title" "Option 1" "Option 2" ...
+# Returns: The selected option number (1-based) or 0 if cancelled
+
+_rick_menu_simple() {
+  # Get the title
+  local title="$1"
+  shift
+  
+  # If no options provided, return error
+  if [[ $# -eq 0 ]]; then
+    echo "Error: No menu options provided."
+    return 1
+  fi
+  
+  # Clear screen
+  clear
+  
+  # Print header
+  echo "============================================================"
+  echo "                  $title                  "
+  echo "============================================================"
+  echo
+  
+  # Print menu options
+  local i=1
+  for option in "$@"; do
+    echo "  $i) $option"
+    ((i++))
+  done
+  
+  echo
+  echo "  q) Quit/Cancel"
+  echo
+  echo "============================================================"
+  
+  # Get system metrics
+  local cpu_usage="N/A"
+  local ram_usage="N/A"
+  local temp="N/A"
+  
+  # Try to get metrics but don't fail if they can't be retrieved
+  cpu_usage=$(_rick_get_cpu_usage 2>/dev/null || echo "N/A")
+  ram_usage=$(_rick_get_ram_usage 2>/dev/null || echo "N/A")
+  temp=$(_rick_get_temperature 2>/dev/null || echo "N/A")
+  
+  # Print footer with system metrics
+  echo "CPU: $cpu_usage% | RAM: $ram_usage% | Temp: ${temp}°C"
+  echo "============================================================"
+  echo
+  
+  # Prompt for choice
+  local choice
+  echo -n "Enter your choice [1-$#, q]: "
+  read choice
+  
+  # Process choice
+  case "$choice" in
+    [1-9]|[1-9][0-9])
+      # Check if choice is within range
+      if [[ $choice -le $# ]]; then
+        return $choice
+      else
+        echo "Invalid choice: $choice (out of range)"
+        sleep 1
+        _rick_menu_simple "$title" "$@"
+      fi
+      ;;
+    q|Q)
+      # Cancel
+      return 0
+      ;;
+    *)
+      # Invalid choice
+      echo "Invalid choice: $choice"
+      sleep 1
+      _rick_menu_simple "$title" "$@"
+      ;;
+  esac
+}
+
+# Execute the function if called directly
+if [[ "${FUNCNAME[0]}" == '_rick_menu_simple' ]]; then
+  _rick_menu_simple "Test Menu" "Option 1" "Option 2" "Option 3"
+  echo "Selected: $?"
+fi 

@@ -1,0 +1,91 @@
+#!/usr/bin/env zsh
+# _rick_menu_monitoring - System monitoring menu for Rick Assistant
+#
+# Usage: _rick_menu_monitoring
+# Returns: 0 on success, 1 on error
+
+_rick_menu_monitoring() {
+  # Check terminal capabilities - needed for styling
+  _rick_menu_check_terminal || return 1
+  
+  # Calculate terminal width
+  local term_width=$(tput cols 2>/dev/null || echo 80)
+  local menu_width=$((term_width - 4))
+
+  # Menu title
+  local menu_title="📊 RICK ASSISTANT: SYSTEM MONITORING 📊"
+  
+  # Loop until user returns to main menu
+  while true; do
+    # Get system metrics
+    local cpu_usage="N/A"
+    local ram_usage="N/A"
+    local disk_space="N/A"
+    local temp="N/A"
+    local uptime="N/A"
+    
+    # Try to get metrics but don't fail if they can't be retrieved
+    cpu_usage=$(_rick_get_cpu_usage 2>/dev/null || echo "N/A")
+    ram_usage=$(_rick_get_ram_usage 2>/dev/null || echo "N/A")
+    disk_space=$(_rick_get_disk_usage 2>/dev/null || echo "N/A")
+    temp=$(_rick_get_temperature 2>/dev/null || echo "N/A")
+    uptime=$(_rick_get_uptime 2>/dev/null || echo "N/A")
+    
+    # Build Rick commentary based on system metrics
+    local rick_comment="Your system's *burp* basic. Nothing special."
+    
+    if [[ "$cpu_usage" != "N/A" && "$cpu_usage" -gt 80 ]]; then
+      rick_comment="Your CPU is gonna *burp* explode, Morty!"
+    elif [[ "$ram_usage" != "N/A" && "$ram_usage" -gt 80 ]]; then
+      rick_comment="RAM usage high! What did you do, Morty?!"
+    elif [[ "$temp" != "N/A" && "$temp" -gt 70 ]]; then
+      rick_comment="It's hot! Did you set my portal gun on fire?!"
+    elif [[ "$disk_space" != "N/A" && "$disk_space" -gt 80 ]]; then
+      rick_comment="Your disk is almost full, M-Morty. Delete some stuff!"
+    fi
+    
+    # Define menu items with current metrics
+    local -a menu_items=(
+      "🔥 CPU Usage: $cpu_usage%"
+      "💾 RAM Usage: $ram_usage%"
+      "💿 Disk Space Used: $disk_space%"
+      "🌡️ Temperature: $temp°C"
+      "⏱️ Uptime: $uptime"
+      "🔄 Refresh Metrics"
+      "↩️ Back to Main Menu"
+    )
+    
+    # Use the navigation function to display and handle the menu
+    _rick_menu_navigate -t "$menu_title" -w $menu_width "${menu_items[@]}"
+    local choice=$?
+    
+    # Process selection
+    case $choice in
+      0) 
+        # Menu was cancelled - return to main menu
+        return 0
+        ;;
+      6)
+        # Refresh Metrics - just continue the loop
+        print -P "%F{green}Refreshing metrics...%f"
+        sleep 1
+        ;;
+      7)
+        # Back to Main Menu
+        return 0
+        ;;
+      *)
+        # For other menu items, just display a message
+        print -P "%F{yellow}This is a display-only metric.%f"
+        read -k 1 -s
+        ;;
+    esac
+  done
+  
+  return 0
+}
+
+# Execute the function if called directly
+if [[ "${FUNCNAME[0]}" == '_rick_menu_monitoring' ]]; then
+  _rick_menu_monitoring "$@"
+fi 

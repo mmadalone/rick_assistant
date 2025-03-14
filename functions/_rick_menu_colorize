@@ -1,0 +1,90 @@
+#!/usr/bin/env zsh
+# _rick_menu_colorize - Colorize text for menu display
+#
+# Usage:
+#   _rick_menu_colorize <color_name> <text>
+#
+# Arguments:
+#   color_name - The name of the color to use
+#   text - The text to colorize
+#
+# Returns:
+#   Prints the colorized text to stdout
+#
+# Example:
+#   _rick_menu_colorize "title" "Menu Title"
+
+# Define colors if not already defined
+if [[ -z "${RICK_MENU_COLORS[(I)*]}" ]]; then
+  typeset -gA RICK_MENU_COLORS=(
+    "header"   "\033[1;36m"  # Bright cyan
+    "title"    "\033[1;32m"  # Bright green
+    "selected" "\033[1;33m"  # Bright yellow
+    "normal"   "\033[0m"     # Normal
+    "help"     "\033[0;36m"  # Cyan
+    "error"    "\033[1;31m"  # Bright red
+    "success"  "\033[1;32m"  # Bright green
+    "warning"  "\033[1;33m"  # Bright yellow
+    "info"     "\033[0;37m"  # White
+    "reset"    "\033[0m"     # Reset
+    "footer"   "\033[1;34m"  # Bright blue
+  )
+fi
+
+_rick_menu_colorize() {
+  # Check argument count
+  if [[ $# -lt 2 ]]; then
+    # Just output the text without color if not enough parameters
+    echo -n "${2:-}"
+    return 1
+  fi
+  
+  local color_name="$1"
+  local text="$2"
+  
+  # Safety check - ensure text is defined
+  if [[ -z "$text" ]]; then
+    text=""  # Empty string as fallback
+  fi
+  
+  # Check if we've detected terminal capabilities, if not, do it now
+  if [[ -z "$_RICK_MENU_SUPPORTS_COLOR" ]]; then
+    _rick_menu_detect_terminal >/dev/null 2>&1
+  fi
+  
+  # Fallback if terminal detection failed
+  if [[ -z "$_RICK_MENU_SUPPORTS_COLOR" ]]; then
+    _RICK_MENU_SUPPORTS_COLOR=0
+  fi
+  
+  # Use numeric value for safer comparison
+  local supports_color=$(( _RICK_MENU_SUPPORTS_COLOR + 0 ))
+  
+  # Return colorized or plain text based on terminal capabilities
+  if (( supports_color )); then
+    # Safely access the color with proper quoting
+    local color_code="${RICK_MENU_COLORS[$color_name]}"
+    local reset_code="${RICK_MENU_COLORS[reset]}"
+    
+    # Fallback if color_name doesn't exist in our map
+    if [[ -z "$color_code" ]]; then
+      # Use normal color if the specified color doesn't exist
+      color_code="${RICK_MENU_COLORS[normal]}"
+    fi
+    
+    # Fallback if reset code doesn't exist
+    if [[ -z "$reset_code" ]]; then
+      reset_code="\033[0m"  # Default reset code
+    fi
+    
+    printf "%s%s%s" "${color_code}" "${text}" "${reset_code}"
+  else
+    # No color support
+    printf "%s" "$text"
+  fi
+  
+  return 0
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_colorize "$@" 

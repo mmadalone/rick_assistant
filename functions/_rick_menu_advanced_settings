@@ -1,0 +1,149 @@
+#!/usr/bin/env zsh
+# _rick_menu_advanced_settings - Display advanced settings for Rick Assistant
+#
+# Usage:
+#   _rick_menu_advanced_settings
+#
+# Returns:
+#   0 on success, non-zero on error
+
+_rick_menu_advanced_settings() {
+  local use_python_impl=$(_rick_get_config "ui___menu___use_python_implementation" "auto")
+  local python_available=$(_rick_has_python && echo "true" || echo "false")
+  
+  # Prepare menu item text with current status
+  local item1
+  if [[ "$use_python_impl" == "true" ]]; then
+    item1="Menu System: [Python]"
+  elif [[ "$use_python_impl" == "false" ]]; then
+    item1="Menu System: [ZSH Native]"
+  else
+    # Auto mode
+    if [[ "$python_available" == "true" ]]; then
+      item1="Menu System: [Auto - Currently Python]"
+    else
+      item1="Menu System: [Auto - Currently ZSH]"
+    fi
+  fi
+  
+  # Add warning if Python is not available
+  if [[ "$use_python_impl" == "true" && "$python_available" == "false" ]]; then
+    item1="${item1} (Python not available, using ZSH)"
+  fi
+  
+  # Define other menu items
+  local item2="Performance Optimizations"
+  local item3="Debug Options"
+  local item4="Back to Settings"
+  
+  # Use the navigate function with explicit parameters
+  local selected_index
+  selected_index=$(_rick_menu_navigate -t "Rick Assistant Advanced Settings" \
+    "$item1" "$item2" "$item3" "$item4")
+  
+  # Handle selection
+  if [[ $selected_index -ge 0 ]]; then
+    case $selected_index in
+      0) _rick_toggle_menu_implementation ;;
+      1) echo "Performance Optimizations selected" ;;
+      2) echo "Debug Options selected" ;;
+      3) _rick_menu_settings ;;
+    esac
+    return 0
+  else
+    _rick_menu_settings
+    return $?
+  fi
+}
+
+# Function to toggle between Python and ZSH native menu implementations
+_rick_toggle_menu_implementation() {
+  local current=$(_rick_get_config "ui___menu___use_python_implementation" "auto")
+  local python_available=$(_rick_has_python && echo "true" || echo "false")
+  local new_value
+  
+  # Cycle through the options: auto -> true -> false -> auto
+  if [[ "$current" == "auto" ]]; then
+    new_value="true"
+    _rick_set_config_value "ui___menu___use_python_implementation" "true"
+    
+    if [[ "$python_available" == "false" ]]; then
+      echo "Menu implementation set to Python (Warning: Python not available, will fallback to ZSH)"
+    else
+      echo "Menu implementation set to Python"
+    fi
+  elif [[ "$current" == "true" ]]; then
+    new_value="false"
+    _rick_set_config_value "ui___menu___use_python_implementation" "false"
+    echo "Menu implementation set to ZSH Native"
+  else
+    new_value="auto"
+    _rick_set_config_value "ui___menu___use_python_implementation" "auto"
+    
+    if [[ "$python_available" == "true" ]]; then
+      echo "Menu implementation set to Auto (Currently using Python)"
+    else
+      echo "Menu implementation set to Auto (Currently using ZSH)"
+    fi
+  fi
+  
+  # Reload menu after a short delay
+  echo "Press any key to continue..."
+  read -k 1
+  _rick_menu_advanced_settings
+}
+
+# Helper function to set config value
+_rick_set_config_value() {
+  local key="$1"
+  local value="$2"
+  local config_file="${HOME}/.rick_assistant/config.json"
+  
+  # Use Python if available for more robust config handling
+  if _rick_has_python; then
+    python3 -c "
+import json, os, sys
+try:
+    config_file = os.path.expanduser('$config_file')
+    config = {}
+    if os.path.exists(config_file):
+        with open(config_file, 'r') as f:
+            config = json.load(f)
+    config['$key'] = '$value'
+    os.makedirs(os.path.dirname(config_file), exist_ok=True)
+    with open(config_file, 'w') as f:
+        json.dump(config, f, indent=2)
+    print('Configuration updated successfully')
+except Exception as e:
+    print(f'Error updating configuration: {e}')
+    sys.exit(1)
+" 2>/dev/null
+    return $?
+  else
+    # Simple fallback if Python isn't available
+    if [[ -f "$config_file" ]]; then
+      # Create backup
+      cp "$config_file" "${config_file}.bak"
+      
+      # Check if key exists
+      if grep -q "\"$key\"" "$config_file"; then
+        # Update existing key
+        sed -i "s/\"$key\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"$key\": \"$value\"/" "$config_file"
+      else
+        # Add new key (simplified approach)
+        sed -i "s/{/{\"$key\": \"$value\",/" "$config_file"
+      fi
+      echo "Configuration updated successfully"
+      return 0
+    else
+      # Create new config file
+      mkdir -p "$(dirname "$config_file")"
+      echo "{\"$key\": \"$value\"}" > "$config_file"
+      echo "Configuration created successfully"
+      return 0
+    fi
+  fi
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_advanced_settings "$@" 

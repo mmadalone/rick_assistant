@@ -1,0 +1,36 @@
+{
+  "checkpoint_id": "CHECKPOINT_{COMPONENT_ID}_{STEP_ID}",
+  "timestamp": "{TIMESTAMP}",
+  "state_vector": {
+    "session_id": "{SESSION_ID}",
+    "vector_clock": {"{VECTOR_CLOCK_NAME}": "{VECTOR_CLOCK_VALUE}"},
+    "current_phase": "{CURRENT_PHASE}",
+    "current_component": "{CURRENT_COMPONENT}",
+    "component_progress": "{COMPONENT_PROGRESS}",
+    "last_completed_chunk": "{LAST_COMPLETED_CHUNK}"
+  },
+  "implementation_state": {
+    "{COMPONENT_KEY}": {
+      "steps_completed": "{STEPS_COMPLETED}",
+      "steps_total": "{STEPS_TOTAL}",
+      "current_step": "{CURRENT_STEP}",
+      "step_progress": "{STEP_PROGRESS}",
+      "completed_substeps": ["{COMPLETED_SUBSTEP}"],
+      "blockers": ["{BLOCKER}"]
+    }
+  },
+  "verification_status": {
+    "tests_passing": "{TESTS_PASSING}",
+    "tests_failing": "{TESTS_FAILING}",
+    "coverage": "{COVERAGE}",
+    "critical_issues": [
+      "{CRITICAL_ISSUE}"
+    ]
+  },
+  "modified_files": [
+    "{MODIFIED_FILE_PATH}"
+  ],
+  "next_action": "{NEXT_ACTION}",
+  "recovery_instructions": "{RECOVERY_INSTRUCTIONS}",
+  "checksum": "{CHECKSUM}"
+} 

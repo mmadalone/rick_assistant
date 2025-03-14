@@ -1,0 +1,113 @@
+#!/usr/bin/env zsh
+# _rick_menu_detect_terminal - Detect terminal capabilities for menu display
+#
+# Usage:
+#   _rick_menu_detect_terminal
+#
+# Returns:
+#   Sets global variables:
+#   - _RICK_MENU_SUPPORTS_COLOR
+#   - _RICK_MENU_SUPPORTS_UNICODE
+#   - _RICK_MENU_WIDTH
+#   - _RICK_MENU_HEIGHT
+
+_rick_menu_detect_terminal() {
+  # Ensure terminal capability variables are declared
+  typeset -g _RICK_MENU_SUPPORTS_COLOR=${_RICK_MENU_SUPPORTS_COLOR:-0}
+  typeset -g _RICK_MENU_SUPPORTS_UNICODE=${_RICK_MENU_SUPPORTS_UNICODE:-0}
+  typeset -g _RICK_MENU_WIDTH=${_RICK_MENU_WIDTH:-80}
+  typeset -g _RICK_MENU_HEIGHT=${_RICK_MENU_HEIGHT:-24}
+  
+  # Check for color support
+  if [[ -t 1 && -n "$TERM" && "$TERM" != "dumb" ]]; then
+    local colors=0
+    # Try multiple methods to detect color support
+    if command -v tput >/dev/null 2>&1; then
+      colors=$(tput colors 2>/dev/null || echo 0)
+    fi
+    
+    # Fallback checks for common terminals
+    if (( colors < 8 )) && [[ "$TERM" =~ ^(xterm|screen|tmux|rxvt|linux|vt100) ]]; then
+      colors=8  # Assume at least 8 colors for these terminals
+    fi
+    
+    if (( colors >= 8 )); then
+      _RICK_MENU_SUPPORTS_COLOR=1
+    else
+      _RICK_MENU_SUPPORTS_COLOR=0
+    fi
+  else
+    _RICK_MENU_SUPPORTS_COLOR=0
+  fi
+  
+  # Check for Unicode support
+  if [[ "$(locale charmap 2>/dev/null || echo UNKNOWN)" == *"UTF-8"* || \
+        "$LC_ALL" == *"UTF-8"* || \
+        "$LC_CTYPE" == *"UTF-8"* || \
+        "$LANG" == *"UTF-8"* ]]; then
+    _RICK_MENU_SUPPORTS_UNICODE=1
+  else
+    _RICK_MENU_SUPPORTS_UNICODE=0
+  fi
+  
+  # Get terminal size - try multiple methods with proper fallbacks
+  local width=80
+  local height=24
+  
+  # Method 1: stty
+  if command -v stty >/dev/null 2>&1; then
+    local stty_output
+    if stty_output=$(stty size 2>/dev/null); then
+      set -- ${=stty_output}
+      if [[ $# -eq 2 && $1 =~ ^[0-9]+$ && $2 =~ ^[0-9]+$ ]]; then
+        height=$1
+        width=$2
+      fi
+    fi
+  fi
+  
+  # Method 2: tput (if stty failed)
+  if [[ $width -eq 80 && $height -eq 24 ]] && command -v tput >/dev/null 2>&1; then
+    local tput_height=$(tput lines 2>/dev/null)
+    local tput_width=$(tput cols 2>/dev/null)
+    
+    if [[ $tput_height =~ ^[0-9]+$ && $tput_width =~ ^[0-9]+$ ]]; then
+      height=$tput_height
+      width=$tput_width
+    fi
+  fi
+  
+  # Method 3: Check COLUMNS and LINES environment variables
+  if [[ $width -eq 80 && $height -eq 24 ]]; then
+    if [[ -n "$COLUMNS" && "$COLUMNS" =~ ^[0-9]+$ ]]; then
+      width=$COLUMNS
+    fi
+    if [[ -n "$LINES" && "$LINES" =~ ^[0-9]+$ ]]; then
+      height=$LINES
+    fi
+  fi
+  
+  # Ensure values are reasonable
+  if (( width < 40 )); then width=40; fi
+  if (( width > 500 )); then width=80; fi  # Sanity check for unreasonable values
+  if (( height < 10 )); then height=10; fi
+  if (( height > 200 )); then height=24; fi  # Sanity check for unreasonable values
+  
+  # Set the values
+  _RICK_MENU_WIDTH=$width
+  _RICK_MENU_HEIGHT=$height
+  
+  # Also set RICK_MENU_WIDTH/HEIGHT for backward compatibility
+  typeset -g RICK_MENU_WIDTH=$_RICK_MENU_WIDTH
+  typeset -g RICK_MENU_HEIGHT=$_RICK_MENU_HEIGHT
+  
+  # Debug output
+  if [[ -n "$RICK_DEBUG" && "$RICK_DEBUG" -eq 1 ]]; then
+    echo "Terminal capabilities: color=$_RICK_MENU_SUPPORTS_COLOR, unicode=$_RICK_MENU_SUPPORTS_UNICODE, size=${_RICK_MENU_WIDTH}x${_RICK_MENU_HEIGHT}" >&2
+  fi
+  
+  return 0
+}
+
+# Call the function
+_rick_menu_detect_terminal 

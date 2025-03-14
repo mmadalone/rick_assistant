@@ -1,0 +1,48 @@
+#!/usr/bin/env zsh
+# _rick_menu_handle_key - Handle key presses for menu navigation
+#
+# Usage: _rick_menu_handle_key <key> <current_index> <max_items>
+# Returns: The new index after key press processing
+
+_rick_menu_handle_key() {
+  local key="$1"
+  local current="$2"
+  local max="$3"
+  
+  case "$key" in
+    up)
+      # Move up with wraparound
+      if (( current == 1 )); then
+        # If at the top, wrap to bottom
+        current=$max
+      else
+        # Otherwise move up
+        ((current--))
+      fi
+      ;;
+    down)
+      # Move down with wraparound
+      if (( current == max )); then
+        # If at the bottom, wrap to top
+        current=1
+      else
+        # Otherwise move down
+        ((current++))
+      fi
+      ;;
+    [1-9]|0)
+      # Direct number selection
+      if (( key >= 1 && key <= max )); then
+        current=$key
+      fi
+      ;;
+  esac
+  
+  # Return the new index
+  echo "$current"
+}
+
+# Execute the function if called directly
+if [[ "${FUNCNAME[0]}" == '_rick_menu_handle_key' ]]; then
+  _rick_menu_handle_key "$@"
+fi 

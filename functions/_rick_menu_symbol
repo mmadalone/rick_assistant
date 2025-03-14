@@ -1,0 +1,111 @@
+#!/usr/bin/env zsh
+# _rick_menu_symbol - Get a menu symbol (Unicode or ASCII fallback)
+#
+# Usage:
+#   _rick_menu_symbol <symbol_name>
+#
+# Arguments:
+#   symbol_name - The name of the symbol to get
+#
+# Returns:
+#   Prints the symbol to stdout
+#
+# Example:
+#   _rick_menu_symbol arrow
+
+# Define symbols if not already defined
+if [[ -z "${RICK_MENU_SYMBOLS[(I)*]}" ]]; then
+  typeset -gA RICK_MENU_SYMBOLS=(
+    "arrow"     "→"
+    "selected"  "●"
+    "unselected" "○"
+    "checkbox_on" "☒"
+    "checkbox_off" "☐"
+    "corner_tl" "┌"
+    "corner_tr" "┐"
+    "corner_bl" "└"
+    "corner_br" "┘"
+    "line_h"    "─"
+    "line_v"    "│"
+    "bullet"    "•"
+    "rarrow"    "➜"
+  )
+fi
+
+# Define ASCII fallbacks if not already defined
+if [[ -z "${RICK_MENU_ASCII[(I)*]}" ]]; then
+  typeset -gA RICK_MENU_ASCII=(
+    "arrow"     "->"
+    "selected"  "*"
+    "unselected" "o"
+    "checkbox_on" "[X]"
+    "checkbox_off" "[ ]"
+    "corner_tl" "+"
+    "corner_tr" "+"
+    "corner_bl" "+"
+    "corner_br" "+"
+    "line_h"    "-"
+    "line_v"    "|"
+    "bullet"    "*"
+    "rarrow"    ">"
+  )
+fi
+
+_rick_menu_symbol() {
+  # Check that we have a symbol name
+  if [[ $# -eq 0 ]]; then
+    echo ""
+    return 1
+  fi
+  
+  local symbol="$1"
+  
+  # Check if we've detected terminal capabilities, if not, do it now
+  if [[ -z "$_RICK_MENU_SUPPORTS_UNICODE" ]]; then
+    _rick_menu_detect_terminal >/dev/null 2>&1
+  fi
+  
+  # Fallback if terminal detection failed
+  if [[ -z "$_RICK_MENU_SUPPORTS_UNICODE" ]]; then
+    _RICK_MENU_SUPPORTS_UNICODE=0
+  fi
+  
+  # Use numeric value for safer comparison
+  local supports_unicode=$(( _RICK_MENU_SUPPORTS_UNICODE + 0 ))
+  
+  # Return the appropriate symbol based on terminal capabilities
+  if (( supports_unicode )); then
+    # Get the Unicode symbol, with fallback
+    local unicode_symbol="${RICK_MENU_SYMBOLS[$symbol]}"
+    if [[ -z "$unicode_symbol" ]]; then
+      # Symbol name wasn't found, use a fallback
+      case "$symbol" in
+        arrow|pointer|select) unicode_symbol="→" ;;
+        check|checked) unicode_symbol="✓" ;;
+        x|cross|error) unicode_symbol="✗" ;;
+        star|favorite) unicode_symbol="★" ;;
+        *) unicode_symbol="•" ;;  # Default fallback
+      esac
+    fi
+    printf "%s" "$unicode_symbol"
+  else
+    # ASCII fallback
+    local ascii_symbol="${RICK_MENU_ASCII[$symbol]}"
+    if [[ -z "$ascii_symbol" ]]; then
+      # Symbol name wasn't found, use a fallback
+      case "$symbol" in
+        arrow|pointer|select) ascii_symbol="->" ;;
+        check|checked) ascii_symbol="[√]" ;;
+        x|cross|error) ascii_symbol="[X]" ;;
+        star|favorite) ascii_symbol="*" ;;
+        *) ascii_symbol="+" ;;  # Default fallback
+      esac
+    fi
+    printf "%s" "$ascii_symbol"
+  fi
+  
+  return 0
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_symbol "$@" 

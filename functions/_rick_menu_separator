@@ -1,0 +1,55 @@
+#!/usr/bin/env zsh
+# _rick_menu_separator - Draw a separator line for menus
+#
+# Usage:
+#   _rick_menu_separator [width] [char] [type]
+#
+# Arguments:
+#   width - Width of the separator (defaults to $_RICK_MENU_WIDTH)
+#   char - Character to use for the line (defaults to "-")
+#   type - Type of separator: "header", "footer", or "normal" (defaults to "normal")
+#
+# Returns:
+#   Prints a separator line to stdout
+#
+# Example:
+#   _rick_menu_separator 80 "-" "header"
+
+_rick_menu_separator() {
+  local width="${1:-$_RICK_MENU_WIDTH}"
+  local char="${2:--}"
+  local type="${3:-normal}"
+  
+  # Check if we've detected terminal capabilities, if not, do it now
+  if [[ -z "$_RICK_MENU_WIDTH" ]]; then
+    _rick_menu_detect_terminal
+    width="${1:-$_RICK_MENU_WIDTH}"
+  fi
+  
+  # Determine start and end characters based on type
+  local start_char end_char
+  
+  case "$type" in
+    header)
+      start_char=$(_rick_menu_symbol corner_tl)
+      end_char=$(_rick_menu_symbol corner_tr)
+      ;;
+    footer)
+      start_char=$(_rick_menu_symbol corner_bl)
+      end_char=$(_rick_menu_symbol corner_br)
+      ;;
+    *)
+      # For normal separators, use a blank space
+      start_char=" "
+      end_char=" "
+      ;;
+  esac
+  
+  # Generate the line
+  printf "%s" "$start_char"
+  printf "%${width}s" "" | tr " " "$char"
+  printf "%s\n" "$end_char"
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_separator "$@" 

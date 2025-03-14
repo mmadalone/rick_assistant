@@ -1,0 +1,38 @@
+# Rick Assistant Powerlevel10k Integration Instructions
+# Follow these steps to update your .zshrc file for proper integration
+
+## STEP 1: Add Integration Files to .zshrc
+# Add these lines AFTER the line that sources .p10k.zsh:
+
+# Load Rick Assistant Powerlevel10k integration
+[[ -f ~/.rick-wsl-fix.zsh ]] && source ~/.rick-wsl-fix.zsh
+[[ -f ~/.rick-distro-detect.zsh ]] && source ~/.rick-distro-detect.zsh
+[[ -f ~/.rick-p10k-integration.zsh ]] && source ~/.rick-p10k-integration.zsh
+
+## STEP 2: Remove Any Old Integration Code
+# Comment out or remove any previous Rick Assistant Powerlevel10k integration lines like:
+# source "$ZSH_CUSTOM/plugins/rick_assistant/src/core/integrations/p10k_integration.zsh"
+# source "$ZSH_CUSTOM/plugins/rick_assistant/src/core/integrations/p10k_init.zsh"
+
+## STEP 3: Make Sure Instant Prompt Configuration is Consistent
+# You should have only ONE of these settings:
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+# OR
+# export POWERLEVEL9K_INSTANT_PROMPT=off
+
+## STEP 4: Optional Debug Mode
+# Uncomment this line if you want to enable debug output:
+# export RICK_P10K_DEBUG=true
+
+## STEP 5: Apply Changes
+# After making these changes, restart your shell:
+# exec zsh
+
+## Troubleshooting
+# If you encounter issues:
+# 1. Run the diagnostics script:
+#    source ~/.rick-p10k-diagnostics.zsh
+# 2. Make sure you run p10k configure to create a clean configuration:
+#    p10k configure
+# 3. Ensure all the scripts are executable:
+#    chmod +x ~/.rick-*.zsh 

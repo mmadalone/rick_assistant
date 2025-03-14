@@ -1,0 +1,73 @@
+#!/usr/bin/env zsh
+# _rick_menu_item - Display a menu item
+#
+# Usage:
+#   _rick_menu_item <index> <text> <is_selected> [width]
+#
+# Arguments:
+#   index - The index of the item
+#   text - The text of the item
+#   is_selected - Whether the item is selected (0 or 1)
+#   width - Optional width of the menu (defaults to $_RICK_MENU_WIDTH)
+#
+# Returns:
+#   Prints a formatted menu item to stdout
+#
+# Example:
+#   _rick_menu_item 0 "Menu Option" 1
+
+_rick_menu_item() {
+  # Validate inputs
+  if [[ $# -lt 3 ]]; then
+    return 1
+  fi
+  
+  local index="$1"
+  local text="$2"
+  local is_selected="$3"
+  local width="${4:-$_RICK_MENU_WIDTH}"
+  
+  # Safety check for width
+  if [[ -z "$width" || ! "$width" =~ ^[0-9]+$ ]]; then
+    width=80  # Fallback width
+  fi
+  
+  # Ensure we have a valid text string
+  if [[ -z "$text" ]]; then
+    text="[Empty Menu Item]"
+  fi
+  
+  # Enforce numeric value for is_selected
+  is_selected=$(( is_selected + 0 ))
+  
+  # Get appropriate symbols
+  local arrow=" "
+  local selected_indicator="normal"
+  
+  if (( is_selected )); then
+    # Try to get the arrow symbol, fall back to ">" if _rick_menu_symbol fails
+    if ! arrow=$(_rick_menu_symbol arrow 2>/dev/null); then
+      arrow=">"
+    fi
+    selected_indicator="selected"
+  fi
+  
+  # Format the item with padding and highlighting
+  printf "  %s " "$arrow"
+  
+  # Call colorize with error handling
+  if ! _rick_menu_colorize "$selected_indicator" "$text" 2>/dev/null; then
+    # Fallback if colorize fails
+    if (( is_selected )); then
+      printf "\033[1m%s\033[0m" "$text"  # Bold text as fallback for selected
+    else
+      printf "%s" "$text"  # Plain text as fallback
+    fi
+  fi
+  
+  # Always return success to prevent menu navigation failure
+  return 0
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_item "$@" 

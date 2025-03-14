@@ -1,0 +1,46 @@
+#!/usr/bin/env zsh
+# _rick_menu_help - Display the help menu for Rick Assistant
+#
+# Usage:
+#   _rick_menu_help
+#
+# Returns:
+#   0 on success, non-zero on error
+
+_rick_menu_help() {
+  # Define menu items as an array with proper quoting
+  local -a items
+  items=(
+    "Commands Help"
+    "Menu Navigation"
+    "Prompt Customization"
+    "Theme Configuration"
+    "Troubleshooting"
+    "About Rick Assistant"
+    "Back to Main Menu"
+  )
+  
+  # Use the navigate function with proper quoting of array elements
+  local selected_index
+  selected_index=$(_rick_menu_navigate -t "Rick Assistant Help" "${items[@]}")
+  
+  # Handle selection
+  if [[ $selected_index -ge 0 ]]; then
+    case $selected_index in
+      0) echo "Commands Help selected" ;;
+      1) echo "Menu Navigation selected" ;;
+      2) echo "Prompt Customization selected" ;;
+      3) echo "Theme Configuration selected" ;;
+      4) echo "Troubleshooting selected" ;;
+      5) echo "About Rick Assistant selected" ;;
+      6) _rick_menu main ;;
+    esac
+    return 0
+  else
+    echo "Menu cancelled"
+    return 1
+  fi
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_help "$@" 

@@ -1,0 +1,71 @@
+#!/usr/bin/env zsh
+# _rick_menu_centered - Center text for menu display
+#
+# Usage:
+#   _rick_menu_centered <text> [color_name] [width]
+#
+# Arguments:
+#   text - The text to center
+#   color_name - Optional color to use (defaults to none)
+#   width - Optional width to center within (defaults to $_RICK_MENU_WIDTH)
+#
+# Returns:
+#   Prints centered text to stdout
+#
+# Example:
+#   _rick_menu_centered "Menu Title" "title" 80
+
+_rick_menu_centered() {
+  # Check argument count
+  if [[ $# -lt 1 ]]; then
+    return 1
+  fi
+  
+  local text="$1"
+  local color_name="${2:-}"
+  local width="${3:-$_RICK_MENU_WIDTH}"
+  
+  # Check if we've detected terminal capabilities, if not, do it now
+  if [[ -z "$_RICK_MENU_WIDTH" ]]; then
+    _rick_menu_detect_terminal
+    width="${3:-$_RICK_MENU_WIDTH}"
+  fi
+  
+  # Calculate text length and padding
+  local text_length=${#text}
+  # Ensure width is a number before calculation to avoid math evaluation issues
+  if [[ "$width" =~ ^[0-9]+$ ]]; then
+    # Use explicit math context to avoid issues with special characters
+    local left_padding=$((( width - text_length ) / 2 ))
+    local right_padding=$((( width - text_length - left_padding )))
+    
+    # Ensure padding is at least 0
+    (( left_padding < 0 )) && left_padding=0
+    (( right_padding < 0 )) && right_padding=0
+  else
+    # Default padding if width is not a number
+    local left_padding=5
+    local right_padding=5
+  fi
+  
+  # Create padding strings
+  local left_pad right_pad
+  printf -v left_pad "%${left_padding}s" ""
+  printf -v right_pad "%${right_padding}s" ""
+  
+  # Print left padding
+  echo -n "$left_pad"
+  
+  # Print text with color if specified
+  if [[ -n "$color_name" ]]; then
+    _rick_menu_colorize "$color_name" "$text"
+  else
+    echo -n "$text"
+  fi
+  
+  # Print right padding and newline
+  echo "$right_pad"
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_centered "$@" 

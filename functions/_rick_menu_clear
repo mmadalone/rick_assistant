@@ -1,0 +1,17 @@
+#!/usr/bin/env zsh
+# _rick_menu_clear - Clear the screen for menu display
+#
+# Usage:
+#   _rick_menu_clear
+#
+# Returns:
+#   Clears the terminal screen
+
+_rick_menu_clear() {
+  # Use printf instead of echo for better compatibility with escape sequences
+  # Clear screen and clear scrollback buffer
+  printf "\033[H\033[2J\033[3J"
+}
+
+# Call the function
+_rick_menu_clear 

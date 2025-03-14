@@ -1,0 +1,86 @@
+#!/usr/bin/env zsh
+# _rick_menu_help - Help menu for Rick Assistant
+#
+# Usage: _rick_menu_help
+# Returns: 0 on success, 1 on error
+
+_rick_menu_help() {
+  # Detect terminal capabilities
+  _rick_menu_detect_terminal
+
+  # Clear screen
+  _rick_menu_clear
+
+  # Calculate terminal dimensions
+  local term_width=$(tput cols 2>/dev/null || echo 80)
+  local menu_width=$(( term_width < 100 ? (term_width - 10) : 90 ))
+  
+  # Print header
+  print -P "%F{cyan}${(l:$menu_width::-:):-}%f"
+  _rick_menu_centered "❓ RICK ASSISTANT: HELP ❓" $menu_width
+  print -P "%F{cyan}${(l:$menu_width::-:):-}%f"
+  print
+
+  # Define help sections
+  print -P "%F{green}ABOUT RICK ASSISTANT%f"
+  print "Rick Assistant is a ZSH plugin that brings the personality of Rick Sanchez"
+  print "from Rick and Morty to your terminal. It provides helpful commands, system"
+  print "monitoring, and a customizable experience with plenty of sass."
+  print
+  
+  print -P "%F{green}AVAILABLE COMMANDS%f"
+  print " !rick       - Get a random Rick quote"
+  print " !help       - Show available commands"
+  print " !config     - Configure Rick Assistant settings"
+  print " !explain    - Explain the last command you ran"
+  print " !portal     - Open a portal to another directory"
+  print " !morty      - Ask for help with a command"
+  print " !universe   - Show information about your system"
+  print " !adventure  - Start a text adventure (if enabled)"
+  print
+  
+  print -P "%F{green}KEYBOARD SHORTCUTS%f"
+  print " Ctrl+R      - Enhanced history search with Rick's commentary"
+  print " Alt+M       - Quick access to the Morty helper"
+  print " Alt+P       - Quick access to portal navigation"
+  print
+  
+  print -P "%F{green}CONFIGURATION%f"
+  print " Configuration is stored in ~/.rick_assistant/config.json"
+  print " You can modify settings through the menu system or by editing the file directly."
+  print " Run 'rick menu' to access the menu system."
+  print
+  
+  # Get system metrics for footer
+  local cpu_usage=$(get_cpu_usage 2>/dev/null || echo "N/A")
+  local ram_usage=$(get_ram_usage 2>/dev/null || echo "N/A")
+  local temperature=$(get_temperature 2>/dev/null || echo "N/A")
+  
+  # Print footer with system metrics
+  print -P "%F{cyan}${(l:$menu_width::-:):-}%f"
+  _rick_menu_centered "CPU: $cpu_usage | RAM: $ram_usage | TEMP: $temperature" $menu_width
+  _rick_menu_centered "$(get_rick_quote)" $menu_width
+  print -P "%F{cyan}${(l:$menu_width::-:):-}%f"
+  print
+
+  # Prompt for choice
+  print -P "Press %F{yellow}M%f to return to the main menu or %F{yellow}Q%f to quit."
+  read -k 1 choice
+  
+  case ${(L)choice} in
+    m)
+      _rick_menu_main
+      ;;
+    q)
+      return 0
+      ;;
+    *)
+      _rick_menu_help
+      ;;
+  esac
+
+  return 0
+}
+
+# Execute the function
+_rick_menu_help "$@" 

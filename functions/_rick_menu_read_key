@@ -1,0 +1,142 @@
+#!/usr/bin/env zsh
+# _rick_menu_read_key - Read a single keypress with escape sequence handling
+#
+# Usage:
+#   _rick_menu_read_key
+#
+# Returns:
+#   Prints the key or key sequence identifier to stdout
+#
+# Example:
+#   key=$(_rick_menu_read_key)
+
+_rick_menu_read_key() {
+  local key=""
+  local timeout_seconds=0.1
+  
+  # Debug output
+  if (( RICK_DEBUG )); then
+    echo "DEBUG: Reading key..." >&2
+  fi
+  
+  # Use zsh's read command with timeout to prevent hangs
+  if ! read -t $timeout_seconds -k 1 char; then
+    # Timeout occurred
+    if (( RICK_DEBUG )); then
+      echo "DEBUG: Key read timed out" >&2
+    fi
+    echo "timeout"
+    return 1
+  fi
+  
+  # Handle escape sequences
+  if [[ "$char" == $'\e' ]]; then
+    # Start building the escape sequence
+    key="$char"
+    
+    # Debug output
+    if (( RICK_DEBUG )); then
+      echo "DEBUG: Detected escape sequence start" >&2
+    fi
+    
+    # Fast check for additional characters to avoid delays
+    if read -t 0.01 -k 1 -s char 2>/dev/null; then
+      key="${key}${char}"
+      
+      # Handle extended sequences
+      if [[ "$char" == "[" || "$char" == "O" ]]; then
+        # Read one more character for common sequences
+        if read -t 0.01 -k 1 -s char 2>/dev/null; then
+          key="${key}${char}"
+          
+          # Handle special keys that might have additional characters
+          # Check if char is a digit, semicolon, or tilde
+          if [[ "$char" == "0" || "$char" == "1" || "$char" == "2" || 
+                "$char" == "3" || "$char" == "4" || "$char" == "5" || 
+                "$char" == "6" || "$char" == "7" || "$char" == "8" || 
+                "$char" == "9" || "$char" == ";" || "$char" == "~" ]]; then
+            # Read one more character
+            if read -t 0.01 -k 1 -s char 2>/dev/null; then
+              key="${key}${char}"
+            fi
+            
+            # Check if the last character is a digit or semicolon
+            last_char="${key: -1}"
+            if [[ "$last_char" == "0" || "$last_char" == "1" || 
+                  "$last_char" == "2" || "$last_char" == "3" || 
+                  "$last_char" == "4" || "$last_char" == "5" || 
+                  "$last_char" == "6" || "$last_char" == "7" || 
+                  "$last_char" == "8" || "$last_char" == "9" || 
+                  "$last_char" == ";" ]]; then
+              # Read one more character
+              if read -t 0.01 -k 1 -s char 2>/dev/null; then
+                key="${key}${char}"
+              fi
+            fi
+          fi
+        fi
+      fi
+    else
+      # This is a lone Escape key
+      key="escape"
+    fi
+    
+    # Map common escape sequences to key names
+    case "$key" in
+      $'\e[A'|$'\eOA') key="up" ;;
+      $'\e[B'|$'\eOB') key="down" ;;
+      $'\e[C'|$'\eOC') key="right" ;;
+      $'\e[D'|$'\eOD') key="left" ;;
+      $'\e[H'|$'\eOH'|$'\e[1~') key="home" ;;
+      $'\e[F'|$'\eOF'|$'\e[4~') key="end" ;;
+      $'\e[2~') key="insert" ;;
+      $'\e[3~') key="delete" ;;
+      $'\e[5~') key="page_up" ;;
+      $'\e[6~') key="page_down" ;;
+      $'\e[Z') key="shift_tab" ;;
+      $'\e') key="escape" ;;
+      # F1-F4 keys
+      $'\eOP'|$'\e[11~') key="f1" ;;
+      $'\eOQ'|$'\e[12~') key="f2" ;;
+      $'\eOR'|$'\e[13~') key="f3" ;;
+      $'\eOS'|$'\e[14~') key="f4" ;;
+      # F5-F8 keys
+      $'\e[15~') key="f5" ;;
+      $'\e[17~') key="f6" ;;
+      $'\e[18~') key="f7" ;;
+      $'\e[19~') key="f8" ;;
+      # F9-F12 keys
+      $'\e[20~') key="f9" ;;
+      $'\e[21~') key="f10" ;;
+      $'\e[23~') key="f11" ;;
+      $'\e[24~') key="f12" ;;
+    esac
+    
+    # Debug output
+    if (( RICK_DEBUG )); then
+      echo "DEBUG: Mapped escape sequence to: $key" >&2
+    fi
+  elif [[ "$char" == $'\n' || "$char" == $'\r' ]]; then
+    key="enter"
+  elif [[ "$char" == $'\t' ]]; then
+    key="tab"
+  elif [[ "$char" == $'\b' || "$char" == $'\177' ]]; then
+    key="backspace"
+  elif [[ "$char" == ' ' ]]; then
+    key="space"
+  else
+    key="$char"
+  fi
+  
+  # Debug output
+  if (( RICK_DEBUG )); then
+    echo "DEBUG: Final key value: $key" >&2
+  fi
+  
+  # Output the detected key
+  echo "$key"
+  return 0
+}
+
+# Call the function
+_rick_menu_read_key 

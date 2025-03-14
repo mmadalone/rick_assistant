@@ -1,0 +1,54 @@
+#!/usr/bin/env zsh
+# _rick_menu_status - Display the status menu for Rick Assistant
+#
+# Usage:
+#   _rick_menu_status
+#
+# Returns:
+#   0 on success, non-zero on error
+
+_rick_menu_status() {
+  # Get system info safely
+  local cpu_info="CPU: N/A"
+  local memory_info="Memory: N/A"
+  local disk_info="Disk: N/A"
+  local load_info="Load: N/A"
+  
+  # Try to get system info safely
+  if command -v free >/dev/null 2>&1 && command -v df >/dev/null 2>&1; then
+    cpu_info="CPU: $(awk '{u=$2+$4; t=$2+$4+$5; if (NR==1){u1=u; t1=t;} else print int(($2+$4-u1) * 100 / (t-t1)) "%"}' <(grep 'cpu ' /proc/stat) <(sleep 1;grep 'cpu ' /proc/stat) 2>/dev/null || echo "N/A")"
+    memory_info="Memory: $(free -h | awk '/^Mem/ {print $3 "/" $2}' 2>/dev/null || echo "N/A")"
+    disk_info="Disk: $(df -h / | awk 'NR==2 {print $3 "/" $2}' 2>/dev/null || echo "N/A")"
+    load_info="Load: $(uptime | awk -F'[a-z]:' '{ print $2}' 2>/dev/null || echo "N/A")"
+  fi
+  
+  # Define menu items explicitly
+  local item1="$cpu_info"
+  local item2="$memory_info"
+  local item3="$disk_info"
+  local item4="$load_info"
+  local item5="Back to Main Menu"
+  
+  # Use the navigate function with explicit parameters
+  local selected_index
+  selected_index=$(_rick_menu_navigate -t "System Status" \
+    "$item1" "$item2" "$item3" "$item4" "$item5")
+  
+  # Handle selection
+  if [[ $selected_index -ge 0 ]]; then
+    if [[ $selected_index -eq 4 ]]; then  # "Back to Main Menu" is item 5, index 4
+      _rick_menu main
+      return $?
+    else
+      # Simply redisplay the status menu to show updated stats
+      _rick_menu_status
+      return $?
+    fi
+  else
+    echo "Menu cancelled"
+    return 1
+  fi
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_status "$@" 

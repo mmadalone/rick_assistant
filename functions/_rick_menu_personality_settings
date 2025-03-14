@@ -1,0 +1,154 @@
+#!/usr/bin/env zsh
+# _rick_menu_personality_settings - Personality Settings submenu for Rick Assistant
+#
+# Usage: _rick_menu_personality_settings
+# Returns: 0 on success, 1 on error
+
+_rick_menu_personality_settings() {
+  # Detect terminal capabilities
+  _rick_menu_detect_terminal
+
+  # Clear screen
+  _rick_menu_clear
+
+  # Calculate terminal dimensions
+  local term_width=$(tput cols 2>/dev/null || echo 80)
+  local menu_width=$(( term_width < 100 ? (term_width - 10) : 90 ))
+  
+  # Print header
+  print -P "%F{cyan}${(l:$menu_width::-:):-}%f"
+  _rick_menu_centered "🧠 PERSONALITY SETTINGS 🧠" $menu_width
+  print -P "%F{cyan}${(l:$menu_width::-:):-}%f"
+  print
+
+  # Get current settings
+  local sass_level=$(get_config_value "personality.sass_level" "3")
+  local burp_frequency=$(get_config_value "personality.burp_frequency" "medium")
+  local intelligence=$(get_config_value "personality.intelligence" "high")
+  local nihilism=$(get_config_value "personality.nihilism" "medium")
+  local catchphrases=$(get_config_value "personality.use_catchphrases" "true")
+  
+  # Convert boolean values to checkmarks
+  local catchphrases_status=$(_rick_menu_symbol "checkbox_$([ "$catchphrases" = "true" ] && echo "on" || echo "off")")
+
+  # Define menu items
+  local -a items
+  items=(
+    "1. Sass Level (1-5): $sass_level"
+    "2. Burp Frequency: $burp_frequency"
+    "3. Intelligence Level: $intelligence"
+    "4. Nihilism Level: $nihilism"
+    "5. Use Catchphrases: $catchphrases_status"
+    "6. Return to Settings Menu"
+    "7. Quit"
+  )
+
+  # Print menu items
+  for i in {1..${#items}}; do
+    print -P " %F{green}${items[$i]}%f"
+  done
+
+  print
+  
+  # Get system metrics for footer
+  local cpu_usage=$(get_cpu_usage 2>/dev/null || echo "N/A")
+  local ram_usage=$(get_ram_usage 2>/dev/null || echo "N/A")
+  local temperature=$(get_temperature 2>/dev/null || echo "N/A")
+  
+  # Print footer with system metrics
+  print -P "%F{cyan}${(l:$menu_width::-:):-}%f"
+  _rick_menu_centered "CPU: $cpu_usage | RAM: $ram_usage | TEMP: $temperature" $menu_width
+  _rick_menu_centered "$(get_rick_quote)" $menu_width
+  print -P "%F{cyan}${(l:$menu_width::-:):-}%f"
+  print
+
+  # Prompt for choice
+  print -n "Enter your choice [1-7]: "
+  read choice
+
+  # Process choice
+  case $choice in
+    1)
+      # Change sass level
+      print -P "%F{yellow}Enter sass level (1-5, where 5 is maximum sass):%f"
+      print -n "Sass level: "
+      read new_level
+      if [[ "$new_level" =~ ^[1-5]$ ]]; then
+        set_config_value "personality.sass_level" "$new_level"
+        print -P "%F{green}Sass level changed to $new_level.%f"
+      else
+        print -P "%F{red}Invalid sass level. Must be between 1 and 5.%f"
+      fi
+      sleep 1
+      _rick_menu_personality_settings
+      ;;
+    2)
+      # Change burp frequency
+      print -P "%F{yellow}Available frequencies: none, low, medium, high, extreme%f"
+      print -n "Enter burp frequency: "
+      read new_freq
+      if [[ "$new_freq" =~ ^(none|low|medium|high|extreme)$ ]]; then
+        set_config_value "personality.burp_frequency" "$new_freq"
+        print -P "%F{green}Burp frequency changed to $new_freq.%f"
+      else
+        print -P "%F{red}Invalid frequency.%f"
+      fi
+      sleep 1
+      _rick_menu_personality_settings
+      ;;
+    3)
+      # Change intelligence level
+      print -P "%F{yellow}Available levels: low, medium, high, genius%f"
+      print -n "Enter intelligence level: "
+      read new_level
+      if [[ "$new_level" =~ ^(low|medium|high|genius)$ ]]; then
+        set_config_value "personality.intelligence" "$new_level"
+        print -P "%F{green}Intelligence level changed to $new_level.%f"
+      else
+        print -P "%F{red}Invalid intelligence level.%f"
+      fi
+      sleep 1
+      _rick_menu_personality_settings
+      ;;
+    4)
+      # Change nihilism level
+      print -P "%F{yellow}Available levels: none, low, medium, high, extreme%f"
+      print -n "Enter nihilism level: "
+      read new_level
+      if [[ "$new_level" =~ ^(none|low|medium|high|extreme)$ ]]; then
+        set_config_value "personality.nihilism" "$new_level"
+        print -P "%F{green}Nihilism level changed to $new_level.%f"
+      else
+        print -P "%F{red}Invalid nihilism level.%f"
+      fi
+      sleep 1
+      _rick_menu_personality_settings
+      ;;
+    5)
+      # Toggle catchphrases
+      local new_value=$([ "$catchphrases" = "true" ] && echo "false" || echo "true")
+      set_config_value "personality.use_catchphrases" "$new_value"
+      print -P "%F{yellow}Catchphrases $([ "$new_value" = "true" ] && echo "enabled" || echo "disabled").%f"
+      sleep 1
+      _rick_menu_personality_settings
+      ;;
+    6)
+      # Return to settings menu
+      _rick_menu_settings
+      ;;
+    7)
+      # Quit
+      return 0
+      ;;
+    *)
+      print -P "%F{red}Invalid choice. Try again.%f"
+      sleep 1
+      _rick_menu_personality_settings
+      ;;
+  esac
+
+  return 0
+}
+
+# Execute the function
+_rick_menu_personality_settings "$@" 

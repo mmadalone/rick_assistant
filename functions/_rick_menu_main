@@ -1,0 +1,55 @@
+#!/usr/bin/env zsh
+# _rick_menu_main - Display the main menu for Rick Assistant
+#
+# Usage:
+#   _rick_menu_main
+#
+# Returns:
+#   0 on success, non-zero on error
+
+_rick_menu_main() {
+  # Define menu items individually to avoid array issues
+  local item1="System Information"
+  local item2="Processor Status"
+  local item3="Memory Usage"
+  local item4="Disk Space"
+  local item5="Network Status"
+  local item6="Settings"
+  local item7="Help"
+  
+  # Use the navigate function with explicit parameters
+  # Ensure proper quoting to prevent issues with special characters
+  local selected_index
+  local menu_title="Rick Assistant Menu"
+  
+  # Call navigate function with proper quoting
+  if ! selected_index=$(_rick_menu_navigate -t "${menu_title}" \
+    "${item1}" "${item2}" "${item3}" "${item4}" "${item5}" "${item6}" "${item7}" 2>/dev/null); then
+    # Handle potential errors in _rick_menu_navigate
+    echo "Error in menu navigation"
+    return 1
+  fi
+  
+  # Convert to integer to ensure it's treated as a number
+  selected_index=$(( selected_index + 0 ))
+  
+  # Handle selection
+  if [[ $selected_index -ge 0 ]]; then
+    case $selected_index in
+      0) echo "System Information selected" ;;
+      1) echo "Processor Status selected" ;;
+      2) echo "Memory Usage selected" ;;
+      3) echo "Disk Space selected" ;;
+      4) echo "Network Status selected" ;;
+      5) _rick_menu settings ;;
+      6) _rick_menu help ;;
+    esac
+    return 0
+  else
+    echo "Menu cancelled"
+    return 1
+  fi
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_main "$@" 

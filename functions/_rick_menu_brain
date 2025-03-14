@@ -1,0 +1,85 @@
+#!/usr/bin/env zsh
+# _rick_menu_brain - Brain Module submenu for Rick Assistant
+#
+# Usage: _rick_menu_brain
+# Returns: 0 on success, 1 on error
+
+_rick_menu_brain() {
+  # Check terminal capabilities - needed for styling
+  _rick_menu_check_terminal || return 1
+  
+  # Calculate terminal width
+  local term_width=$(tput cols 2>/dev/null || echo 80)
+  local menu_width=$((term_width - 4))
+
+  # Menu title and items
+  local menu_title="🧠 RICK ASSISTANT: BRAIN MODULE 🧠"
+  
+  # Define menu items
+  local -a menu_items=(
+    "🤖 AI Models"
+    "😈 Personality"
+    "💬 Responses"
+    "🔥 Sassiness Level"
+    "↩️ Back to Main Menu"
+  )
+  
+  # Loop until user returns to main menu
+  while true; do
+    # Get system metrics for footer
+    local cpu_usage="N/A"
+    local ram_usage="N/A"
+    local temp="N/A"
+    
+    # Try to get metrics but don't fail if they can't be retrieved
+    cpu_usage=$(_rick_get_cpu_usage 2>/dev/null || echo "N/A")
+    ram_usage=$(_rick_get_ram_usage 2>/dev/null || echo "N/A")
+    temp=$(_rick_get_temperature 2>/dev/null || echo "N/A")
+    
+    # Build footer with Rick-themed commentary
+    local rick_comment="Time to get *burp* schwifty with my neural circuits!"
+    
+    # Use the navigation function to display and handle the menu
+    _rick_menu_navigate -t "$menu_title" -w $menu_width "${menu_items[@]}"
+    local choice=$?
+    
+    # Process selection
+    case $choice in
+      0) 
+        # Menu was cancelled - return to main menu
+        return 0
+        ;;
+      1)
+        # AI Models
+        print -P "%F{yellow}AI Models configuration not implemented yet!%f"
+        read -k 1 -s
+        ;;
+      2)
+        # Personality
+        print -P "%F{yellow}Personality configuration not implemented yet!%f"
+        read -k 1 -s
+        ;;
+      3)
+        # Responses
+        print -P "%F{yellow}Responses configuration not implemented yet!%f"
+        read -k 1 -s
+        ;;
+      4)
+        # Sassiness Level
+        print -P "%F{yellow}Sassiness Level configuration not implemented yet!%f"
+        read -k 1 -s
+        ;;
+      5)
+        # Back to Main Menu
+        return 0
+        ;;
+    esac
+  done
+  
+  return 0
+}
+
+# Execute the function if called directly
+if [[ "${FUNCNAME[0]}" == '_rick_menu_brain' ]]; then
+  _rick_menu_brain "$@"
+fi 

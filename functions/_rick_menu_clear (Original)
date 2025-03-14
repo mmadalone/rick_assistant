@@ -1,0 +1,23 @@
+#!/usr/bin/env zsh
+# _rick_menu_clear - Clear the terminal screen for Rick's menu system
+#
+# Usage:
+#   _rick_menu_clear
+#
+# Arguments:
+#   None
+#
+# Returns:
+#   Clears the terminal screen
+#
+# Example:
+#   _rick_menu_clear
+
+# Function implementation
+_rick_menu_clear() {
+  # Use printf instead of echo for better compatibility with escape sequences
+  printf "\033[H\033[2J\033[3J"
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_clear "$@" 

@@ -1,0 +1,51 @@
+#!/usr/bin/env zsh
+# _rick_compatibility_layer - Provide compatibility with old function names
+#
+# This function sets up aliases for old function names to point to new ones
+# during the refactoring process to ensure backward compatibility.
+#
+# Usage:
+#   _rick_compatibility_layer
+#
+# No arguments needed
+
+# Function implementation
+_rick_compatibility_layer() {
+  # Map old global variables to new ones if they exist
+  if (( ${+RICK_ASSISTANT_DEBUG} )); then
+    typeset -gi RICK_DEBUG=${RICK_ASSISTANT_DEBUG}
+  fi
+  
+  # Map old function names to new ones
+  local -A function_map=(
+    # Core functions
+    "_rick_register_module"       "rick_core_module_load"
+    "_rick_ensure_module"         "rick_core_is_module_loaded"
+    "_rick_register_function"     "rick_core_register_function"
+    "_rick_ensure_function"       "rick_core_is_function_registered"
+    "_rick_register_command"      "rick_core_register_command"
+    "_rick_call_command"          "rick_core_call_command"
+    
+    # Menu functions (will be mapped to autoloaded functions)
+    # "_rick_menu_colorize"         "_rick_menu_colorize"
+    # "_rick_menu_clear"            "_rick_menu_clear"
+  )
+  
+  # Create function aliases for backward compatibility
+  for old_func new_func in ${(kv)function_map}; do
+    if ! typeset -f "$old_func" >/dev/null 2>&1 && typeset -f "$new_func" >/dev/null 2>&1; then
+      if (( RICK_DEBUG )); then
+        print "Rick Assistant: Creating compatibility alias from $old_func to $new_func"
+      fi
+      
+      # Create a function that calls the new one
+      eval "$old_func() { $new_func \"\$@\" }"
+    fi
+  done
+  
+  # Check for old module paths and create compatibility symlinks if needed
+  # (not implemented yet - for future use)
+}
+
+# Call the function with the arguments passed to this script
+_rick_compatibility_layer "$@" 

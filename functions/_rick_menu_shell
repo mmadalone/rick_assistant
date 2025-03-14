@@ -1,0 +1,121 @@
+#!/usr/bin/env zsh
+# _rick_menu_shell - Shell commands menu for Rick Assistant
+#
+# Usage: _rick_menu_shell
+# Returns: 0 on success, 1 on error
+
+_rick_menu_shell() {
+  # Check terminal capabilities - needed for styling
+  _rick_menu_check_terminal || return 1
+  
+  # Calculate terminal width
+  local term_width=$(tput cols 2>/dev/null || echo 80)
+  local menu_width=$((term_width - 4))
+
+  # Menu title
+  local menu_title="💻 RICK ASSISTANT: SHELL COMMANDS 💻"
+  
+  # Define menu items
+  local -a menu_items=(
+    "❓ !help - List all commands"
+    "🧠 !rick - Toggle Rick mode"
+    "⚙️ !config - Configure Rick Assistant"
+    "📋 !explain - Explain previous command"
+    "🔍 !fortune - Get Rick wisdom"
+    "↩️ Back to Main Menu"
+  )
+  
+  # Loop until user returns to main menu
+  while true; do
+    # Get system metrics for footer
+    local cpu_usage="N/A"
+    local ram_usage="N/A"
+    local temp="N/A"
+    
+    # Try to get metrics but don't fail if they can't be retrieved
+    cpu_usage=$(_rick_get_cpu_usage 2>/dev/null || echo "N/A")
+    ram_usage=$(_rick_get_ram_usage 2>/dev/null || echo "N/A")
+    temp=$(_rick_get_temperature 2>/dev/null || echo "N/A")
+    
+    # Build footer with Rick-themed commentary
+    local rick_comment="My commands are *burp* so much better than your pathetic *burp* shell!"
+    
+    # Use the navigation function to display and handle the menu
+    _rick_menu_navigate -t "$menu_title" -w $menu_width "${menu_items[@]}"
+    local choice=$?
+    
+    # Process selection
+    case $choice in
+      0) 
+        # Menu was cancelled - return to main menu
+        return 0
+        ;;
+      1)
+        # !help command - execute the command
+        _rick_menu_clear
+        print -P "%F{cyan}Executing !help command...%f"
+        if type _rick_cmd_help >/dev/null 2>&1; then
+          _rick_cmd_help
+        else
+          print -P "%F{yellow}Help command not implemented yet!%f"
+        fi
+        read -k 1 -s "?Press any key to continue..."
+        ;;
+      2)
+        # !rick command
+        _rick_menu_clear
+        print -P "%F{cyan}Executing !rick command...%f"
+        if type _rick_cmd_rick >/dev/null 2>&1; then
+          _rick_cmd_rick
+        else
+          print -P "%F{yellow}Rick command not implemented yet!%f"
+        fi
+        read -k 1 -s "?Press any key to continue..."
+        ;;
+      3)
+        # !config command
+        _rick_menu_clear
+        print -P "%F{cyan}Executing !config command...%f"
+        if type _rick_cmd_config >/dev/null 2>&1; then
+          _rick_cmd_config
+        else
+          print -P "%F{yellow}Config command not implemented yet!%f"
+        fi
+        read -k 1 -s "?Press any key to continue..."
+        ;;
+      4)
+        # !explain command
+        _rick_menu_clear
+        print -P "%F{cyan}Executing !explain command...%f"
+        if type _rick_cmd_explain >/dev/null 2>&1; then
+          _rick_cmd_explain
+        else
+          print -P "%F{yellow}Explain command not implemented yet!%f"
+        fi
+        read -k 1 -s "?Press any key to continue..."
+        ;;
+      5)
+        # !fortune command
+        _rick_menu_clear
+        print -P "%F{cyan}Executing !fortune command...%f"
+        if type _rick_cmd_fortune >/dev/null 2>&1; then
+          _rick_cmd_fortune
+        else
+          print -P "%F{yellow}Fortune command not implemented yet!%f"
+        fi
+        read -k 1 -s "?Press any key to continue..."
+        ;;
+      6)
+        # Back to Main Menu
+        return 0
+        ;;
+    esac
+  done
+  
+  return 0
+}
+
+# Execute the function if called directly
+if [[ "${FUNCNAME[0]}" == '_rick_menu_shell' ]]; then
+  _rick_menu_shell "$@"
+fi 

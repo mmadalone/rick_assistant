@@ -1,0 +1,54 @@
+#!/usr/bin/env zsh
+# _rick - Completion for the rick command
+#
+# This provides tab-completion for the rick command.
+# Usage: compdef _rick rick
+
+_rick() {
+  local curcontext="$curcontext" state line
+  typeset -A opt_args
+
+  _arguments -C \
+    '1: :->command' \
+    '*: :->args'
+
+  case $state in
+    command)
+      local -a commands
+      commands=(
+        'help:Show help information'
+        'menu:Open the Rick Assistant menu'
+        'status:Show system status information'
+        'prompt:Configure prompt settings'
+        'aliases:Toggle Rick-themed aliases'
+      )
+      _describe -t commands 'rick command' commands
+      ;;
+    args)
+      case $line[1] in
+        menu)
+          local -a menu_types
+          menu_types=(
+            'main:Main menu'
+            'settings:Settings menu'
+            'status:Status information'
+            'help:Help menu'
+          )
+          _describe -t menu_types 'menu type' menu_types
+          ;;
+        prompt)
+          local -a prompt_args
+          prompt_args=(
+            'segment:Configure prompt segment'
+            'theme:Configure prompt theme'
+            'reset:Reset prompt to defaults'
+          )
+          _describe -t prompt_args 'prompt argument' prompt_args
+          ;;
+      esac
+      ;;
+  esac
+}
+
+# Call the completion function
+_rick "$@" 

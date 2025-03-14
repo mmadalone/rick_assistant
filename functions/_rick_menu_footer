@@ -1,0 +1,90 @@
+#!/usr/bin/env zsh
+# _rick_menu_footer - Display a standard footer for menu screens
+#
+# Usage:
+#   _rick_menu_footer [width]
+#
+# Arguments:
+#   width - Optional width for the footer (defaults to $_RICK_MENU_WIDTH)
+#
+# Returns:
+#   Prints the footer to stdout
+#
+# Example:
+#   _rick_menu_footer 80
+
+_rick_menu_footer() {
+  # Get width parameter or use default
+  local width="${1:-$_RICK_MENU_WIDTH}"
+  
+  # Check if metrics should be displayed
+  local show_metrics=$(_rick_get_config "ui___show_metrics" "true")
+  # Also try the dot format as fallback
+  if [[ -z "$show_metrics" ]]; then
+    show_metrics=$(_rick_get_config_value "ui.show_metrics" "true")
+  fi
+  
+  # Get current menu implementation
+  local use_python_impl=$(_rick_get_config "ui___menu___use_python_implementation" "true")
+  local python_available=$(_rick_has_python && echo "true" || echo "false")
+  local impl_indicator
+  
+  if [[ "$use_python_impl" == "true" && "$python_available" == "true" ]]; then
+    impl_indicator="PY-MENU"
+  else
+    impl_indicator="ZSH-MENU"
+  fi
+  
+  # Draw footer separator
+  _rick_menu_separator "$width" "-" "footer"
+  
+  # Create footer content based on metrics setting
+  local footer=""
+  
+  # Only gather and display system information if metrics are enabled
+  if [[ "$show_metrics" == "true" ]]; then
+    # Gather system information
+    local cpu_usage="$(command -v top >/dev/null && top -bn1 | grep "Cpu(s)" | awk '{print $2}' || echo "??")%"
+    local mem_usage="$(command -v free >/dev/null && free | grep Mem | awk '{print int($3/$2 * 100)}' || echo "??")%"
+    local temperature="??"
+    if command -v vcgencmd >/dev/null; then
+      temperature="$(vcgencmd measure_temp | cut -d= -f2 | cut -d\' -f1)°C"
+    fi
+    
+    # Create footer content with system info and menu implementation
+    footer="CPU: ${cpu_usage} | RAM: ${mem_usage} | TEMP: ${temperature} | ${impl_indicator}"
+  else
+    # Simplified footer without metrics
+    footer="${impl_indicator}"
+  fi
+  
+  # Add a Rick-themed comment
+  local rick_quotes=(
+    "Wubba lubba dub dub!"
+    "I'm not drunk! *burp*"
+    "I've got a portal gun and a bad attitude!"
+    "Science isn't about why, it's about why not!"
+    "Nobody exists on purpose. Nobody belongs anywhere."
+  )
+  local random_index=$((RANDOM % ${#rick_quotes[@]} + 1))
+  local rick_quote="${rick_quotes[$random_index]}"
+  
+  # Add quote to footer if there's space
+  if (( ${#footer} + ${#rick_quote} + 5 < width )); then
+    footer="${footer} | ${rick_quote}"
+  fi
+  
+  # Print footer content
+  echo -n "  "
+  _rick_menu_colorize "footer" "$footer"
+  echo ""
+  
+  # Print controls
+  echo "  [↑↓: Navigate] [Enter: Select] [Esc/q: Back]"
+  
+  # Draw closing separator
+  _rick_menu_separator "$width" "-" "footer"
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_footer "$@" 

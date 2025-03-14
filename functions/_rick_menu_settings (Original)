@@ -1,0 +1,145 @@
+#!/usr/bin/env zsh
+# _rick_menu_settings - Settings menu for Rick Assistant
+#
+# Usage: _rick_menu_settings
+# Returns: 0 on success, 1 on error
+
+_rick_menu_settings() {
+  # Check terminal capabilities - needed for styling
+  _rick_menu_check_terminal || return 1
+  
+  # Calculate terminal width
+  local term_width=$(tput cols 2>/dev/null || echo 80)
+  local menu_width=$((term_width - 4))
+
+  # Menu title
+  local menu_title="⚙️ RICK ASSISTANT: SETTINGS ⚙️"
+  
+  # Loop until user returns to main menu
+  while true; do
+    # Get current settings
+    local use_python=$(_rick_get_config_value "ui.use_python_menu" || echo "false")
+    local animations=$(_rick_get_config_value "ui.animations" || echo "true")
+    local unicode=$(_rick_get_config_value "ui.unicode" || echo "true")
+    local show_metrics=$(_rick_get_config_value "ui.show_metrics" || echo "true")
+    
+    # Create status marks for each setting
+    local python_status="❌"
+    [[ "$use_python" == "true" ]] && python_status="✅"
+    
+    local anim_status="❌"
+    [[ "$animations" == "true" ]] && anim_status="✅"
+    
+    local unicode_status="❌"
+    [[ "$unicode" == "true" ]] && unicode_status="✅"
+    
+    local metrics_status="❌"
+    [[ "$show_metrics" == "true" ]] && metrics_status="✅"
+    
+    # Define menu items with current status
+    local -a menu_items=(
+      "🔧 General Settings"
+      "😈 Personality Settings"
+      "💄 UI Settings"
+      "🐍 Use Python Menu [$python_status]"
+      "🎬 Animations [$anim_status]"
+      "🌐 Unicode [$unicode_status]"
+      "📊 Show System Metrics [$metrics_status]"
+      "↩️ Back to Main Menu"
+    )
+    
+    # Get system metrics for footer
+    local cpu_usage="N/A"
+    local ram_usage="N/A"
+    local temp="N/A"
+    
+    # Try to get metrics but don't fail if they can't be retrieved
+    cpu_usage=$(_rick_get_cpu_usage 2>/dev/null || echo "N/A")
+    ram_usage=$(_rick_get_ram_usage 2>/dev/null || echo "N/A")
+    temp=$(_rick_get_temperature 2>/dev/null || echo "N/A")
+    
+    # Build footer with Rick-themed commentary
+    local rick_comment="S-s-settings, Morty! Don't *burp* mess them up!"
+    
+    # Use the navigation function to display and handle the menu
+    _rick_menu_navigate -t "$menu_title" -w $menu_width "${menu_items[@]}"
+    local choice=$?
+    
+    # Process selection
+    case $choice in
+      0) 
+        # Menu was cancelled - return to main menu
+        return 0
+        ;;
+      1)
+        # General Settings
+        _rick_menu_general_settings
+        ;;
+      2)
+        # Personality Settings
+        print -P "%F{yellow}Personality Settings not implemented yet!%f"
+        read -k 1 -s
+        ;;
+      3)
+        # UI Settings
+        print -P "%F{yellow}UI Settings not implemented yet!%f"
+        read -k 1 -s
+        ;;
+      4)
+        # Toggle Python Menu
+        if [[ "$use_python" == "true" ]]; then
+          _rick_set_config_value "ui.use_python_menu" "false"
+          print -P "%F{green}Python menu disabled!%f"
+        else
+          _rick_set_config_value "ui.use_python_menu" "true"
+          print -P "%F{green}Python menu enabled!%f"
+        fi
+        read -k 1 -s
+        ;;
+      5)
+        # Toggle Animations
+        if [[ "$animations" == "true" ]]; then
+          _rick_set_config_value "ui.animations" "false"
+          print -P "%F{green}Animations disabled!%f"
+        else
+          _rick_set_config_value "ui.animations" "true"
+          print -P "%F{green}Animations enabled!%f"
+        fi
+        read -k 1 -s
+        ;;
+      6)
+        # Toggle Unicode
+        if [[ "$unicode" == "true" ]]; then
+          _rick_set_config_value "ui.unicode" "false"
+          print -P "%F{green}Unicode disabled!%f"
+        else
+          _rick_set_config_value "ui.unicode" "true"
+          print -P "%F{green}Unicode enabled!%f"
+        fi
+        read -k 1 -s
+        ;;
+      7)
+        # Toggle Show System Metrics
+        if [[ "$show_metrics" == "true" ]]; then
+          _rick_set_config_value "ui.show_metrics" "false"
+          print -P "%F{green}System metrics hidden!%f"
+        else
+          _rick_set_config_value "ui.show_metrics" "true"
+          print -P "%F{green}System metrics shown!%f"
+        fi
+        read -k 1 -s
+        ;;
+      8)
+        # Back to Main Menu
+        return 0
+        ;;
+    esac
+  done
+  
+  return 0
+}
+
+# Execute the function if called directly
+if [[ "${FUNCNAME[0]}" == '_rick_menu_settings' ]]; then
+  _rick_menu_settings "$@"
+fi 

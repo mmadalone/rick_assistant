@@ -1,0 +1,2720 @@
+# 🧪 Rick Assistant ZSH Plugin - Advanced Cursor AI Development Rules
+# Optimized for stateful, fault-tolerant documentation generation with cognitive load management
+# Implements comprehensive chunking strategies and multi-tier recovery protocols
+# Enhanced with advanced resilience mechanisms for robust development process execution
+# Incorporates timeout mitigation architecture with progressive degradation pathways
+
+version: 3.1.0
+
+# 📊 Project Architecture
+project:
+  name: "rick_assistant"
+  description: "Rick Sanchez-themed ZSH plugin with Powerlevel10k integration"
+  repository: "rick_assistant"
+  style: "zsh"
+  license: "MIT"
+  version: "1.0.0"
+  author: "Madalone"
+  roadmap: "docs/plan.md"
+  development_approach: "prompt-based development for non-coders"
+  state_management:
+    distributed_state_persistence:
+      primary_mechanism: "state_vector_path: docs/STATUS.md"
+      secondary_mechanism: "embedded_metadata: docs/META_STATE.md"
+      tertiary_mechanism: "checkpoint_files: docs/checkpoints/"
+      reconciliation_protocol: "deterministic_vector_reconciliation"
+      versioning_strategy: "monotonic_vector_clocks"
+      integrity_verification: "cryptographic_hashing"
+    checkpoint_frequency: "component_boundary"
+    recovery_protocol: "multi_tier_progressive"
+    critical_state_attributes:
+      - "component_completion_state"
+      - "implementation_phase"
+      - "dependency_satisfaction"
+      - "verification_status"
+    state_vector_schema: |
+      {
+        "session_id": "DEV_SESSION_{TIMESTAMP}",
+        "vector_clock": {VECTOR_CLOCK},
+        "state_version": "3.0",
+        "last_consistent_state": "{TIMESTAMP}",
+        "implementation_state": {...}
+      }
+  # 🛡️ AI Hallucination Prevention & Validation
+
+# 📂 Directory Structure
+directories:
+  - path: "rick_assistant"
+    description: "Main plugin directory"
+    subdirectories:
+      - "src/core"
+      - "src/ui"
+      - "src/ai"
+      - "src/utils"
+      - "src/config"
+      - "tests/core"
+      - "tests/integration"
+      - "tests/utils"
+      - "tests/validation"
+      - "docs"
+# 📝 File Structure Rules
+file_patterns:
+  - pattern: "*.plugin.zsh"
+    description: "ZSH plugin entry points"
+    location: "root_directory"
+    
+  - pattern: "src/__init__.py"
+    description: "Package initialization file"
+    template: "package_init"
+    
+  - pattern: "src/*/__.init__.py"
+    description: "Subpackage initialization files"
+    template: "subpackage_init"
+    
+  - pattern: "src/utils/*.py"
+    description: "Utility modules"
+    template: "utility_module"
+    examples:
+      - "logger.py"
+      - "errors.py"
+      - "config.py"
+      - "validation.py"
+      - "system.py"
+      - "dependencies.py"
+      - "path_safety.py"
+      - "component_validation.py"
+      - "temperature_alerts.py"
+
+  - pattern: "src/core/*.py"
+    description: "Core functionality modules"
+    template: "core_module"
+    examples:
+      - "hooks.py"
+      - "prompt.py"
+      - "commands.py"
+      - "messages.py"
+      - "rick.py"
+      - "setup.py"
+      - "plugin.py"
+    
+  - pattern: "src/ui/*.py"
+    description: "User interface modules"
+    template: "ui_module"
+    examples:
+      - "text.py"
+      - "input.py"
+    
+  - pattern: "src/ai/*.py"
+    description: "AI integration modules"
+    template: "ai_module"
+    
+  - pattern: "test_*.py"
+    description: "Test files for root components"
+    location: "root_directory"
+    
+  - pattern: "tests/*/test_*.py"
+    description: "Test files for specific components"
+    template: "test_module"
+# 🧩 Implementation Phases
+implementation_phases:
+  - phase: 1
+    name: "Core Foundation"
+    status: "COMPLETED"
+    components:
+      - "rick_assistant.plugin.zsh"
+      - "src/utils/logger.py"
+      - "src/utils/errors.py"
+      - "src/utils/config.py"
+      - "src/utils/validation.py"
+      - "src/__init__.py"
+      - "src/utils/dependencies.py"
+      - "src/utils/path_safety.py"
+      - "src/utils/component_validation.py"
+    
+  - phase: 2
+    name: "ZSH Integration & Basic Functionality"
+    status: "COMPLETED"
+    components:
+      - "src/core/hooks.py"
+      - "src/core/prompt.py"
+      - "src/core/commands.py"
+      - "src/core/messages.py"
+      - "src/core/rick.py"
+      - "src/core/setup.py"
+      - "src/core/plugin.py"
+    
+  - phase: 3
+    name: "Enhanced User Interface & Experience"
+    status: "PARTIALLY COMPLETED"
+    components:
+      - "src/utils/system.py" # COMPLETED
+      - "src/utils/temperature_alerts.py" # COMPLETED
+      - "src/core/prompt.py" # Enhancement - COMPLETED
+      - "src/ui/text.py" # COMPLETED
+      - "src/ui/input.py" # PARTIALLY COMPLETED
+      - "src/ui/menu.py" # TODO
+      - "src/ui/status.py" # TODO
+      - "src/ui/universe.py" # TODO
+    
+  - phase: 4
+    name: "Command Processing & Safety Features"
+    components:
+      - "src/core/safety.py"
+      - "src/core/commands.py" # Enhancement
+      - "src/core/executor.py"
+    
+  - phase: 5
+    name: "Expanded Fake Rick & Content Features"
+    components:
+      - "src/core/personalities.py"
+      - "src/utils/backup.py"
+      - "src/ui/menu.py" # Enhancement
+      - "src/utils/media.py"
+    
+  - phase: 6
+    name: "AI Integration & Advanced Features"
+    components:
+      - "src/ai/models.py"
+      - "src/ai/personality.py"
+      - "src/ui/settings.py"
+      - "src/ai/tokens.py"
+    
+  - phase: 7
+    name: "Advanced Features & Polish"
+    components:
+      - "src/utils/performance.py"
+      - "src/ui/input.py" # Enhancement
+      - "src/core/suggestions.py"
+      - "src/ai/errors.py"
+      - "docs/README.md"
+      - "setup.py"
+# 🛠️ Code Templates
+code_templates:
+  - id: "package_init"
+    description: "Main package initialization template"
+    template: |
+      """
+      Rick Sanchez-themed ZSH assistant main package
+      
+      {ASCII_ART}
+      """
+      
+      __version__ = "0.1.0"
+      __author__ = "Your Name"
+      __description__ = "Rick Sanchez-themed ZSH assistant"
+      
+      METADATA = {
+          "name": "rick_assistant",
+          "version": __version__,
+          "description": __description__,
+          "author": __author__,
+          "github": "https://github.com/yourusername/rick_assistant"
+      }
+      
+      # Initialize logging
+      from src.utils.logger import setup_logger
+      setup_logger()
+      
+  - id: "test_module"
+    description: "Test module template"
+    template: |
+      """
+      Test module for {MODULE_NAME}
+      
+      Tests the functionality of the {MODULE_NAME} module.
+      """
+      
+      import pytest
+      import os
+      import sys
+      from unittest.mock import patch, MagicMock
+      
+      # Import module to test
+      from src.{MODULE_PATH} import {MODULE_NAME}
+      
+      # Test fixtures
+      @pytest.fixture
+      def setup_test_environment():
+          # Setup test environment
+          yield
+          # Teardown test environment
+      
+      # Test cases
+      def test_{FUNCTION_NAME}_basic_functionality(setup_test_environment):
+          """Test basic functionality of {FUNCTION_NAME}"""
+          # Arrange
+          
+          # Act
+          
+          # Assert
+
+  - id: "core_module"
+    description: "Core module template with Rick's personality"
+    template: |
+      """
+      {MODULE_NAME} - {MODULE_DESCRIPTION}
+      
+      This module provides {FUNCTIONALITY} for the Rick Assistant.
+      """
+      
+      import os
+      import sys
+      from src.utils.logger import get_logger
+      from src.utils.errors import safe_execute, RickAssistantError
+      
+      # Initialize logger
+      logger = get_logger(__name__)
+      
+      # Constants
+      {CONSTANTS}
+      
+      # Main functionality
+      {FUNCTIONS}
+
+# 🎯 AI Prompting Rules
+ai_prompting:
+  - context: "generic"
+    prefix: "Create a Python module for a Rick Sanchez-themed ZSH assistant with these features:"
+    suffix: "Make all functions safe with try/except blocks to prevent terminal crashes. Add Rick-themed messages for critical errors."
+    
+  - context: "core_modules"
+    prefix: "Create a core functionality module for a Rick Sanchez-themed ZSH assistant with these features:"
+    suffix: "Make all functions extremely safe with thorough error handling. Include Rick's personality with sarcastic comments."
+    
+  - context: "ui_modules"
+    prefix: "Create a user interface module for a Rick Sanchez-themed ZSH assistant with these features:"
+    suffix: "Style all elements with Rick & Morty portal theme (green/blue colors). Add Rick-style commentary in interactions."
+
+# 🎨 Styling & Coding Standards
+coding_standards:
+  python:
+    max_line_length: 88
+    docstring_style: "google"
+    quotes: "double"
+    indentation: 4
+    error_handling: "required"
+    
+  naming_conventions:
+    classes: "PascalCase"
+    functions: "snake_case"
+    constants: "UPPER_SNAKE_CASE"
+    modules: "snake_case"
+    
+  error_handling:
+    pattern: |
+      try:
+          # Code that might fail
+      except Exception as e:
+          logger.error(f"Error in {function_name}: {str(e)}")
+          # Add Rick-style error message
+          return fallback_value
+# 🧪 Testing Framework
+testing:
+  directories:
+    - "tests/core": "Unit tests for core functionality"
+    - "tests/integration": "Integration tests between components"
+    - "tests/utils": "Unit tests for utility functions"
+    - "tests/validation": "Validation framework and stats"
+  patterns:
+    - "test_*.py": "Test files following pytest naming convention"
+    - "conftest.py": "Pytest configuration and fixtures"
+  command: "pytest -xvs tests/"
+
+# 🚀 Installation & Deployment
+installation:
+  base_directory: "rick_assistant"
+  requires:
+    - "zsh"
+    - "oh-my-zsh"
+    - "python3"
+  configuration:
+    zshrc_line: "plugins=(... rick_assistant)"
+  activation:
+    command: "source ~/.zshrc && rick_assistant_setup"
+
+# Generation Process Parameters
+generation_process:
+  sequencing:
+    method: "dependency_based_traversal"
+    validation_checkpoints: true
+    state_preservation: true
+    causal_consistency: true
+    critical_path_identification: true
+
+  asynchronous_generation:
+    enabled: true
+    activation_trigger: "timeout_detection"
+    transaction_model: "atomic_section_generation"
+    commit_points:
+      - "heading_boundaries"
+      - "logical_section_completion"
+      - "state_vector_checkpoints"
+    
+    micro_generation_units:
+      - unit: "section"
+        token_limit: 500
+        retry_strategy: "progressive_simplification"
+      - unit: "subsection"
+        token_limit: 300
+        retry_strategy: "content_prioritization"
+      - unit: "component_fragment"
+        token_limit: 150
+        retry_strategy: "minimal_structural_generation"
+    
+    synthesis_phase:
+      enabled: true
+      integration_method: "progressive_assembly"
+      conflict_resolution: "boundary_normalization"
+      reference_reconciliation: "bidirectional_verification"
+      stylistic_harmonization: "light_standardization"
+
+  transactional_boundaries:
+    enabled: true
+    atomic_generation_units: "section_level"
+    transaction_logging: true
+    rollback_capabilities: true
+    idempotent_operations: true
+    commit_verification: true
+  
+  parallel_processing:
+    enabled: false
+    max_concurrent_files: 1
+    completion_verification: true
+    conflict_resolution_strategy: "deterministic_reconciliation"
+  
+  progress_tracking:
+    document: "DOC_PROGRESS.md"
+    format: "machine_parsable_json"
+    update_frequency: "after_each_file"
+    backup_frequency: "after_each_component"
+    versioned_snapshots: true
+    track_metrics:
+      - "files_generated"
+      - "tokens_consumed"
+      - "recovery_events"
+      - "parsing_success_rate"
+      - "resilience_activations"
+      - "error_prediction_accuracy"
+
+# Content Chunking Optimization
+content_chunking:
+  strategy: "adaptive_complexity"
+  parameters:
+    text_content: 
+      max_lines: 300
+      max_tokens: 3000
+      optimal_breakpoints: "section_boundaries"
+    
+    code_intensive:
+      max_lines: 200
+      max_tokens: 2000
+      optimal_breakpoints: "function_boundaries"
+    
+    hybrid_content:
+      max_lines: 250
+      max_tokens: 2500
+      optimal_breakpoints: "logical_transitions"
+    
+    diagram_heavy:
+      max_lines: 150
+      max_tokens: 1500
+      optimal_breakpoints: "diagram_boundaries"
+    
+    high_entropy:
+      max_lines: 100
+      max_tokens: 1000
+      optimal_breakpoints: "concept_boundaries"
+  
+  hierarchical_timeout_chunking:
+    enabled: true
+    strategies:
+      - level: "standard"
+        activation: "default"
+        parameters: null
+      - level: "aggressive"
+        activation: "single_timeout"
+        parameters:
+          chunk_size_multiplier: 0.6
+          token_threshold: "reduced"
+          context_preservation: "standard"
+      - level: "extreme"
+        activation: "multiple_timeouts"
+        parameters:
+          chunk_size_multiplier: 0.4
+          token_threshold: "minimal"
+          context_preservation: "essential_only"
+      - level: "atomic"
+        activation: "persistent_timeouts"
+        parameters:
+          chunk_size_multiplier: 0.2
+          token_threshold: "critical_only"
+          context_preservation: "core_state_vector"
+  
+  chunking_notation:
+    boundary_marker: |
+      <!-- DOCUMENT_CHUNK_BOUNDARY: {SOURCE_CHUNK} → {TARGET_CHUNK} -->
+    
+    context_recapitulation: |
+      <!-- CONTEXT_CONTINUATION:
+      - Previous Chunk: {PREVIOUS_CHUNK}
+      - Component: {COMPONENT_NAME}
+      - Current Section: {SECTION_NAME}
+      - Topics Covered: {TOPICS_LIST}
+      - Semantic Digest: {SEMANTIC_HASH}
+      -->
+  
+  self_healing_structures:
+    enabled: true
+    embedded_semantic_markers: true
+    reconstruction_templates: true
+    content_fingerprinting: true
+    structural_invariants: true
+    regeneration_triggers:
+      - "integrity_verification_failure"
+      - "semantic_inconsistency_detection"
+      - "structural_corruption_indicator"
+    recovery_instruction_templates:
+      inline_recovery: |
+        <!-- SELF_HEALING_MARKER: 
+        - Context: {SURROUNDING_CONTEXT}
+        - Expected Structure: {EXPECTED_STRUCTURE}
+        - Content Signature: {CONTENT_SIGNATURE}
+        -->
+      sectional_recovery: |
+        <!-- SECTIONAL_RECOVERY_BLUEPRINT:
+        - Section Type: {SECTION_TYPE}
+        - Required Elements: {REQUIRED_ELEMENTS}
+        - Structural Template: {STRUCTURE_TEMPLATE}
+        - Content Constraints: {CONTENT_CONSTRAINTS}
+        -->
+
+# Context Management System
+context_management:
+  distributed_state_persistence:
+    primary_mechanism: "session_header_embedding"
+    secondary_mechanism: "external_state_registry"
+    tertiary_mechanism: "distributed_metadata_embedding"
+    reconciliation_protocol: "deterministic_consensus"
+    verification_frequency: "continuous"
+    persistence_redundancy: 3
+    recovery_priority: "highest"
+  
+  state_vector:
+    schema: |
+      {
+        "session_id": "RICK_ASSISTANT_DOC_GEN",
+        "timestamp": "YYYY-MM-DD-HH-MM",
+        "current_component": "COMPONENT_NAME",
+        "current_file": "FILENAME.md",
+        "completed_files": ["FILE1.md", "FILE2.md"],
+        "pending_files": ["FILE3.md", "FILE4.md"],
+        "recovery_state": "NORMAL|RECOVERY_MODE",
+        "generation_metrics": {
+          "files_completed": 0,
+          "chunks_generated": 0,
+          "recovery_events": 0,
+          "resilience_activations": 0
+        },
+        "state_vector_version": "v1.0",
+        "reconciliation_checksum": "HASH_VALUE"
+      }
+    persistence_method: "session_header_embedding"
+  
+  temporal_consistency_reconciliation:
+    enabled: true
+    timestamp_based_versioning: true
+    causal_consistency_enforcement: true
+    version_vectors: true
+    conflict_resolution_strategy: "last_writer_wins_with_preservation"
+    historical_state_retention: "component_completion"
+    temporal_anomaly_detection: true
+  
+  cross_reference_system:
+    forward_reference: "<<REF:FILE:SECTION>>"
+    backward_reference: "<<BACKREF:FILE:SECTION>>"
+    dependency_reference: "<<DEP:FILE>>"
+    reference_validation: true
+    automatic_repair: true
+  
+  session_initialization:
+    template: |
+      ## Documentation Generation Session - {TIMESTAMP}
+      
+      - Component Focus: {COMPONENT}
+      - Files to Generate: {FILES_LIST}
+      - Dependencies Required: {DEPENDENCIES}
+      - State Preservation: Enabled
+      - Chunking Strategy: {CHUNKING_STRATEGY}
+      - Resilience Level: {RESILIENCE_LEVEL}
+      - Session ID: {SESSION_ID}
+      - State Vector Version: {STATE_VECTOR_VERSION}
+
+# Documentation Format Standards
+format_standards:
+  markdown:
+    headings:
+      h1: "Document Title Only"
+      h2: "Major Sections"
+      h3: "Subsections"
+      h4: "Detailed Topics"
+      max_nesting: 4
+    
+    lists:
+      max_nesting: 3
+      preferred_style: "dashed for unordered, numbered for sequential"
+    
+    code_blocks:
+      syntax_highlighting: required
+      preferred_style: |
+        ```{language}
+        # Code content with syntax highlighting
+        function example() {
+          # Implementation
+        }
+        ```
+    
+    tables:
+      format: "Standard GitHub-flavored markdown"
+      headers: required
+      alignment: "Left for text, right for numbers"
+    
+    emphasis:
+      bold: "Use for important concepts"
+      italic: "Use for technical terms or emphasis"
+      combined: "Use sparingly for critical information"
+
+# Progressive Content Verification
+content_verification:
+  verification_stages:
+    - stage: "initial_generation"
+      verification_type: "structural_integrity"
+      frequency: "per_section"
+    - stage: "intermediate_completion"
+      verification_type: "semantic_coherence"
+      frequency: "per_file"
+    - stage: "final_integration"
+      verification_type: "comprehensive_validation"
+      frequency: "per_component"
+
+  false_pass_prevention:
+    verification_steps: 3
+    redundant_checks: "enabled"
+    anomaly_detection: "strict"
+    rollback_on_uncertainty: "true"
+
+  verification_metrics:
+    - metric: "structural_compliance"
+      threshold: 0.95
+      remediation: "structural_repair"
+    - metric: "semantic_consistency"
+      threshold: 0.90
+      remediation: "contextual_reconciliation"
+    - metric: "reference_integrity"
+      threshold: 1.0
+      remediation: "reference_repair"
+    - metric: "formatting_standard_compliance"
+      threshold: 0.98
+      remediation: "format_standardization"
+  
+  anomaly_detection:
+    enabled: true
+    detection_methods:
+      - "statistical_outlier_analysis"
+      - "pattern_deviation_recognition"
+      - "semantic_incongruity_detection"
+    response_strategies:
+      - "targeted_regeneration"
+      - "structural_regularization"
+      - "content_harmonization"
+
+hallucination_prevention:
+  validation_steps: 4
+  steps:
+    - "semantic_consistency_validation"
+    - "source_citation_validation"
+    - "cross_reference_validation"
+    - "progressive_validation"
+  verification_methods:
+    - "checksum_validation"
+    - "environment_validation: docs/ENVIRONMENT_VALIDATION_SCRIPTS.md"
+    - "Regex validation of function names"
+    - "Pattern matching for process substitution"
+    - "Static analysis of function definitions"
+  deterministic_cascade:
+    primary: "docs/STATUS.md"
+    fallback: "docs/META_STATE.md"
+    final: "docs/checkpoints/"
+  versioning_strategy: "incremental_commit_validation"
+
+# 🔄 Automated Development Validation
+progressive_validation:
+  validation_sequence:
+    - name: "Initial Code Review"
+      reference: "docs/PATTERNS/PROGRESSIVE_VALIDATION.md"
+    - name: "Syntax & Linting"
+      method: "Static analysis"
+    - name: "Cross-Implementation Review"
+      method: "Automated diff comparison"
+    - name: "Checkpoint Verification"
+      method: "Manual QA validation"
+  automated_error_detection:
+    enabled: true
+    logging: "docs/ERROR_LOGS/"
+        
+  progress_tracking:
+    primary_document: "docs/STATUS.md"
+    backup_documents:
+      - "docs/STATUS_BACKUP.md_1.md"
+      - "docs/STATUS_BACKUP.md_2.md"
+    format: "machine_parsable_json"
+    visualization: "ascii_progress_indicators"
+    update_frequency: "post_transaction"
+    integrity_verification: "checksum_validation"
+    anomaly_detection: "progress_regression_monitoring"
+  chunking_strategy:
+    parameterization:
+      text_content: 
+        max_lines: 300
+        max_tokens: 3000
+        optimal_breakpoints: "section_boundaries"
+      code_intensive:
+        max_lines: 200
+        max_tokens: 2000
+        optimal_breakpoints: "function_boundaries"
+      hybrid_content:
+        max_lines: 250
+        max_tokens: 2500
+        optimal_breakpoints: "logical_transitions"
+      diagram_heavy:
+        max_lines: 150
+        max_tokens: 1500
+        optimal_breakpoints: "diagram_boundaries"
+      high_entropy:
+        max_lines: 100
+        max_tokens: 1000
+        optimal_breakpoints: "concept_boundaries"
+    hierarchical_timeout_chunking:
+      enabled: true
+      strategies:
+        - level: "standard"
+          activation: "default"
+          parameters: null
+        - level: "aggressive"
+          activation: "single_timeout"
+          parameters:
+            chunk_size_multiplier: 0.6
+            token_threshold: "reduced"
+            context_preservation: "standard"
+        - level: "extreme"
+          activation: "multiple_timeouts"
+          parameters:
+            chunk_size_multiplier: 0.4
+            token_threshold: "minimal"
+            context_preservation: "essential_only"
+        - level: "atomic"
+          activation: "persistent_timeouts"
+          parameters:
+            chunk_size_multiplier: 0.2
+            token_threshold: "critical_only"
+            context_preservation: "core_state_vector"
+    dynamic_adaptation:
+      enabled: true
+      metrics:
+        - "complexity_estimation"
+        - "token_consumption_rate"
+        - "parsing_success_rate"
+      threshold_adjustment: "bayesian_optimization"
+  implementation_workflow:
+    workflow_guide: "docs/PROMPT_BASED_WORKFLOW.md"
+    prompt_library: "docs/PROMPTS_FOR_NON_CODERS.md"
+    difficulty_guide: "docs/IMPLEMENTATION_DIFFICULTY_GUIDE.md"
+    terminal_snippets: "docs/TERMINAL_COMMAND_SNIPPETS.md"
+    environment_validation: "docs/ENVIRONMENT_VALIDATION_SCRIPTS.md"
+    progress_visualization: "docs/PROGRESS_VISUALIZATION.md"
+    prompt_engineering_faq: "docs/PROMPT_ENGINEERING_FAQ.md"
+    improvements_documentation: "docs/IMPLEMENTED_IMPROVEMENTS.md"
+    dry_principles_reference: "docs/DRY_IMPROVEMENTS.md"
+    interactive_walkthrough: "docs/INTERACTIVE_WALKTHROUGH.md"
+    achievement_system: "docs/ACHIEVEMENT_SYSTEM.md"
+    success_stories: "docs/SUCCESS_STORIES/README.md"
+    transactional_boundaries:
+      enabled: true
+      transaction_log: "docs/TRANSACTION_LOG.md"
+      atomic_operations: "component_level"
+      compensation_actions: 
+        defined: true
+        documentation: "docs/RECOVERY_ACTIONS.md"
+      commit_verification: true
+  dependencies:
+    - "zsh >= 5.8"
+    - "oh-my-zsh"
+    - "powerlevel10k"
+    - "python (optional)"
+  keywords:
+    - "zsh"
+    - "oh-my-zsh"
+    - "powerlevel10k"
+    - "p10k"
+    - "rick-assistant"
+    - "shell"
+  installation:
+    method: "oh-my-zsh plugin"
+    path: "$ZSH/custom/plugins/rick_assistant"
+    p10k_integration: |
+      # Add to ~/.p10k.zsh
+      POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS+=(rick_segment)
+  error_resilience:
+    probabilistic_error_anticipation:
+      enabled: true
+      prediction_model: "bayesian_development_risk"
+      sensitivity: 0.85
+      mitigation_triggers:
+        - "implementation_complexity_threshold"
+        - "dependency_chain_length"
+        - "error_pattern_recognition"
+      preemptive_actions:
+        - "complexity_reduction"
+        - "dependency_decoupling"
+        - "additional_verification_point"
+    failure_recovery:
+      strategies:
+        - name: "component_isolation"
+          applicability: "dependency_chain_corruption"
+          priority: "highest"
+        - name: "implementation_simplification"
+          applicability: "complexity_overload"
+          priority: "high"
+        - name: "temporal_rollback"
+          applicability: "implementation_inconsistency"
+          priority: "medium"
+      deterministic_cascade:
+        enabled: true
+        progressive_degradation:
+          - tier: "1"
+            preservation: "full_functionality_with_reduced_features"
+          - tier: "2"
+            preservation: "core_functionality_only"
+          - tier: "3"
+            preservation: "minimal_viable_implementation"
+
+# 🛠️ Versioning Workflow (Safe Reverts)
+git_workflow:
+  versioning:
+    auto_backup: "enabled"
+    commit_before_edit: "true"
+    commit_message_format: "[Auto-Save] $description"
+    backup_branch: "backup-{date}"
+    rollback_command: "git reset --hard HEAD~1"
+
+# 📝 Implementation Process Architecture
+implementation_process:
+  roadmap: 
+    file: "docs/plan.md"
+    adherence: "strict"
+    updates_required: true
+    update_pattern: "Document actual implementation details and any deviations"
+    dependency_graph:
+      representation: "directed_acyclic_graph"
+      visualization: "docs/DEPENDENCY_GRAPH.md"
+      critical_path_identification: true
+      bottleneck_analysis: true
+  
+  asynchronous_generation:
+    enabled: true
+    activation_trigger: "timeout_detection"
+    transaction_model: "atomic_section_generation"
+    commit_points:
+      - "heading_boundaries"
+      - "logical_section_completion"
+      - "state_vector_checkpoints"
+    
+    micro_generation_units:
+      - unit: "section"
+        token_limit: 500
+        retry_strategy: "progressive_simplification"
+      - unit: "subsection"
+        token_limit: 300
+        retry_strategy: "content_prioritization"
+      - unit: "component_fragment"
+        token_limit: 150
+        retry_strategy: "minimal_structural_generation"
+    
+    synthesis_phase:
+      enabled: true
+      integration_method: "progressive_assembly"
+      conflict_resolution: "boundary_normalization"
+      reference_reconciliation: "bidirectional_verification"
+      stylistic_harmonization: "light_standardization"
+  
+  state_persistence:
+    distributed_state_vector:
+      format: "json"
+      schema: |
+        {
+          "session_id": "RICK_ASSISTANT_DEV_GEN",
+          "generation_timestamp": "YYYY-MM-DD-HH-MM",
+          "current_phase": "INITIALIZATION|CORE_DOCUMENTATION|IMPLEMENTATION_PHASE_N|SUPPORT_DOCUMENTATION|QA_DOCUMENTATION|COMPLETION",
+          "current_component": "COMPONENT_IDENTIFIER",
+          "component_progress": 0.0-1.0,
+          "total_progress": 0.0-1.0,
+          "last_completed_chunk": "CHUNK_IDENTIFIER",
+          "next_pending_chunk": "CHUNK_IDENTIFIER",
+          "error_recovery_state": "NORMAL|RECOVERY_MODE_1|RECOVERY_MODE_2",
+          "parsing_metrics": {
+            "successful_chunks": 0,
+            "recovery_attempts": 0,
+            "tokens_generated": 0
+          },
+          "vector_clock": {"node1": 1, "node2": 3, "node3": 2},
+          "consistency_signature": "HASH_VALUE"
+        }
+      persistence_mechanisms:
+        - "embedded_json"
+        - "dedicated_state_file"
+        - "progress_document_metadata"
+      reconciliation_protocol: "vector_clock_consistency"
+      conflict_resolution: "last_writer_wins_with_history"
+    
+    # New section for automated checkpoint creation
+    state_persistence_automation:
+      enabled: true
+      checkpoint_creation:
+        trigger: "vector_clock_increment"
+        automatic: true
+        required: true
+        file_format: "json"
+        template_path: "docs/templates/checkpoint_template.json"
+        validation_required: true
+      checkpoint_verification:
+        post_creation_check: true
+        reference_verification: true
+        mandatory_fields:
+          - "checkpoint_id"
+          - "timestamp"
+          - "state_vector"
+          - "checksum"
+    
+    progress_instrumentation:
+      format: "json"
+      schema: |
+        {
+          "project_metadata": {
+            "name": "Rick Assistant ZSH Plugin Documentation",
+            "version": "1.0.0",
+            "last_updated": "YYYY-MM-DD-HH-MM",
+            "completion_percentage": 0.0-1.0
+          },
+          "phases": [
+            {
+              "id": "INITIALIZATION",
+              "status": "PENDING|IN_PROGRESS|COMPLETE",
+              "completion_percentage": 0.0-1.0,
+              "components": [
+                {
+                  "id": "COMPONENT_ID",
+                  "status": "PENDING|IN_PROGRESS|COMPLETE",
+                  "chunks": ["CHUNK_ID_1", "CHUNK_ID_2"],
+                  "dependencies": ["DEPENDENCY_1", "DEPENDENCY_2"],
+                  "validation_status": "PENDING|PASSED|FAILED"
+                }
+              ]
+            }
+          ],
+          "session_metrics": {
+            "chunks_generated": 0,
+            "parsing_errors": 0,
+            "recovery_attempts": 0,
+            "recovery_success_rate": 0.0-1.0
+          },
+          "integrity_verification": {
+            "checksum": "HASH_VALUE",
+            "last_verification": "TIMESTAMP",
+            "verification_status": "VALID|INVALID"
+          }
+        }
+      redundancy_strategy: "triple_modular_redundancy"
+      recovery_mechanism: "consensus_based_reconstruction"
+    
+    context_reference_system:
+      forward_reference_marker: "<<REF:COMPONENT:SECTION>>"
+      backward_reference_marker: "<<BACKREF:COMPONENT:SECTION>>"
+      dependency_reference_marker: "<<DEP:COMPONENT>>"
+      reference_validation: true
+      integrity_verification: true
+      automatic_repair: true
+      chunk_boundary_marker: |
+        <!-- CHUNK_BOUNDARY: {SOURCE_CHUNK} → {TARGET_CHUNK} -->
+        <!-- CONTEXT_VECTOR: {json_context_state} -->
+        <!-- SEMANTIC_SIGNATURE: {semantic_hash} -->
+  
+  documentation:
+    directory: "docs/"
+    required_files:
+      - "STATUS.md": "Track implementation progress"
+      - "DEVIATIONS.md": "Document deviations from original plan"
+      - "FIXES.md": "Document fixes and improvements made during implementation"
+      - "COMPONENT_DOCS/": "Directory for individual component documentation"
+      - "SUCCESS_STORIES/": "Directory for documented implementation successes"
+      - "SESSION_SUMMARIES/": "Directory for session summary documentation"
+      - "MICRO_MILESTONES.md": "Tracking smaller achievement points within components"
+    self_healing_mechanisms:
+      enabled: true
+      semantic_markers:
+        insertion_frequency: "section_boundaries"
+        format: |
+          <!-- SEMANTIC_MARKER:
+          - Type: {MARKER_TYPE}
+          - Content Type: {CONTENT_TYPE}
+          - Expected Structure: {STRUCTURE_SCHEMA}
+          - Semantic Hash: {CONTENT_HASH}
+          -->
+      reconstruction_templates:
+        enabled: true
+        storage: "docs/templates/reconstruction/"
+        application: "automatic_upon_corruption_detection"
+      corruption_detection:
+        enabled: true
+        methods:
+          - "structural_analysis"
+          - "semantic_consistency_validation"
+          - "reference_integrity_checking"
+    
+  development_cycle:
+    steps:
+      - step: "Research"
+        description: "Research official documentation, community solutions, and success stories"
+        required: true
+        output: "Document findings in implementation notes"
+        reasoning_protocol: "chain_of_thought"
+        verification: "source_citation_validation"
+        transaction_boundary: true
+      
+      - step: "Propose"
+        description: "Propose implementation approach before coding"
+        required: true
+        wait_for_approval: true
+        details: "Include code structure, expected behavior, and potential issues"
+        references: "Use success stories as implementation pattern references"
+        contrastive_examples:
+          enabled: true
+          format: "OPTIMAL_IMPLEMENTATION vs ANTI_PATTERN"
+        transaction_boundary: true
+      
+      - step: "Implement"
+        description: "Implement the approved approach"
+        verification: "Ensure implementation matches proposal"
+        self_verification_loop:
+          enabled: true
+          criteria:
+            - "ZSH Best Practices"
+            - "Functional Requirements"
+            - "Documentation Quality"
+        transaction_boundary: true
+      
+      - step: "Test"
+        description: "Test the implementation thoroughly"
+        output: "Document test results and any issues found"
+        verification_checkpoints:
+          enabled: true
+          frequency: "critical_boundaries"
+        transaction_boundary: true
+      
+      - step: "Document"
+        description: "Document the implementation details"
+        location: "docs/COMPONENT_DOCS/{component_name}.md"
+        required: true
+        consider_success_story: "For significant components, consider creating a success story"
+        transaction_boundary: true
+      
+      - step: "Update"
+        description: "Update roadmap and status files"
+        required: true
+        files:
+          - "docs/STATUS.md"
+          - "docs/plan.md" 
+        transaction_boundary: true
+
+      # New step for automated checkpoint creation
+      - step: "Checkpoint Creation"
+        description: "Create checkpoint file with current state vector"
+        required: true
+        automated: true
+        timing: "After any state vector update"
+        output_location: "docs/checkpoints/CHECKPOINT_{COMPONENT}_{STEP}.json"
+        transaction_boundary: true
+      
+      - step: "Quality Verification"
+        description: "Verify against quality assurance checklists"
+        required: true
+        reference: "docs/QUALITY_ASSURANCE_CHECKLISTS.md"
+        timing: "Pre-implementation, during implementation, and post-implementation"
+        transaction_boundary: true
+      
+      - step: "Session Handoff"
+        description: "Create session summary and prepare for next session"
+        required: true
+        reference: "docs/SESSION_CONTINUATION_FRAMEWORK.md"
+        output: "Session summary with accomplishments and next steps"
+        transaction_boundary: true
+    
+    transactional_operations:
+      enabled: true
+      isolation_level: "serializable"
+      checkpoint_creation:
+        frequency: "step_boundary"
+        format: "json_state_snapshot"
+        location: "docs/checkpoints/"
+      rollback_mechanism:
+        enabled: true
+        strategy: "component_level_atomicity"
+        recovery_points:
+          - "pre_implementation"
+          - "post_implementation_pre_test"
+          - "post_test_pre_documentation"
+      commit_procedure:
+        verification_required: true
+        finalization_record: true
+
+# 🧠 Cognitive Resource Management
+cognitive_resource_management:
+  session_optimization:
+    complexity_thresholds:
+      - complexity: "Easy (⭐)"
+        session_limit: "90-120 minutes"
+        break_frequency: "Every 40 minutes"
+        break_duration: "5-10 minutes"
+      
+      - complexity: "Moderate (⭐⭐, ⭐⭐⭐)"
+        session_limit: "60-90 minutes"
+        break_frequency: "Every 30 minutes"
+        break_duration: "10-15 minutes"
+      
+      - complexity: "Complex (⭐⭐⭐⭐)"
+        session_limit: "45-60 minutes"
+        break_frequency: "Every 20 minutes"
+        break_duration: "15-20 minutes"
+      
+      - complexity: "Very Complex (⭐⭐⭐⭐⭐)"
+        session_limit: "30-45 minutes"
+        break_frequency: "Every 15 minutes"
+        break_duration: "20-30 minutes"
+  
+  cognitive_load_monitoring:
+    algorithmic_load_estimation:
+      enabled: true
+      metrics:
+        - "implementation_complexity"
+        - "context_switching_frequency"
+        - "decision_point_density"
+        - "dependency_chain_depth"
+      adjustment_vector: "polynomial_complexity_function"
+      intervention_triggers:
+        - threshold: 0.75
+          action: "recommend_simplification"
+        - threshold: 0.85
+          action: "enforce_break"
+        - threshold: 0.95
+          action: "session_termination"
+    
+    check_template: |
+      <!-- COGNITIVE_LOAD_CHECK -->
+      Current cognitive indicators:
+      - Session duration: {DURATION}
+      - Components completed this session: {COUNT}
+      - Implementation complexity level: {COMPLEXITY}
+      - Cognitive load estimation: {LOAD_PERCENTAGE}%
+      - Recommended action: {CONTINUE|SHORT_BREAK|LONG_BREAK|SESSION_TERMINATION}
+    
+    fatigue_indicators:
+      - indicator: "Repeated misunderstandings or confusion"
+        message: "It seems there might be some confusion. Taking a short break could help reset and clarify your approach."
+        detection_mechanism: "pattern_recognition_in_communication"
+      
+      - indicator: "Circular problem-solving attempts"
+        message: "We seem to be revisiting the same issue repeatedly. A short break might help bring fresh perspective."
+        detection_mechanism: "solution_attempt_repetition_detection"
+      
+      - indicator: "Increasing frustration in communication"
+        message: "This seems challenging. Consider taking a brief break to step back and approach this with fresh energy."
+        detection_mechanism: "sentiment_analysis_trigger"
+      
+      - indicator: "Multiple revisions of the same code"
+        message: "We've made several revisions to this section. Taking a break might help clarify what approach works best."
+        detection_mechanism: "edit_frequency_analysis"
+  
+  context_switch_mitigation:
+    distributed_context_retention:
+      mechanisms:
+        - "explicit_state_serialization"
+        - "implicit_context_embedding"
+        - "critical_path_highlighting"
+      format: "redundant_multimodal_encoding"
+      verification: "cross_reference_validation"
+    
+    suspension_marker_template: |
+      <!-- SESSION_SUSPENSION_MARKER -->
+      - Current component: {COMPONENT}
+      - Implementation state: {STATE_VECTOR}
+      - Next action upon return: {NEXT_ACTION}
+      - Critical details to remember: {CRITICAL_DETAILS}
+      - Context hash: {CONTEXT_HASH}
+      - Associated checkpoint: {CHECKPOINT_ID}
+    
+    resumption_protocol_template: |
+      <!-- SESSION_RESUMPTION_PROTOCOL -->
+      Welcome back! To optimize cognitive reengagement:
+      1. Review the current component context: {COMPONENT_SUMMARY}
+      2. Recall the implementation state: {STATE_SUMMARY}
+      3. Verify your understanding of next steps: {VERIFICATION_QUESTION}
+      4. Confirm readiness to proceed with: "Ready to continue with {COMPONENT}"
+      5. Checkpoint validation: {CHECKPOINT_VALIDATION_STATUS}
+  
+  micro_milestone_integration:
+    reference_doc: "docs/MICRO_MILESTONES.md"
+    strategy: "Recommend short breaks after completing 2-3 micro-milestones"
+    milestone_based_breaks:
+      - milestone_type: "Planning milestones"
+        break_after: "Completing component research and planning"
+        message: "You've completed the planning phase for this component. Take a moment to mentally prepare for implementation."
+      
+      - milestone_type: "Implementation milestones"
+        break_after: "Implementing core functionality"
+        message: "Core functionality is implemented! This is a good time for a quick break before adding additional features."
+      
+      - milestone_type: "Testing milestones" 
+        break_after: "Verifying implementation"
+        message: "Testing complete! Consider taking a short break before documenting or moving to the next component."
+    
+    temporal_consistency_enforcement:
+      enabled: true
+      verification_points:
+        - "milestone_completion"
+        - "session_suspension"
+        - "session_resumption"
+      reconciliation_mechanism: "vector_clock_based_consistency"
+      conflict_resolution: "semantic_merge_with_preservation"
+
+# 🔍 Research Requirements
+research_requirements:
+  preimplementation_research:
+    enabled: true
+    mandatory: true
+    description: "Before proposing any implementation, CURSOR MUST research relevant documentation and best practices"
+    sources:
+      - "ZSH documentation: https://zsh.sourceforge.io/Doc/"
+      - "Oh My ZSH documentation: https://github.com/ohmyzsh/ohmyzsh/wiki"
+      - "Powerlevel10k documentation: https://github.com/romkatv/powerlevel10k"
+      - "relevant StackOverflow posts and community solutions"
+      - "Python documentation: https://docs.python.org/3/"
+      - "Powerlevel10k segments examples: https://github.com/romkatv/powerlevel10k/issues?q=is%3Aissue+segment"
+      - "Powerlevel10k config examples: https://github.com/romkatv/powerlevel10k/issues?q=is%3Aissue+config"
+      - "Powerlevel10k community themes: https://github.com/romkatv/powerlevel10k/wiki"
+      - "Oh My ZSH community plugins: https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins"
+      - "Oh My ZSH plugin development guides: https://github.com/ohmyzsh/ohmyzsh/wiki/Customization"
+      - "Success story examples: docs/SUCCESS_STORIES/"
+    progressive_verification:
+      enabled: true
+      verification_stages:
+        - stage: "source_identification"
+          criteria: "relevance_to_component"
+          threshold: 0.85
+        - stage: "content_validation"
+          criteria: "technical_accuracy"
+          threshold: 0.90
+        - stage: "implementation_applicability"
+          criteria: "pattern_adaptability"
+          threshold: 0.80
+      verification_record: "docs/RESEARCH_VERIFICATION.md"
+  
+  documentation_citation:
+    required: true
+    format: "URL + relevant section"
+    example: "According to the ZSH documentation (https://zsh.sourceforge.io/Doc/Release/Parameters.html#Parameters), parameter expansion..."
+    verification_mechanism: "citation_validity_checking"
+    recency_requirements: "prefer_sources_updated_within_last_year"
+  
+  verification_steps:
+    - "Verify solution against official documentation"
+    - "Check for similar implementations in existing plugins"
+    - "Confirm compatibility with target ZSH version"
+    - "Consider performance implications"
+    - "Validate against community best practices"
+    - "Test with both Powerlevel10k instant prompt enabled and disabled"
+    
+  chain_of_thought_reasoning:
+    enabled: true
+    template: |
+      <!-- REASONING_SEQUENCE -->
+      Before generating {COMPONENT}, systematically evaluate:
+
+      1. Required dependencies: [DEP1, DEP2, ...]
+      2. Design pattern applicability:
+         - Pattern A: Appropriate because {REASON}
+         - Pattern B: Suboptimal because {REASON}
+         - Selected approach: {PATTERN} because {JUSTIFICATION}
+      3. Interface considerations with [RELATED_COMPONENTS]
+         - Data flow: {DESCRIPTION}
+         - Control flow: {DESCRIPTION}
+         - Error propagation: {DESCRIPTION}
+      4. Resilience analysis:
+         - Potential failure modes: [FAILURE_MODES]
+         - Mitigation strategies: [MITIGATIONS]
+         - Recovery mechanisms: [RECOVERY_APPROACHES]
+      5. Implementation verification plan:
+         - Critical verification points: [VERIFICATION_POINTS]
+         - Expected outcomes: [EXPECTED_OUTCOMES]
+         - Validation methods: [VALIDATION_METHODS]
+
+# 📜 Best Practices Enforcement
+best_practices:
+  enforcement_registry:
+    zsh:
+      - rule_id: "ZSH-001"
+        description: "Use local variables with 'local' keyword inside functions"
+        enforcement: "strict"
+        validation_method: "Static analysis of function definitions"
+        
+      - rule_id: "ZSH-002"
+        description: "Prefer parameter expansion over external commands"
+        enforcement: "strict"
+        examples: "${var} instead of $(echo $var)"
+        validation_method: "Pattern matching for process substitution"
+        
+      - rule_id: "ZSH-003"
+        description: "Use associative arrays for structured data"
+        enforcement: "recommended"
+        validation_method: "Data structure analysis"
+        
+      - rule_id: "ZSH-004"
+        description: "Avoid subshell creation when possible"
+        enforcement: "strict"
+        
+      - rule_id: "ZSH-005"
+        description: "Use ZSH built-ins instead of external commands"
+        enforcement: "strict"
+        
+      - rule_id: "ZSH-006"
+        description: "Leverage ZSH modules (zsh/datetime, zsh/regex) for efficiency"
+        enforcement: "recommended"
+        
+      - rule_id: "ZSH-007"
+        description: "Follow ZSH naming conventions"
+        enforcement: "strict"
+        pattern: "snake_case with ra_ prefix"
+    
+    powerlevel10k:
+      - rule_id: "P10K-001"
+        description: "Follow Powerlevel10k segment naming conventions"
+        enforcement: "strict"
+        pattern: "prompt_*_segment()"
+        validation_method: "Regex validation of function names"
+        
+      - rule_id: "P10K-002"
+        description: "Use p10k segment function for rendering"
+        enforcement: "strict"
+        
+      - rule_id: "P10K-003"
+        description: "Implement instant_prompt compatibility"
+        enforcement: "strict"
+        validation_method: "Hook registration analysis"
+        
+      - rule_id: "P10K-004"
+        description: "Support conditional rendering based on terminal width"
+        enforcement: "recommended"
+        
+      - rule_id: "P10K-005"
+        description: "Follow exact Powerlevel10k styling variable patterns"
+        enforcement: "strict"
+        pattern: "POWERLEVEL9K_COMPONENT_*"
+        validation_method: "Configuration variable validation"
+        
+      - rule_id: "P10K-006"
+        description: "Cache expensive computations"
+        enforcement: "strict"
+    
+    oh_my_zsh:
+      - rule_id: "OMZ-001"
+        description: "Follow Oh My ZSH plugin structure standards"
+        enforcement: "strict"
+        reference: "https://github.com/ohmyzsh/ohmyzsh/wiki/Customization#plugins"
+        
+      - rule_id: "OMZ-002"
+        description: "Use fpath to add function directories before autoloading"
+        enforcement: "strict"
+        
+      - rule_id: "OMZ-003"
+        description: "Register hooks correctly according to Oh My ZSH patterns"
+        enforcement: "strict"
+        
+      - rule_id: "OMZ-004"
+        description: "Follow existing patterns in popular Oh My ZSH plugins"
+        enforcement: "recommended"
+    
+    dry:
+      - rule_id: "DRY-001"
+        description: "Group related functions in shared library files"
+        enforcement: "strict"
+        
+      - rule_id: "DRY-002"
+        description: "Create centralized configuration system"
+        enforcement: "strict"
+        
+      - rule_id: "DRY-003"
+        description: "Implement message templates with substitution"
+        enforcement: "strict"
+        
+      - rule_id: "DRY-004"
+        description: "Create standardized error handling"
+        enforcement: "strict"
+        
+      - rule_id: "DRY-005"
+        description: "Use consistent patterns across similar functions"
+        enforcement: "strict"
+    
+    python:
+      - rule_id: "PY-001"
+        description: "Make Python components optional enhancements"
+        enforcement: "strict"
+        
+      - rule_id: "PY-002"
+        description: "Implement fallbacks for Python functionality"
+        enforcement: "strict"
+        
+      - rule_id: "PY-003"
+        description: "Follow PEP 8 style guidelines"
+        enforcement: "strict"
+        
+      - rule_id: "PY-004"
+        description: "Use type hints in Python 3.6+"
+        enforcement: "recommended"
+        
+      - rule_id: "PY-005"
+        description: "Handle exceptions gracefully"
+        enforcement: "strict"
+        
+      - rule_id: "PY-006"
+        description: "Document Python functions with docstrings"
+        enforcement: "strict"
+    
+  duplication_prevention:
+    scanning_architecture:
+      scan_levels:
+        - level: "Function Level"
+          scope: "All .zsh files"
+          detection_method: "AST-based comparison"
+          similarity_threshold: 0.85
+          
+        - level: "Code Block"
+          scope: "Current component"
+          detection_method: "Token sequence matching"
+          similarity_threshold: 0.80
+          
+        - level: "Logic Pattern"
+          scope: "Implementation pattern"
+          detection_method: "Semantic vector comparison"
+          similarity_threshold: 0.75
+      progressive_verification:
+        enabled: true
+        verification_layers:
+          - layer: "syntactic_analysis"
+            method: "token_pattern_matching"
+            confidence_threshold: 0.90
+          - layer: "semantic_analysis"
+            method: "intent_vector_comparison"
+            confidence_threshold: 0.85
+          - layer: "functional_analysis"
+            method: "behavior_pattern_matching"
+            confidence_threshold: 0.75
+    
+    reuse_recommendation:
+      enabled: true
+      strategy: |
+        Upon detection of potential duplication:
+        1. Identify source components with similar functionality
+        2. Generate abstraction proposals for unified implementation
+        3. Provide refactoring patterns for existing implementations
+        4. Implement cross-referencing between related components
+      semantic_similarity_detection:
+        enabled: true
+        algorithm: "neural_embedding_comparison"
+        detection_threshold: 0.80
+        false_positive_mitigation: true
+
+# 👩‍💻 Non-Coder Support Framework
+non_coder_support:
+  implementation_explanations:
+    level: "detailed"
+    avoid_jargon: true
+    include_comments: true
+    examples_required: true
+    reference_success_stories: true
+    progressive_disclosure:
+      enabled: true
+      levels:
+        - level: "conceptual_overview"
+          detail: "high_level_description"
+          technical_depth: "minimal"
+        - level: "functional_explanation"
+          detail: "operational_behavior"
+          technical_depth: "moderate"
+        - level: "implementation_details"
+          detail: "technical_specifics"
+          technical_depth: "comprehensive"
+  
+  template_framework:
+    distributed_template_repository:
+      primary_storage: "docs/templates/"
+      fallback_storage: "docs/templates_backup/"
+      synchronization_protocol: "version_vector_reconciliation"
+    
+    template_registry:
+      - category: "Implementation Initialization"
+        activation_context: "Phase Start"
+        template_id: "start_component_N"
+        ui_presentation: "Button: 'Start Component'"
+        template_text: |
+          I'd like to implement the [COMPONENT_NAME] component from Phase [PHASE_NUMBER].
+          
+          Please research the requirements, existing implementations, and best practices for this component,
+          then propose an implementation approach following the required sections in our implementation proposal format.
+          
+          Focus on making the explanation non-technical and include detailed comments in the code.
+      
+      - category: "Implementation Approval"
+        activation_context: "Post-Proposal"
+        template_id: "approve_implementation"
+        ui_presentation: "Button: 'Approve Implementation'"
+        template_text: |
+          I approve this implementation approach. Please proceed with implementing the component as proposed.
+      
+      - category: "Testing Verification"
+        activation_context: "Post-Implementation"
+        template_id: "verify_component"
+        ui_presentation: "Button: 'Verify Component'"
+        template_text: |
+          I've implemented the [COMPONENT_NAME]. Please help me verify it:
+          
+          1. Check it against the Quality Assurance Checklists
+          2. Confirm it follows best practices
+          3. Verify the documentation is complete
+          4. Suggest any improvements
+      
+      - category: "Documentation Update"
+        activation_context: "Post-Verification"
+        template_id: "update_docs"
+        ui_presentation: "Button: 'Update Documentation'"
+        template_text: |
+          Please create documentation for the [COMPONENT_NAME] component in docs/COMPONENT_DOCS/[COMPONENT_NAME].md
+          
+          Include all required sections:
+          - Purpose and Functionality
+          - Implementation Details
+          - Usage Examples
+          - Configuration Options
+          - Testing Instructions
+          - Visual Verification Guide
+          - Code Examples
+    
+    application_protocol:
+      - "Define parameterization schema with required/optional fields"
+      - "Implement context-sensitive parameter suggestion"
+      - "Validate template completeness before submission"
+      - "Provide completion feedback after template processing"
+    
+    template_resilience:
+      redundant_storage: true
+      versioning: true
+      integrity_verification: true
+      automatic_repair: 
+        enabled: true
+        reference_template: "canonical_templates_repository"
+  
+  error_handling:
+    explanations: "clear, non-technical explanations of errors"
+    suggestions: "provide specific fixes for common errors"
+    preemptive_warnings: "warn about potential issues before they occur"
+    reference_patterns: "refer to error handling patterns in success stories"
+    progressive_resolution:
+      enabled: true
+      stages:
+        - stage: "error_identification"
+          detail_level: "non_technical_description"
+        - stage: "cause_analysis"
+          detail_level: "conceptual_explanation"
+        - stage: "solution_implementation"
+          detail_level: "guided_steps"
+  
+  code_structure:
+    comments: "extensive"
+    function_descriptions: "detailed explanation of purpose and parameters"
+    variable_naming: "descriptive names that indicate purpose"
+    follow_examples: "follow successful component implementation patterns"
+    cognitive_complexity_management:
+      enabled: true
+      complexity_metrics:
+        - "cyclomatic_complexity"
+        - "nesting_depth"
+        - "function_length"
+      complexity_thresholds:
+        - level: "beginner"
+          max_cyclomatic_complexity: 5
+          max_nesting_depth: 2
+          max_function_length: 25
+        - level: "intermediate"
+          max_cyclomatic_complexity: 10
+          max_nesting_depth: 3
+          max_function_length: 50
+  
+  testing_guidance:
+    instructions: "step-by-step testing instructions"
+    expected_results: "clear descriptions of expected behavior"
+    troubleshooting: "common issues and solutions"
+    example_tests: "reference testing approaches from success stories"
+    progressive_validation:
+      enabled: true
+      validation_sequence:
+        - phase: "basic_functionality"
+          complexity: "minimal"
+          verification_type: "core_features"
+        - phase: "edge_cases"
+          complexity: "moderate"
+          verification_type: "boundary_conditions"
+        - phase: "comprehensive_testing"
+          complexity: "advanced"
+          verification_type: "full_test_suite"
+  
+  code_examples:
+    include: true
+    description: "Provide concrete code examples even for prompt-based development"
+    purpose: "Help non-coders verify AI-generated code and understand implementations"
+    format: "Include function signatures, parameter types, and example usage"
+    complexity_levels:
+      - basic: "Minimal working example"
+      - standard: "Common use case implementation"
+      - advanced: "Implementation with error handling and edge cases"
+    contrastive_framework:
+      enabled: true
+      template: |
+        <!-- CONTRASTIVE_EXAMPLES -->
+        Implementation pattern for {COMPONENT}:
+
+        OPTIMAL IMPLEMENTATION:
+        ```zsh
+        # Demonstrates proper error handling, DRY principles, and modularity
+        function ra_exemplary_function() {
+          local input="$1"
+          # Implementation with proper validation, error handling, and ZSH idioms
+        }
+        ```
+
+        ANTI-PATTERN (AVOID):
+        ```zsh
+        # Demonstrates poor practices: global variables, missing error handling, repetition
+        function ra_problematic_function() {
+          # Implementation with problematic patterns
+        }
+        ```
+    self_healing_examples:
+      enabled: true
+      repair_mechanisms:
+        - "pattern_template_substitution"
+        - "structure_preservation_with_content_regeneration"
+        - "semantic_intent_preservation"
+  
+  visual_aids:
+    flowcharts: "Include decision flowcharts for complex logic"
+    before_after: "Show before/after examples for visual verification"
+    verification_screenshots: "Provide reference images of successful implementations"
+    diffs: "Show expected changes when applicable"
+    resilient_visualization:
+      enabled: true
+      fallback_representations:
+        - primary: "mermaid_diagram"
+          fallback: "ascii_flowchart"
+        - primary: "svg_visualization"
+          fallback: "text_description"
+  
+  learning_progression:
+    read_only_phase: "Include analysis phase before modification"
+    progressive_complexity: "Start simple and add features incrementally"
+    fallback_options: "Provide simpler alternatives for complex features"
+    verification_stages: "Break verification into smaller steps with immediate feedback"
+    adaptive_complexity:
+      enabled: true
+      skill_assessment:
+        method: "implementation_success_rate"
+        adjustment_frequency: "component_boundary"
+      complexity_adaptation:
+        direction: "bidirectional"
+        smoothing: "gradual_progression"
+  
+  reference_materials:
+    command_cards: "Create cheat sheets for common ZSH commands"
+    environment_setup: "Detailed environment verification steps"
+    success_criteria: "Explicit checklists for non-technical verification"
+    pattern_references: "Examples of common plugin implementation patterns"
+    distributed_knowledge_persistence:
+      enabled: true
+      storage_mechanisms:
+        - "primary_documentation"
+        - "embedded_reference_markers"
+        - "cross_reference_indices"
+      reconciliation_strategy: "vector_clock_based"
+
+# 🧠 AI Development Instructions
+ai_development:
+  prompt_engineering_patterns:
+    chain_of_thought:
+      enabled: true
+      template: |
+        <!-- REASONING_SEQUENCE -->
+        Before generating {COMPONENT}, systematically evaluate:
+
+        1. Required dependencies: [DEP1, DEP2, ...]
+        2. Design pattern applicability:
+           - Pattern A: Appropriate because {REASON}
+           - Pattern B: Suboptimal because {REASON}
+           - Selected approach: {PATTERN} because {JUSTIFICATION}
+        3. Interface considerations with [RELATED_COMPONENTS]
+           - Data flow: {DESCRIPTION}
+           - Control flow: {DESCRIPTION}
+           - Error propagation: {DESCRIPTION}
+        4. Resilience considerations:
+           - Potential failure modes: [FAILURE_MODES]
+           - Detection mechanisms: [DETECTION_APPROACHES]
+           - Recovery strategies: [RECOVERY_METHODS]
+        5. Implementation verification:
+           - Critical assertions: [ASSERTIONS]
+           - Verification points: [VERIFICATION_POINTS]
+           - Expected outcomes: [OUTCOMES]
+    
+    contrastive_examples:
+      enabled: true
+      template: |
+        <!-- CONTRASTIVE_EXAMPLES -->
+        Implementation pattern for {COMPONENT}:
+
+        OPTIMAL IMPLEMENTATION:
+        ```zsh
+        # Demonstrates proper error handling, DRY principles, and modularity
+        function ra_exemplary_function() {
+          local input="$1"
+          # Implementation with proper validation, error handling, and ZSH idioms
+        }
+        ```
+
+        ANTI-PATTERN (AVOID):
+        ```zsh
+        # Demonstrates poor practices: global variables, missing error handling, repetition
+        function ra_problematic_function() {
+          # Implementation with problematic patterns
+        }
+        ```
+    
+    self_verification:
+      enabled: true
+      template: |
+        <!-- VALIDATION_PROTOCOL -->
+        After generating {COMPONENT}, verify against these criteria:
+
+        1. ZSH Best Practices:
+           - [ ] Uses local variables within functions
+           - [ ] Implements proper error handling
+           - [ ] Follows naming conventions
+
+        2. Functional Requirements:
+           - [ ] Satisfies core requirements A, B, C
+           - [ ] Handles edge cases X, Y, Z
+           - [ ] Implements consistent error reporting
+
+        3. Documentation Quality:
+           - [ ] Includes parameter documentation
+           - [ ] Provides usage examples
+           - [ ] Explains implementation rationale
+
+        4. Resilience Characteristics:
+           - [ ] Implements appropriate error detection
+           - [ ] Provides graceful degradation
+           - [ ] Includes recovery mechanisms
+           - [ ] Preserves state consistency
+  
+  syntax_optimization:
+    optimizations:
+      - description: "Code Block Formatting"
+        pattern: |
+          ```{language_identifier}
+          # Comment with single # symbol
+          code_content(); # Inline comments aligned
+          ```
+      
+      - description: "Markdown Structure"
+        rules:
+          - "H1 for document titles only"
+          - "H2 for major sections"
+          - "H3 for subsections"
+          - "Maximum nesting depth: 3 levels"
+      
+      - description: "List Formatting"
+        rules:
+          - "Maximum nesting: 2 levels"
+          - "Consistent indentation: 2 spaces"
+          - "Single item type per list (bullets or numbers)"
+    adaptive_complexity_management:
+      enabled: true
+      complexity_metrics:
+        - "token_density"
+        - "formatting_depth"
+        - "semantic_entropy"
+      response_strategies:
+        - trigger: "high_token_density"
+          action: "content_segmentation"
+        - trigger: "excessive_formatting_depth"
+          action: "structure_simplification"
+        - trigger: "high_semantic_entropy"
+          action: "conceptual_decomposition"
+  
+  parsing_recovery:
+    probabilistic_error_anticipation:
+      enabled: true
+      prediction_model: "bayesian_parsing_risk"
+      intervention_threshold: 0.75
+      mitigation_strategies:
+        - "preemptive_chunking"
+        - "format_simplification"
+        - "pattern_restriction"
+    
+    verification_checkpoint_template: |
+      <!-- VERIFICATION_CHECKPOINT: CHECKPOINT_ID -->
+      Critical content verification point. If parsing fails after this point, revert to this checkpoint.
+      <!-- STATE_VECTOR: {STATE_VECTOR_JSON} -->
+      <!-- SEMANTIC_DIGEST: {SEMANTIC_DIGEST} -->
+    
+    recovery_protocols:
+      - name: "Primary Recovery: Chunk Subdivision"
+        description: "Split problematic chunk into smaller parts"
+        template: |
+          <!-- RECOVERY_MODE_1 -->
+          - Original Chunk: {CHUNK_ID}
+          - Recovery Chunk: {CHUNK_ID}_A
+          - Syntax Level: SIMPLIFIED
+          - Token Limit: 50% of original
+          - State Vector: {STATE_VECTOR_JSON}
+          - Recovery ID: {RECOVERY_UUID}
+      
+      - name: "Secondary Recovery: Syntax Simplification"
+        description: "Reduce complexity while preserving content"
+        template: |
+          <!-- RECOVERY_MODE_2 -->
+          - Original Chunk: {CHUNK_ID}
+          - Recovery Chunk: {CHUNK_ID}_A
+          - Syntax Level: MINIMAL
+          - Token Limit: 40% of original
+          - Format: TEXT_DOMINANT
+          - State Vector: {STATE_VECTOR_JSON}
+          - Recovery ID: {RECOVERY_UUID}
+      
+      - name: "Tertiary Recovery: Context Reinitiation"
+        description: "Reset context and simplify drastically"
+        template: |
+          <!-- RECOVERY_MODE_3 -->
+          - Recovery Target: ESSENTIAL_CONTENT_ONLY
+          - Syntax Level: ATOMIC
+          - Format: PLAIN_TEXT_WITH_MINIMAL_MARKDOWN
+          - State Preservation: CRITICAL_PATH_ONLY
+          - State Vector: {ESSENTIAL_STATE_VECTOR_JSON}
+          - Recovery ID: {RECOVERY_UUID}
+    
+    polymorphic_recovery_strategies:
+      enabled: true
+      strategy_selection:
+        method: "failure_mode_classification"
+        classification_model: "error_pattern_recognition"
+        effectiveness_learning: true
+      adaptation_mechanisms:
+        - "strategy_parameter_tuning"
+        - "hybrid_strategy_composition"
+        - "progressive_fallback_sequence"
+  
+  proposal_workflow:
+    required: true
+    transactional_boundaries:
+      enabled: true
+      compensation_actions: true
+      atomicity: "workflow_step_level"
+    
+    steps:
+      - step: "Research documentation and best practices"
+        required: true
+        substeps:
+          - "Study official documentation"
+          - "Review community solutions"
+          - "Analyze relevant success stories for similar patterns"
+        verification: true
+        transaction_boundary: true
+      
+      - step: "Propose implementation with code structure"
+        required: true
+        verification: true
+        transaction_boundary: true
+      
+      - step: "WAIT FOR EXPLICIT APPROVAL before implementing"
+        required: true
+        emphasis: "critical"
+        verification: true
+        transaction_boundary: true
+      
+      - step: "Implement approved approach"
+        required: true
+        verification: true
+        transaction_boundary: true
+      
+      - step: "Document implementation and update status"
+        required: true
+        verification: true
+        transaction_boundary: true
+  
+  code_quality:
+    - rule: "Include detailed comments explaining code"
+      required: true
+    - rule: "Follow consistent style throughout codebase"
+      required: true
+    - rule: "Optimize for performance while maintaining readability"
+      required: true
+    - rule: "Handle all error cases gracefully"
+      required: true
+    - rule: "Implement appropriate resilience mechanisms"
+      required: true
+      aspects:
+        - "error detection"
+        - "graceful degradation"
+        - "state preservation"
+        - "recovery mechanisms"
+  
+  response_format:
+    proposal: |
+      # Implementation Proposal: [Component Name]
+      
+      ## Research Summary
+      Based on my research from [cite documentation sources], I found that...
+      
+      ## Implementation Approach
+      I propose implementing this component by...
+      
+      ## Files to Create/Modify
+      - `file1.zsh`: [purpose]
+      - `file2.zsh`: [purpose]
+      
+      ## Code Structure
+      The main function will be `ra_function_name()` which will...
+      
+      ## Resilience Considerations
+      This implementation addresses potential failures through:
+      - Detection: [detection mechanisms]
+      - Mitigation: [mitigation strategies]
+      - Recovery: [recovery approaches]
+      
+      ## Potential Issues
+      We need to be careful about [potential issues] because...
+      
+      ## Testing Strategy
+      This implementation can be tested by...
+      
+      Do you approve of this implementation approach?
+    
+    implementation_summary: |
+      # Implementation Complete: [Component Name]
+      
+      ## Summary
+      I've implemented [component] according to the approved approach.
+      
+      ## Changes Made
+      - Created/modified these files:
+        - `file1.zsh`: [description of changes]
+        - `file2.zsh`: [description of changes]
+      
+      ## Resilience Implementation
+      - Error detection mechanisms: [details]
+      - Graceful degradation paths: [details]
+      - Recovery capabilities: [details]
+      
+      ## Testing Performed
+      - [test results]
+      
+      ## Documentation Updated
+      - [list of documentation files updated]
+      
+      ## Next Steps
+      The next component to implement is [next component].
+
+# 🦸 Rick Persona Implementation Framework
+rick_persona:
+  linguistic_patterns:
+    - context: "Success Feedback"
+      category: "Dismissive Praise"
+      mechanism: "String template with randomization"
+      example: "You did {task}? Wow, *burp* even a {random_low_intelligence_entity} could do that."
+    
+    - context: "Error Notification"
+      category: "Exaggerated Criticism"
+      mechanism: "Parameterized template"
+      example: "Great job, Morty! You've {error_description}. You know what that means? It means {catastrophic_consequence}!"
+    
+    - context: "System Status"
+      category: "Scientific Arrogance"
+      mechanism: "State-dependent template"
+      example: "The system is {status_state}, not that your {diminutive_brain_reference} could appreciate the {complex_scientific_concept} behind it."
+  
+  personality_intensity:
+    levels:
+      - level: 1
+        description: "Mild Rick characteristics"
+        features: "occasional burps, light sarcasm"
+      
+      - level: 2
+        description: "Standard Rick"
+        features: "regular attitude, moderate insults, scientific references"
+      
+      - level: 3
+        description: "Extreme Rick"
+        features: "frequent burps, heavy insults, nihilistic references"
+    adaptive_adjustment:
+      enabled: true
+      adjustment_signals:
+        - "user_engagement_level"
+        - "implementation_success_rate"
+        - "error_frequency"
+      adjustment_strategy: "feedback_based_calibration"
+  
+  response_customization:
+    distributed_template_repository:
+      primary_storage: "templates/rick_responses/"
+      redundant_storage: "backup_templates/rick_responses/"
+      sync_protocol: "vector_clock_reconciliation"
+    
+    substitution_variables:
+      - "random_low_intelligence_entity"
+      - "diminutive_brain_reference"
+      - "complex_scientific_concept"
+      - "catastrophic_consequence"
+      - "interdimensional_reference"
+    
+    response_categories:
+      - category: "command_success"
+        template_count: 20
+        substitution_count: 3
+      
+      - category: "command_failure"
+        template_count: 20
+        substitution_count: 4
+      
+      - category: "system_status"
+        template_count: 15
+        substitution_count: 3
+      
+      - category: "general_mockery"
+        template_count: 25
+        substitution_count: 5
+    
+    resilience_mechanisms:
+      template_verification: true
+      template_repair: true
+      fallback_templates: true
+      variable_substitution_validation: true
+
+# 🎮 Achievement System
+achievement_system:
+  taxonomy:
+    - category: "Implementation Milestones"
+      dimensions: "By phase, complexity, component count"
+      unlock_mechanism: "Component completion"
+      reward: "Advanced implementation patterns"
+      achievements:
+        - id: "PHASE1_COMPLETE"
+          title: "Foundation Builder"
+          description: "Completed all Phase 1 components"
+          icon: "🏗️"
+        
+        - id: "FIRST_COMPLEX_COMPONENT"
+          title: "Complexity Tamer"
+          description: "Successfully implemented first ⭐⭐⭐⭐ component"
+          icon: "🔥"
+    
+    - category: "Code Quality"
+      dimensions: "DRY compliance, pattern elegance, optimization"
+      unlock_mechanism: "Quality analysis"
+      reward: "Optimization techniques"
+      achievements:
+        - id: "PERFECT_DRY"
+          title: "Master of Efficiency"
+          description: "Implemented a component with perfect DRY compliance"
+          icon: "💧"
+        
+        - id: "ELEGANT_PATTERN"
+          title: "Pattern Picasso"
+          description: "Created an exceptionally elegant implementation pattern"
+          icon: "🎨"
+    
+    - category: "Learning Progression"
+      dimensions: "Concept mastery, technique application"
+      unlock_mechanism: "Knowledge application"
+      reward: "Advanced customization options"
+      achievements:
+        - id: "ZSH_MASTER"
+          title: "ZSH Guru"
+          description: "Demonstrated advanced ZSH pattern understanding"
+          icon: "🧙"
+        
+        - id: "P10K_WIZARD"
+          title: "Powerlevel10k Wizard"
+          description: "Created a flawless Powerlevel10k segment"
+          icon: "⚡"
+  
+  visualization:
+    ascii_format: |
+      PHASE 1: [████████████] 100% MASTERED!
+      PHASE 2: [██████████░░]  80% HERO LEVEL
+      PHASE 3: [████████░░░░]  70% ADVANCING
+      PHASE 4: [████░░░░░░░░]  40% INITIATED
+    file_path: "docs/ACHIEVEMENT_PROGRESS.md"
+    update_frequency: "After each achievement unlock"
+    backup_visualization:
+      enabled: true
+      frequency: "daily"
+      format: "json_with_timestamp"
+  
+  resilience_mechanisms:
+    distributed_achievement_tracking:
+      enabled: true
+      storage_mechanisms:
+        - "primary_achievement_record"
+        - "embedded_milestone_markers"
+        - "user_visible_progress_indicators"
+      reconciliation_protocol: "achievement_consensus_algorithm"
+    
+    achievement_verification:
+      enabled: true
+      verification_frequency: "achievement_boundary"
+      verification_method: "implementation_artifact_validation"
+      repair_mechanism: "selective_achievement_reconstruction"
+
+# 🚀 Adaptive Complexity Management
+adaptive_complexity:
+  calibration:
+    - level: "Beginner"
+      success_rate: "< 70%"
+      complexity_adaptation: "Reduce by 1-2 levels"
+      implementation_granularity: "Atomic functions with templates"
+    
+    - level: "Intermediate"
+      success_rate: "70-85%"
+      complexity_adaptation: "Maintain current level"
+      implementation_granularity: "Component subsystems"
+    
+    - level: "Advanced"
+      success_rate: "> 85%"
+      complexity_adaptation: "Increase by 1 level"
+      implementation_granularity: "Integrated components"
+  
+  dynamic_complexity_adjustment:
+    enabled: true
+    assessment_frequency: "component_completion"
+    adaptation_metrics:
+      - "implementation_success_rate"
+      - "error_frequency"
+      - "completion_time"
+      - "user_feedback"
+    smoothing_algorithm: "exponential_moving_average"
+    confidence_intervals: true
+  
+  fallback_implementation:
+    hierarchy:
+      - level: "Primary Implementation"
+        description: "Full-featured with optimal patterns"
+        verification_criteria: "All features with full resilience"
+      
+      - level: "Simplified Implementation"
+        description: "Core functionality with standard patterns"
+        verification_criteria: "Core features with basic resilience"
+      
+      - level: "Minimal Viable Implementation"
+        description: "Essential functionality only"
+        verification_criteria: "Basic functionality only"
+      
+      - level: "Template-Based Implementation"
+        description: "Pre-configured templates requiring minimal customization"
+        verification_criteria: "Functional essentials only"
+    
+    progressive_degradation:
+      enabled: true
+      degradation_triggers:
+        - "multiple_implementation_failures"
+        - "excessive_complexity_indication"
+        - "repeated_pattern_failures"
+      strategy: "stepwise_reduction_with_verification"
+
+# 🧪 Testing Requirements
+testing:
+  strategy:
+    approach: "Test-driven development when possible"
+    coverage: "Aim for 85%+ code coverage"
+    visual_verification: "Required for UI components"
+    resilience_testing:
+      enabled: true
+      approaches:
+        - "fault_injection"
+        - "chaos_engineering_principles"
+        - "boundary_condition_testing"
+  
+  false_pass_prevention:
+    - rule: "Track assertion counts in tests"
+      enforcement: "strict"
+    - rule: "Require tests to fail when implementation is broken"
+      enforcement: "strict"
+    - rule: "Verify assertions are non-trivial"
+      enforcement: "strict"
+    - rule: "Randomize test order to detect dependencies"
+      enforcement: "recommended"
+    - rule: "Implement boundary testing for all input handling"
+      enforcement: "strict"
+    - rule: "Use mutation testing to verify test effectiveness"
+      enforcement: "recommended"
+    - rule: "Implement resilience verification tests"
+      enforcement: "strict"
+      verification:
+        - "error_handling_paths"
+        - "recovery_mechanisms"
+        - "degradation_behaviors"
+  
+  documentation:
+    - rule: "Document expected test outcomes"
+      enforcement: "strict"
+    - rule: "Provide visual test verification steps for UI components"
+      enforcement: "strict"
+    - rule: "Include test coverage reports in documentation"
+      enforcement: "recommended"
+    - rule: "Document resilience verification results"
+      enforcement: "strict"
+  
+  resilience_verification:
+    enabled: true
+    verification_approaches:
+      - "component_isolation_testing"
+      - "dependency_failure_simulation"
+      - "race_condition_analysis"
+      - "resource_constraint_simulation"
+    documentation: "docs/RESILIENCE_TEST_RESULTS.md"
+    verification_frequency: "component_completion"
+
+# 🔄 Success Story Reference System
+success_story_reference:
+  pattern_registry:
+    - category: "Message Handling"
+      domain: "ZSH Arrays"
+      complexity: "⭐⭐"
+      reference: "docs/SUCCESS_STORIES/MESSAGE_SYSTEM.md"
+    
+    - category: "P10k Integration"
+      domain: "Segment Architecture"
+      complexity: "⭐⭐⭐"
+      reference: "docs/SUCCESS_STORIES/P10K_SEGMENT.md"
+    
+    - category: "Hook Management"
+      domain: "ZSH Event System"
+      complexity: "⭐⭐⭐⭐"
+      reference: "docs/SUCCESS_STORIES/ZSH_HOOKS.md"
+  
+  distributed_pattern_repository:
+    enabled: true
+    storage_mechanisms:
+      - "component_documentation"
+      - "pattern_library"
+      - "embedded_references"
+    synchronization_protocol: "vector_clock_consistency"
+    conflict_resolution: "semantic_pattern_merging"
+  
+  application_protocol:
+    - "Pattern identification based on functional requirements"
+    - "Structural adaptation to current component context"
+    - "Variable substitution for component-specific parameters"
+    - "Extension points identification for customization"
+    - "Validation against original pattern constraints"
+    - "Resilience mechanism incorporation"
+    - "Recovery pattern integration"
+  
+  resilience_patterns:
+    - category: "Error Detection"
+      patterns:
+        - name: "Progressive Validation"
+          reference: "docs/PATTERNS/PROGRESSIVE_VALIDATION.md"
+        - name: "Input Boundary Verification"
+          reference: "docs/PATTERNS/BOUNDARY_VERIFICATION.md"
+    
+    - category: "State Consistency"
+      patterns:
+        - name: "Atomic Updates"
+          reference: "docs/PATTERNS/ATOMIC_UPDATES.md"
+        - name: "Transactional Operations"
+          reference: "docs/PATTERNS/TRANSACTIONAL_OPS.md"
+    
+    - category: "Recovery Mechanisms"
+      patterns:
+        - name: "Graceful Degradation"
+          reference: "docs/PATTERNS/GRACEFUL_DEGRADATION.md"
+        - name: "Progressive Fallback"
+          reference: "docs/PATTERNS/PROGRESSIVE_FALLBACK.md"
+
+# 📝 Documentation Generation Protocol
+documentation_generation:
+  generation_prompts:
+  initialization: |
+    Begin documentation generation for the Rick Assistant ZSH Plugin Documentation Project.
+    
+    I'll be generating documentation following a structured approach with adaptive chunking and state preservation.
+    
+    Project parameters:
+    - Documentation Type: Development guide for prompt-based coding
+    - Target Audience: Non-coders using AI assistants
+    - Style Requirements: Technical accuracy with Rick Sanchez persona elements
+    - Chunking Strategy: Complexity-based with logical section boundaries
+    - Resilience Level: Enterprise-grade with multi-layered error recovery
+    
+    Let's start with generating the foundational documentation files.
+  
+  component_generation: |
+    Generate the documentation for the {COMPONENT_NAME} component of the Rick Assistant ZSH Plugin.
+    
+    Files to create:
+    {FILES_LIST}
+    
+    For each file:
+    - Follow markdown formatting standards
+    - Implement appropriate content chunking for files exceeding complexity thresholds
+    - Maintain cross-references to related documentation
+    - Include detailed code examples where relevant
+    - Incorporate Rick Sanchez persona elements where appropriate
+    - Apply resilience mechanisms including semantic markers and verification checkpoints
+    
+    State Vector:
+    {STATE_VECTOR_JSON}
+
+  timeout_continuation:
+    aggressive_chunking: |
+      SESSION_CONTINUATION_WITH_COMPLEXITY_REDUCTION
+      - Fragmentation Level: AGGRESSIVE
+      - Chunk Size Reduction: 60%
+      - Token Threshold: MINIMAL
+      - Context Preservation: ESSENTIAL_ONLY
+      
+      Previous State Vector:
+      {STATE_VECTOR_JSON}
+      
+      Continue generating ONLY {SECTION_IDENTIFIER} with reduced complexity and minimal formatting.
+    
+    micro_section_generation: |
+      MICRO_GENERATION_TRANSACTION
+      - Target Section: {SECTION_IDENTIFIER}
+      - Token Budget: {TOKEN_LIMIT}
+      - Content Priority: ESSENTIAL_TECHNICAL_INFORMATION
+      - Formatting Level: MINIMAL
+      - Persona Elements: NONE
+      
+      Generate precisely this section according to constraints.
+    
+    document_synthesis: |
+      DOCUMENT_SYNTHESIS_PROMPT
+      - Assembly Mode: PROGRESSIVE_INTEGRATION
+      - Context Reconciliation: BOUNDARY_NORMALIZATION
+      - Reference Resolution: FORWARD_BACKWARD_VERIFICATION
+      - Stylistic Harmonization: LIGHT_STANDARDIZATION
+      
+      Integrate the following independently generated sections into a coherent document:
+      {SECTION_LIST}
+
+  file_generation: |
+    Create the {FILE_NAME} documentation file for the Rick Assistant ZSH Plugin.
+    
+    File parameters:
+    - Component: {COMPONENT_NAME}
+    - Purpose: {FILE_PURPOSE}
+    - Dependencies: {DEPENDENCIES}
+    - Chunking Required: {YES/NO}
+    - Estimated Complexity: {COMPLEXITY_LEVEL}
+    - Resilience Requirements: {RESILIENCE_LEVEL}
+    
+    Content requirements:
+    - {CONTENT_REQUIREMENT_1}
+    - {CONTENT_REQUIREMENT_2}
+    - ...
+    
+    State Vector:
+    {STATE_VECTOR_JSON}
+  
+  chunk_generation: |
+    Generate chunk {CHUNK_ID} of {TOTAL_CHUNKS} for the {FILE_NAME} documentation file.
+    
+    Chunk parameters:
+    - Content Type: {CONTENT_TYPE}
+    - Topics Covered: {TOPICS_LIST}
+    - Previous Chunk: {PREVIOUS_CHUNK_ID}
+    - Next Chunk: {NEXT_CHUNK_ID}
+    - Semantic Digest: {SEMANTIC_DIGEST}
+    
+    Apply appropriate continuation markers, context recapitulation, and semantic verification markers.
+    
+    State Vector:
+    {STATE_VECTOR_JSON}
+  
+  recovery_initiation: |
+    Implement {RECOVERY_LEVEL} recovery protocol for the {FILE_NAME} documentation generation.
+    
+    Recovery parameters:
+    - Problematic Content: {PROBLEMATIC_CONTENT_DESCRIPTION}
+    - Recovery Strategy: {RECOVERY_STRATEGY}
+    - Simplification Level: {SIMPLIFICATION_LEVEL}
+    - Recovery ID: {RECOVERY_ID}
+    - Prior Attempts: {PRIOR_ATTEMPTS}
+    
+    Proceed with generating the content using the specified recovery strategy.
+    
+    State Vector:
+    {STATE_VECTOR_JSON}
+
+# Documentation Quality Standards
+quality_standards:
+  content_requirements:
+    - requirement: "Technical Accuracy"
+      description: "All technical information must be accurate and consistent with ZSH, P10k, and OMZ standards"
+      verification: "Cross-reference with official documentation"
+      verification_frequency: "continuous"
+    
+    - requirement: "Completeness"
+      description: "Documentation must cover all aspects of the component without omissions"
+      verification: "Checklist verification against component specifications"
+      verification_frequency: "per_component"
+    
+    - requirement: "Clarity"
+      description: "Explanations must be clear and accessible to non-technical users"
+      verification: "Complexity analysis and readability metrics"
+      verification_frequency: "per_file"
+    
+    - requirement: "Consistency"
+      description: "Terminology and structure must be consistent across all documentation"
+      verification: "Terminology database verification"
+      verification_frequency: "continuous"
+    
+    - requirement: "Rick Persona Integration"
+      description: "Appropriate integration of Rick Sanchez character elements"
+      verification: "Character consistency analysis"
+      verification_frequency: "per_file"
+  
+  structural_requirements:
+    - requirement: "Logical Organization"
+      description: "Content must follow a logical, progressive structure"
+      verification: "Topic flow analysis"
+      verification_frequency: "per_file"
+    
+    - requirement: "Proper Formatting"
+      description: "Content must adhere to markdown formatting standards"
+      verification: "Syntax validation"
+      verification_frequency: "continuous"
+    
+    - requirement: "Navigability"
+      description: "Documentation must include proper cross-references and navigation aids"
+      verification: "Reference integrity checking"
+      verification_frequency: "per_component"
+    
+    - requirement: "Chunking Integrity"
+      description: "Chunked documents must maintain context and continuity"
+      verification: "Chunk boundary analysis"
+      verification_frequency: "per_chunk"
+
+  primary_sequence:
+    - phase: "Project Structure Initialization"
+      prompt: |
+        I'm implementing the documentation for a Rick Sanchez-themed ZSH assistant plugin with Powerlevel10k integration, following a prompt-based coding approach for non-coders. Following your optimized protocol, I'll begin with initializing the project structure.
+
+        Please generate these foundation files with full content, optimized for Cursor AI parsing:
+
+        1. STATUS.md - Progress tracking
+        2. plan.md - Dependency-based sequential phases
+        3. DIRECTORY_STRUCTURE.md - Project file organization
+
+        Apply the optimization protocols for chunking, context maintenance, and parsing reliability. Update STATUS.md after creating each file.
+
+        <!-- INITIALIZATION_VECTOR -->
+        - Session Type: NEW
+        - Phase: INITIALIZATION
+        - Component: PROJECT_STRUCTURE
+        - Chunking Strategy: CONTENT_ADAPTIVE
+        - Verification Protocol: ENABLED
+        - Resilience Level: ENTERPRISE
+        - Transaction ID: {TRANSACTION_UUID}
+    
+    - phase: "Core Documentation Generation"
+      prompt: |
+        Now that the project structure is initialized, let's implement the core documentation files. These provide the foundational guidance for the implementation process.
+
+        Generate these core documentation files:
+
+        1. SETUP_GUIDE.md - Environment preparation and validation
+        2. PROMPT_BASED_WORKFLOW.md - Guidelines for non-coders using prompts
+        3. VISUAL_STYLE_GUIDE.md - Visual appearance guidelines with Rick personality
+        4. BEST_PRACTICES.md - ZSH, P10k, and Oh My ZSH coding standards
+        5. DEPENDENCY_MAP.md - Component dependency visualization
+
+        For each file:
+        - Apply contrastive examples where appropriate
+        - Implement self-verification loops
+        - Ensure content adheres to Rick Sanchez persona
+        - Incorporate appropriate resilience mechanisms
+        - Update STATUS.md after each file
+
+        <!-- CONTEXT_CONTINUATION -->
+        - Previous Phase: INITIALIZATION
+        - Current Phase: CORE_DOCUMENTATION
+        - Completed Components: [PROJECT_STRUCTURE]
+        - Chunk Optimization: HYBRID_CONTENT_MODE
+        - Resilience Level: ENTERPRISE
+        - Vector Clock: {VECTOR_CLOCK}
+        - Transaction ID: {TRANSACTION_UUID}
+    
+    - phase: "Implementation Phase Documentation"
+      template: |
+        Let's implement the documentation for Phase {N} ({PHASE_NAME}). This phase focuses on {PHASE_DESCRIPTION} with dependencies on {PREVIOUS_PHASES}.
+
+        Generate the following files with optimal chunking:
+
+        1. PHASE{N}_OVERVIEW.md - Phase summary, dependencies, and goals
+        2. PHASE{N}_COMPONENT_A_00.md - Component A documentation (Part 1)
+        3. PHASE{N}_COMPONENT_A_01.md - Component A documentation (Part 2)
+        ...
+
+        For each component:
+        - Include purpose, functionality, and implementation details
+        - Provide code snippets with optimal syntax highlighting
+        - Include usage examples and testing instructions
+        - Implement chain-of-thought reasoning for complex sections
+        - Create verification checkpoints after critical content
+        - Incorporate appropriate resilience mechanisms
+        - Apply all optimization protocols
+
+        <!-- PHASE_TRANSITION -->
+        - Previous Phase: {PREVIOUS_PHASE}
+        - Current Phase: IMPLEMENTATION_PHASE_{N}
+        - Completed Components: [{COMPLETED_COMPONENTS}]
+        - Dependencies: [{DEPENDENCIES}]
+        - Verification Requirements: [{VERIFICATION_ITEMS}]
+        - Resilience Level: ENTERPRISE
+        - Vector Clock: {VECTOR_CLOCK}
+        - Transaction ID: {TRANSACTION_UUID}
+    
+    - phase: "Support Documentation Generation"
+      prompt: |
+        Now that the implementation phases are documented, let's create the support documentation files. These provide auxiliary guidance for the implementation process.
+
+        Generate these support documentation files:
+
+        1. CODE_EXAMPLES.md - Reusable code snippet library
+        2. DECISION_FLOWS.md - Implementation decision flowcharts
+        3. ZSH_COMMAND_REFERENCE.md - Common ZSH command cheat sheet
+        4. VISUAL_VERIFICATION_GUIDE.md - Visual implementation verification
+        5. TERMINAL_COMMAND_SNIPPETS.md - Ready-to-use terminal commands
+
+        Apply all optimization protocols and ensure each file is comprehensive yet focused. Incorporate appropriate resilience mechanisms throughout. Update STATUS.md after each file.
+
+        <!-- CONTEXT_CONTINUATION -->
+        - Previous Phase: IMPLEMENTATION_PHASE_6
+        - Current Phase: SUPPORT_DOCUMENTATION
+        - Completed Components: [ALL_IMPLEMENTATION_PHASES]
+        - Verification Requirements: HYBRID_CONTENT_VERIFICATION
+        - Resilience Level: ENTERPRISE
+        - Vector Clock: {VECTOR_CLOCK}
+        - Transaction ID: {TRANSACTION_UUID}
+    
+    - phase: "Quality Assurance Documentation"
+      prompt: |
+        Finally, let's create the quality assurance documentation to ensure implementation correctness and reliability.
+
+        Generate these QA documentation files:
+
+        1. QUALITY_ASSURANCE_CHECKLISTS.md - Component verification checklists
+        2. PRE_IMPLEMENTATION_CHECKPOINTS.md - Pre-implementation verification
+        3. ERROR_DICTIONARY.md - Common errors and solutions
+        4. SESSION_CONTINUATION_FRAMEWORK.md - Context maintenance between sessions
+        5. CONSOLIDATED_TROUBLESHOOTING.md - Comprehensive troubleshooting guide
+
+        For each file, apply all optimization protocols and ensure comprehensive coverage of quality assurance concerns. Incorporate resilience verification procedures throughout. Update STATUS.md after each file.
+
+        <!-- CONTEXT_CONTINUATION -->
+        - Previous Phase: SUPPORT_DOCUMENTATION
+        - Current Phase: QA_DOCUMENTATION
+        - Completed Components: [IMPLEMENTATION_PHASES, SUPPORT_DOCUMENTATION]
+        - Verification Requirements: HIGH_RELIABILITY_VERIFICATION
+        - Resilience Level: ENTERPRISE
+        - Vector Clock: {VECTOR_CLOCK}
+        - Transaction ID: {TRANSACTION_UUID}
+    
+    - phase: "Project Completion"
+      prompt: |
+        Now that all documentation components have been generated, let's create the completion summary and finalize the project.
+
+        Generate these completion files:
+
+        1. COMPLETION_SUMMARY.md - Overview of all generated files
+        2. IMPLEMENTATION_ROADMAP.md - Suggested implementation sequence
+        3. LEARNING_PATH.md - Progressive learning guide for non-coders
+        4. RESILIENCE_VERIFICATION.md - Comprehensive resilience verification guide
+
+        Update STATUS.md to show 100% completion with final metrics.
+
+        <!-- PROJECT_COMPLETION -->
+        - Previous Phase: QA_DOCUMENTATION
+        - Current Phase: COMPLETION
+        - Completed Components: [ALL_COMPONENTS]
+        - Final Verification: COMPREHENSIVE_PROJECT_VERIFICATION
+        - Resilience Level: ENTERPRISE
+        - Vector Clock: {VECTOR_CLOCK}
+        - Transaction ID: {TRANSACTION_UUID}
+
+  error_recovery:
+    timeout_mitigation:
+      enabled: true
+      detection:
+        indicators:
+          - "generation_termination_without_completion_signal"
+          - "expected_output_truncation"
+          - "session_boundary_violation"
+        threshold: 0.65
+        verification_method: "content_boundary_analysis"
+      
+      progressive_degradation:
+        enabled: true
+        degradation_tiers:
+          - tier: 1
+            description: "Full content with complete formatting"
+            token_reduction: 0.0
+            complexity_reduction: 0.0
+            trigger: "first_timeout"
+          - tier: 2
+            description: "Complete content with minimal formatting"
+            token_reduction: 0.3
+            complexity_reduction: 0.4
+            trigger: "second_timeout"
+          - tier: 3
+            description: "Core content with skeleton structure only"
+            token_reduction: 0.5
+            complexity_reduction: 0.6
+            trigger: "third_timeout"
+          - tier: 4
+            description: "Outline-only generation with key points"
+            token_reduction: 0.7
+            complexity_reduction: 0.8
+            trigger: "fourth_timeout"
+          - tier: 5
+            description: "Section headers with placeholder text"
+            token_reduction: 0.9
+            complexity_reduction: 0.9
+            trigger: "persistent_timeout"
+        
+        token_budget_allocation:
+          critical_sections: 0.4
+          structural_elements: 0.3
+          elaboration_content: 0.2
+          stylistic_elements: 0.1
+
+    probabilistic_error_anticipation:
+      enabled: true
+      prediction_model: "bayesian_error_risk"
+      intervention_threshold: 0.70
+      preemptive_actions:
+        - "verification_point_insertion"
+        - "complexity_reduction"
+        - "chunking_optimization"
+    
+    - protocol: "Primary Recovery: Chunk Subdivision"
+      prompt: |
+        It appears there was a parsing issue with the previous chunk. Let's implement the primary recovery protocol:
+
+        1. Identify the problematic chunk: {CHUNK_ID}
+        2. Split into two sub-chunks:
+           - {CHUNK_ID}_A: First 50% of content
+           - {CHUNK_ID}_B: Remaining 50% of content
+
+        Let's regenerate {CHUNK_ID}_A with simplified syntax:
+
+        <!-- RECOVERY_MODE_1 -->
+        - Original Chunk: {CHUNK_ID}
+        - Recovery Chunk: {CHUNK_ID}_A
+        - Syntax Level: SIMPLIFIED
+        - Token Limit: 50% of original
+        - State Vector: {STATE_VECTOR_JSON}
+        - Vector Clock: {VECTOR_CLOCK}
+        - Recovery ID: {RECOVERY_UUID}
+    
+    - protocol: "Secondary Recovery: Syntax Simplification"
+      prompt: |
+        The primary recovery attempt encountered issues. Implementing secondary recovery protocol:
+
+        1. Restructure content with minimal formatting
+        2. Replace complex code blocks with simplified versions
+        3. Eliminate nested structures
+        4. Reduce markdown formatting to basic elements
+
+        Let's regenerate {CHUNK_ID}_A with minimal syntax:
+
+        <!-- RECOVERY_MODE_2 -->
+        - Original Chunk: {CHUNK_ID}
+        - Recovery Chunk: {CHUNK_ID}_A
+        - Syntax Level: MINIMAL
+        - Token Limit: 40% of original
+        - Format: TEXT_DOMINANT
+        - State Vector: {STATE_VECTOR_JSON}
+        - Vector Clock: {VECTOR_CLOCK}
+        - Recovery ID: {RECOVERY_UUID}
+    
+    - protocol: "Tertiary Recovery: Context Reinitiation"
+      prompt: |
+        Implementing tertiary recovery protocol for critical failure:
+
+        1. Reinitialize document generation context
+        2. Preserve only essential state variables
+        3. Reduce scope to core content only
+        4. Eliminate all non-essential formatting
+
+        Let's regenerate the essential content with atomic structure:
+
+        <!-- RECOVERY_MODE_3 -->
+        - Recovery Target: ESSENTIAL_CONTENT_ONLY
+        - Syntax Level: ATOMIC
+        - Format: PLAIN_TEXT_WITH_MINIMAL_MARKDOWN
+        - State Preservation: CRITICAL_PATH_ONLY
+        - Essential State Vector: {ESSENTIAL_STATE_VECTOR_JSON}
+        - Essential Vector Clock: {ESSENTIAL_VECTOR_CLOCK}
+        - Recovery ID: {RECOVERY_UUID}
+    
+    polymorphic_recovery_strategies:
+      enabled: true
+      strategy_selection:
+        method: "error_pattern_classification"
+        classification_model: "parsing_failure_taxonomy"
+        adaptation_mechanism: "effectiveness_feedback_learning"
+      custom_strategies:
+        - name: "Semantic Preservation with Format Reduction"
+          applicability: "complex_nested_structure_failure"
+          template: |
+            <!-- SEMANTIC_PRESERVATION_RECOVERY -->
+            - Original Content: {CONTENT_ID}
+            - Recovery Method: SEMANTIC_PRESERVATION
+            - Format Complexity: MINIMAL
+            - Content Signature: {CONTENT_HASH}
+            - Recovery ID: {RECOVERY_UUID}
+        
+        - name: "Progressive Chunking with Boundary Optimization"
+          applicability: "token_limit_approached"
+          template: |
+            <!-- PROGRESSIVE_CHUNKING_RECOVERY -->
+            - Original Content: {CONTENT_ID}
+            - Recovery Method: PROGRESSIVE_CHUNKING
+            - Boundary Selection: OPTIMAL_SEMANTIC_BOUNDARIES
+            - Chunk Sequence: {CHUNK_SEQUENCE}
+            - Recovery ID: {RECOVERY_UUID}

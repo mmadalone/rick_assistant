@@ -1,0 +1,193 @@
+#!/usr/bin/env zsh
+# _rick_menu_simple_arrows - Display a simple menu with arrow key navigation
+#
+# Usage: _rick_menu_simple_arrows "Title" "Option 1" "Option 2" ...
+# Returns: The selected option number (1-based) or 0 if cancelled
+
+# Global state tracking to prevent unnecessary redraws
+typeset -gA _RICK_MENU_STATE
+
+_rick_menu_simple_arrows() {
+  # Get the title
+  local title="$1"
+  shift
+  
+  # If no options provided, return error
+  if [[ $# -eq 0 ]]; then
+    echo "Error: No menu options provided."
+    return 1
+  fi
+  
+  # Store menu items
+  local -a menu_items
+  local i=1
+  for option in "$@"; do
+    menu_items[$i]="$option"
+    ((i++))
+  done
+  
+  # Initialize terminal
+  local term_lines=$(tput lines)
+  local term_cols=$(tput cols)
+  
+  # Calculate positions for menu items
+  local header_lines=5  # Title + borders + spacing
+  
+  # Current selection (1-based indexing)
+  local current=1
+  local max=$#
+  local prev_selection=0
+  
+  # Get system metrics just once initially
+  local cpu_usage=$(_rick_get_cpu_usage 2>/dev/null || echo "N/A")
+  local ram_usage=$(_rick_get_ram_usage 2>/dev/null || echo "N/A")
+  local temp=$(_rick_get_temperature 2>/dev/null || echo "N/A")
+  
+  # Do initial full draw
+  clear
+  
+  # Hide cursor during menu navigation
+  tput civis
+  
+  # Set trap to ensure cursor is restored and terminal state is reset on exit
+  trap 'tput cnorm; stty sane; clear; return 0' EXIT INT TERM
+  
+  # Draw the menu once
+  _rick_menu_draw_full "$title" "$current" "$max" "$cpu_usage" "$ram_usage" "$temp" "${menu_items[@]}"
+  
+  # Loop until user makes a selection
+  while true; do
+    # Counter for empty/timeout responses
+    local empty_count
+    (( empty_count = ${empty_count:-0} + 1 ))
+    
+    # Read a key
+    local key
+    key=$(_rick_menu_read_key)
+    
+    # Handle timeout explicitly
+    if [[ "$key" == "timeout" ]]; then
+      # If we get too many timeouts in a row, break the loop
+      if (( empty_count > 5 )); then
+        tput cnorm  # Show cursor
+        clear
+        echo "Too many empty responses - exiting menu"
+        return 0
+      fi
+      # Just continue the loop on timeout
+      continue
+    fi
+    
+    # Reset empty count on successful key read
+    empty_count=0
+    
+    # Save previous selection for partial redraw
+    prev_selection=$current
+    
+    # Process key press
+    case "$key" in
+      up)
+        # Move selection up (with wraparound)
+        ((current--))
+        if [[ $current -lt 1 ]]; then
+          current=$max
+        fi
+        # Only redraw changed lines
+        _rick_menu_update_selection $prev_selection $current "${menu_items[@]}"
+        ;;
+      down)
+        # Move selection down (with wraparound)
+        ((current++))
+        if [[ $current -gt $max ]]; then
+          current=1
+        fi
+        # Only redraw changed lines
+        _rick_menu_update_selection $prev_selection $current "${menu_items[@]}"
+        ;;
+      enter|space)
+        # Return the selected item number
+        tput cnorm  # Show cursor
+        clear
+        return $current
+        ;;
+      q|Q|escape)
+        # Cancel the menu
+        tput cnorm  # Show cursor
+        clear
+        return 0
+        ;;
+      [1-9]|[1-9][0-9])
+        # Direct number selection if in range
+        if [[ $key -le $max ]]; then
+          tput cnorm  # Show cursor
+          clear
+          return $key
+        fi
+        ;;
+    esac
+  done
+}
+
+# Function to draw the full menu
+_rick_menu_draw_full() {
+  local title="$1"
+  local current="$2"
+  local max="$3"
+  local cpu_usage="$4"
+  local ram_usage="$5"  
+  local temp="$6"
+  shift 6  # Skip the first 6 parameters
+  
+  # Save position at the top of the screen
+  tput cup 0 0
+  
+  # Draw header
+  echo "============================================================"
+  echo "                  $title                  "
+  echo "============================================================"
+  echo
+  
+  # Draw menu items
+  local i=1
+  for option in "$@"; do
+    if [[ $i -eq $current ]]; then
+      print -P "  %F{yellow}→ $i) $option%f"
+    else
+      echo "    $i) $option"
+    fi
+    ((i++))
+  done
+  
+  # Draw footer
+  echo
+  echo "    q) Quit/Cancel"
+  echo
+  echo "============================================================"
+  echo "CPU: $cpu_usage% | RAM: $ram_usage% | Temp: ${temp}°C"
+  echo "============================================================"
+  echo "↑/↓: Navigate | Enter: Select | 1-$max: Direct Select | q: Cancel"
+}
+
+# Function to update just the selection (minimizes flickering)
+_rick_menu_update_selection() {
+  local prev="$1"
+  local current="$2"
+  shift 2
+  
+  # Calculate line positions (accounting for header lines)
+  local header_lines=5  # Title + borders + spacing
+  
+  # Move to previous selection and reset it
+  tput cup $((header_lines + prev - 1)) 0
+  echo "    $prev) $@[$prev]$(tput el)"
+  
+  # Move to current selection and highlight it
+  tput cup $((header_lines + current - 1)) 0
+  print -P "  %F{yellow}→ $current) $@[$current]%f$(tput el)"
+}
+
+# Execute the function if called directly
+if [[ "${FUNCNAME[0]}" == '_rick_menu_simple_arrows' ]]; then
+  _rick_menu_simple_arrows "Test Menu" "Option 1" "Option 2" "Option 3"
+  echo "Selected: $?"
+fi 

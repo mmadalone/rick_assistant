@@ -1,0 +1,291 @@
+#!/usr/bin/env zsh
+# _rick_menu_navigate - Handle menu navigation and item selection
+#
+# Usage:
+#   _rick_menu_navigate <items...>
+#
+# Arguments:
+#   items - List of menu items to display
+#
+# Options:
+#   -t <title> - Set the menu title
+#   -w <width> - Set the menu width
+#   -p <prefix> - Set a prefix for all menu items
+#
+# Returns:
+#   Prints the selected item index or -1 if cancelled
+#
+# Example:
+#   _rick_menu_navigate -t "Select an option" "Option 1" "Option 2" "Option 3"
+
+_rick_menu_navigate() {
+  # Parse options
+  local title=""
+  local width=""
+  local prefix=""
+  
+  while [[ "$1" == -* ]]; do
+    case "$1" in
+      -t)
+        shift
+        title="$1"
+        shift
+        ;;
+      -w)
+        shift
+        width="$1"
+        shift
+        ;;
+      -p)
+        shift
+        prefix="$1"
+        shift
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+  
+  # Debug output - print navigation parameters
+  if (( RICK_DEBUG )); then
+    echo "DEBUG: _rick_menu_navigate called with:" >&2
+    echo "  title: '$title'" >&2
+    echo "  width: '$width'" >&2
+    echo "  prefix: '$prefix'" >&2
+    echo "  items: $#" >&2
+  fi
+  
+  # Detect terminal capabilities if not done yet - with extra error handling
+  if (( RICK_DEBUG )); then
+    echo "DEBUG: Detecting terminal capabilities..." >&2
+  fi
+  
+  if ! _rick_menu_detect_terminal; then
+    if (( RICK_DEBUG )); then
+      echo "DEBUG: Terminal detection failed, using defaults" >&2
+    fi
+    # Ensure defaults are set
+    typeset -g _RICK_MENU_SUPPORTS_COLOR=${_RICK_MENU_SUPPORTS_COLOR:-0}
+    typeset -g _RICK_MENU_SUPPORTS_UNICODE=${_RICK_MENU_SUPPORTS_UNICODE:-0}
+    typeset -g _RICK_MENU_WIDTH=${_RICK_MENU_WIDTH:-80}
+    typeset -g _RICK_MENU_HEIGHT=${_RICK_MENU_HEIGHT:-24}
+  fi
+  
+  # Set width from detected width if not specified
+  [[ -z "$width" ]] && width=$_RICK_MENU_WIDTH
+  
+  # Debug output - print terminal capabilities
+  if (( RICK_DEBUG )); then
+    echo "DEBUG: Terminal capabilities:" >&2
+    echo "  color: $_RICK_MENU_SUPPORTS_COLOR" >&2
+    echo "  unicode: $_RICK_MENU_SUPPORTS_UNICODE" >&2
+    echo "  size: ${_RICK_MENU_WIDTH}x${_RICK_MENU_HEIGHT}" >&2
+  fi
+  
+  # Validate inputs
+  if [[ $# -eq 0 ]]; then
+    if (( RICK_DEBUG )); then
+      echo "DEBUG: No menu items provided" >&2
+    fi
+    echo "-1"  # Return -1 for cancel if no items
+    return 1
+  fi
+  
+  # Store menu items in an array for safer access
+  local -a menu_items
+  local i
+  for ((i=1; i<=$#; i++)); do
+    menu_items[$i]="${prefix}${@[$i]}"
+  done
+  
+  # Debug output - print menu items
+  if (( RICK_DEBUG )); then
+    echo "DEBUG: Menu items:" >&2
+    for ((i=1; i<=$#; i++)); do
+      echo "  $i: '${menu_items[$i]}'" >&2
+    done
+  fi
+  
+  # Initialize menu state
+  local current_index=0
+  local max_index=$(( $# - 1 ))
+  local action=""
+  
+  # Safely save and restore terminal state
+  if (( RICK_DEBUG )); then
+    echo "DEBUG: Saving terminal state..." >&2
+  fi
+  
+  # Temporary file to capture stty settings
+  local stty_settings_file
+  stty_settings_file=$(mktemp)
+  stty -g > "$stty_settings_file" 2>/dev/null
+  local stty_settings
+  stty_settings=$(cat "$stty_settings_file")
+  rm -f "$stty_settings_file"
+  
+  # Check if stty settings were captured successfully
+  if [[ -z "$stty_settings" ]]; then
+    if (( RICK_DEBUG )); then
+      echo "DEBUG: Failed to capture stty settings, using defaults" >&2
+    fi
+    # Use simple defaults if stty fails
+    stty_settings="sane"
+  fi
+  
+  # Save cursor position and hide it - with error handling
+  if ! printf "\033[s\033[?25l"; then
+    if (( RICK_DEBUG )); then
+      echo "DEBUG: Failed to save cursor position and hide it" >&2
+    fi
+  fi
+  
+  # Enable raw input mode
+  stty -echo raw 2>/dev/null || true
+  
+  # Main menu loop
+  local running=1
+  local debug_info=""  # For capturing debug information
+  
+  # Trap errors
+  trap 'debug_info="Trapped error: $?"' ERR
+  
+  # Trap signals for clean exit
+  trap '_rick_menu_cleanup_navigate "$stty_settings"' INT TERM HUP
+  
+  while (( running )); do
+    # Clear screen
+    _rick_menu_clear || true
+    
+    # Draw title if provided
+    if [[ -n "$title" ]]; then
+      _rick_menu_centered "$title" "title" "$width" || true
+      echo
+      _rick_menu_separator "$width" "-" "header" || true
+      echo
+    fi
+    
+    # Draw items - use the array for safer access
+    for ((i=0; i<=max_index; i++)); do
+      local is_selected=0
+      [[ $i -eq $current_index ]] && is_selected=1
+      
+      # Get the item from the array (arrays are 1-indexed in zsh)
+      local item_text="${menu_items[$i+1]}"
+      
+      # Call item display with error handling
+      if ! _rick_menu_item "$i" "$item_text" "$is_selected"; then
+        debug_info="Error in _rick_menu_item (index: $i, text: $item_text, selected: $is_selected)"
+        if (( RICK_DEBUG )); then
+          echo "DEBUG: $debug_info" >&2
+        fi
+      fi
+      echo
+    done
+    
+    # Draw footer
+    echo
+    if ! _rick_menu_footer "$width"; then
+      debug_info="Error in _rick_menu_footer (width: $width)"
+      if (( RICK_DEBUG )); then
+        echo "DEBUG: $debug_info" >&2
+      fi
+    fi
+    
+    # Read key safely, with fallback for errors
+    local key=""
+    if ! key=$(_rick_menu_read_key); then
+      key="timeout"
+      debug_info="Error in _rick_menu_read_key"
+      if (( RICK_DEBUG )); then
+        echo "DEBUG: $debug_info" >&2
+      fi
+    fi
+    
+    # Debug output - print key
+    if (( RICK_DEBUG )); then
+      echo "DEBUG: Key pressed: '$key'" >&2
+    fi
+    
+    # Process key with safe error handling and fallback
+    if ! action=$(_rick_menu_handle_key "$key" "$current_index" "$max_index"); then
+      action="$current_index"  # Default to keeping current index on error
+      debug_info="Error in _rick_menu_handle_key (key: $key, index: $current_index, max: $max_index)"
+      if (( RICK_DEBUG )); then
+        echo "DEBUG: $debug_info" >&2
+      fi
+    fi
+    
+    # Debug output - print action
+    if (( RICK_DEBUG )); then
+      echo "DEBUG: Action: '$action'" >&2
+    fi
+    
+    # Handle action
+    case "$action" in
+      "SELECT")
+        # Exit loop and return success
+        running=0
+        ;;
+      "CANCEL")
+        # Exit loop and return cancel
+        current_index=-1
+        running=0
+        ;;
+      "TOGGLE")
+        # Not implemented in this version
+        ;;
+      *)
+        # Update current index (should be a number)
+        if [[ "$action" =~ ^[0-9]+$ ]]; then
+          current_index=$action
+        else
+          # If action isn't a number, keep current index
+          debug_info="Invalid action: $action (key: $key)"
+          if (( RICK_DEBUG )); then
+            echo "DEBUG: $debug_info" >&2
+          fi
+        fi
+        ;;
+    esac
+  done
+  
+  # Cleanup routine for restoring terminal state
+  _rick_menu_cleanup_navigate "$stty_settings"
+  
+  # Show debug info if there was an error and debug is enabled
+  if [[ -n "$debug_info" && -n "$RICK_DEBUG" && "$RICK_DEBUG" -eq 1 ]]; then
+    echo "DEBUG: $debug_info" >&2
+  fi
+  
+  # Return the selected index
+  echo "$current_index"
+  
+  # Return success if item selected, otherwise error
+  [[ $current_index -ge 0 ]] && return 0 || return 1
+}
+
+# Helper function to safely restore terminal state
+_rick_menu_cleanup_navigate() {
+  local stty_settings="$1"
+  
+  # Restore terminal settings
+  if [[ -n "$stty_settings" ]]; then
+    stty "$stty_settings" 2>/dev/null || stty sane 2>/dev/null || true
+  else
+    stty sane 2>/dev/null || true
+  fi
+  
+  # Show cursor
+  printf "\033[?25h"
+  
+  # Clear screen to leave a clean state
+  _rick_menu_clear
+  
+  # Remove trap
+  trap - INT TERM HUP
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_navigate "$@" 

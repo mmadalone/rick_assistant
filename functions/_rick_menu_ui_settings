@@ -1,0 +1,144 @@
+#!/usr/bin/env zsh
+# _rick_menu_ui_settings - UI Settings submenu for Rick Assistant
+#
+# Usage: _rick_menu_ui_settings
+# Returns: 0 on success, 1 on error
+
+_rick_menu_ui_settings() {
+  # Detect terminal capabilities
+  _rick_menu_detect_terminal
+
+  # Clear screen
+  _rick_menu_clear
+
+  # Calculate terminal dimensions
+  local term_width=$(tput cols 2>/dev/null || echo 80)
+  local menu_width=$(( term_width < 100 ? (term_width - 10) : 90 ))
+  
+  # Print header
+  print -P "%F{cyan}${(l:$menu_width::-:):-}%f"
+  _rick_menu_centered "🎨 UI SETTINGS 🎨" $menu_width
+  print -P "%F{cyan}${(l:$menu_width::-:):-}%f"
+  print
+
+  # Get current settings
+  local use_unicode=$(get_config_value "ui.unicode" "true")
+  local use_animations=$(get_config_value "ui.animations" "true")
+  local theme=$(get_config_value "ui.theme" "portal")
+  local prompt_style=$(get_config_value "ui.prompt_style" "classic")
+  local show_metrics=$(get_config_value "ui.show_metrics" "true")
+  
+  # Convert boolean values to checkmarks
+  local unicode_status=$(_rick_menu_symbol "checkbox_$([ "$use_unicode" = "true" ] && echo "on" || echo "off")")
+  local animations_status=$(_rick_menu_symbol "checkbox_$([ "$use_animations" = "true" ] && echo "on" || echo "off")")
+  local metrics_status=$(_rick_menu_symbol "checkbox_$([ "$show_metrics" = "true" ] && echo "on" || echo "off")")
+
+  # Define menu items
+  local -a items
+  items=(
+    "1. Unicode Support: $unicode_status"
+    "2. Typing Animations: $animations_status"
+    "3. Theme: $theme"
+    "4. Prompt Style: $prompt_style"
+    "5. Show System Metrics: $metrics_status"
+    "6. Return to Settings Menu"
+    "7. Quit"
+  )
+
+  # Print menu items
+  for i in {1..${#items}}; do
+    print -P " %F{green}${items[$i]}%f"
+  done
+
+  print
+  
+  # Get system metrics for footer
+  local cpu_usage=$(get_cpu_usage 2>/dev/null || echo "N/A")
+  local ram_usage=$(get_ram_usage 2>/dev/null || echo "N/A")
+  local temperature=$(get_temperature 2>/dev/null || echo "N/A")
+  
+  # Print footer with system metrics
+  print -P "%F{cyan}${(l:$menu_width::-:):-}%f"
+  _rick_menu_centered "CPU: $cpu_usage | RAM: $ram_usage | TEMP: $temperature" $menu_width
+  _rick_menu_centered "$(get_rick_quote)" $menu_width
+  print -P "%F{cyan}${(l:$menu_width::-:):-}%f"
+  print
+
+  # Prompt for choice
+  print -n "Enter your choice [1-7]: "
+  read choice
+
+  # Process choice
+  case $choice in
+    1)
+      # Toggle Unicode support
+      local new_value=$([ "$use_unicode" = "true" ] && echo "false" || echo "true")
+      set_config_value "ui.unicode" "$new_value"
+      print -P "%F{yellow}Unicode support $([ "$new_value" = "true" ] && echo "enabled" || echo "disabled").%f"
+      sleep 1
+      _rick_menu_ui_settings
+      ;;
+    2)
+      # Toggle typing animations
+      local new_value=$([ "$use_animations" = "true" ] && echo "false" || echo "true")
+      set_config_value "ui.animations" "$new_value"
+      print -P "%F{yellow}Typing animations $([ "$new_value" = "true" ] && echo "enabled" || echo "disabled").%f"
+      sleep 1
+      _rick_menu_ui_settings
+      ;;
+    3)
+      # Change theme
+      print -P "%F{yellow}Available themes: portal, science, classic, dark%f"
+      print -n "Enter theme name: "
+      read new_theme
+      if [[ "$new_theme" =~ ^(portal|science|classic|dark)$ ]]; then
+        set_config_value "ui.theme" "$new_theme"
+        print -P "%F{green}Theme changed to $new_theme.%f"
+      else
+        print -P "%F{red}Invalid theme name.%f"
+      fi
+      sleep 1
+      _rick_menu_ui_settings
+      ;;
+    4)
+      # Change prompt style
+      print -P "%F{yellow}Available styles: classic, minimal, verbose%f"
+      print -n "Enter prompt style: "
+      read new_style
+      if [[ "$new_style" =~ ^(classic|minimal|verbose)$ ]]; then
+        set_config_value "ui.prompt_style" "$new_style"
+        print -P "%F{green}Prompt style changed to $new_style.%f"
+      else
+        print -P "%F{red}Invalid prompt style.%f"
+      fi
+      sleep 1
+      _rick_menu_ui_settings
+      ;;
+    5)
+      # Toggle system metrics
+      local new_value=$([ "$show_metrics" = "true" ] && echo "false" || echo "true")
+      set_config_value "ui.show_metrics" "$new_value"
+      print -P "%F{yellow}System metrics display $([ "$new_value" = "true" ] && echo "enabled" || echo "disabled").%f"
+      sleep 1
+      _rick_menu_ui_settings
+      ;;
+    6)
+      # Return to settings menu
+      _rick_menu_settings
+      ;;
+    7)
+      # Quit
+      return 0
+      ;;
+    *)
+      print -P "%F{red}Invalid choice. Try again.%f"
+      sleep 1
+      _rick_menu_ui_settings
+      ;;
+  esac
+
+  return 0
+}
+
+# Execute the function
+_rick_menu_ui_settings "$@" 

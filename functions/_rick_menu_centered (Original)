@@ -1,0 +1,41 @@
+#!/usr/bin/env zsh
+# _rick_menu_centered - Print centered text for the menu
+#
+# Usage:
+#   _rick_menu_centered <text> [width]
+#
+# Arguments:
+#   text - The text to center
+#   width - Optional width to center within (defaults to terminal width)
+#
+# Returns:
+#   Prints the centered text to stdout
+#
+# Example:
+#   _rick_menu_centered "Title" 50  # Centers "Title" in a 50-character width
+
+# Function implementation
+_rick_menu_centered() {
+  local text="$1"
+  local width="${2:-$RICK_MENU_WIDTH}"
+  
+  # Validate inputs
+  [[ -z "$text" ]] && return 1
+  [[ "$width" -lt 1 ]] && width=$RICK_MENU_WIDTH
+  
+  # Strip ANSI color codes for length calculation
+  local text_length=${#${text//\[[0-9;]*m/}}
+  
+  # Calculate padding
+  local padding=$(( (width - text_length) / 2 ))
+  padding=$((padding > 0 ? padding : 0))
+  
+  # Print centered text with padding
+  printf "%${padding}s%s%${padding}s" "" "$text" ""
+  
+  # Add an extra space for odd lengths
+  (( (padding * 2 + text_length) < width )) && printf " "
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_centered "$@" 

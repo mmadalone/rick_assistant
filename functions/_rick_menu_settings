@@ -1,0 +1,44 @@
+#!/usr/bin/env zsh
+# _rick_menu_settings - Display the settings menu for Rick Assistant
+#
+# Usage:
+#   _rick_menu_settings
+#
+# Returns:
+#   0 on success, non-zero on error
+
+_rick_menu_settings() {
+  # Define menu items individually to avoid array issues
+  local item1="Toggle Color Support"
+  local item2="Toggle Unicode Support"
+  local item3="Configure Prompt"
+  local item4="Configure Theme"
+  local item5="Advanced Settings"
+  local item6="Reset to Defaults"
+  local item7="Back to Main Menu"
+  
+  # Use the navigate function with explicit parameters
+  local selected_index
+  selected_index=$(_rick_menu_navigate -t "Rick Assistant Settings" \
+    "$item1" "$item2" "$item3" "$item4" "$item5" "$item6" "$item7")
+  
+  # Handle selection
+  if [[ $selected_index -ge 0 ]]; then
+    case $selected_index in
+      0) echo "Toggle Color Support selected" ;;
+      1) echo "Toggle Unicode Support selected" ;;
+      2) echo "Configure Prompt selected" ;;
+      3) echo "Configure Theme selected" ;;
+      4) _rick_menu_advanced_settings ;;
+      5) echo "Reset to Defaults selected" ;;
+      6) _rick_menu main ;;
+    esac
+    return 0
+  else
+    echo "Menu cancelled"
+    return 1
+  fi
+}
+
+# Call the function with the arguments passed to this script
+_rick_menu_settings "$@" 
