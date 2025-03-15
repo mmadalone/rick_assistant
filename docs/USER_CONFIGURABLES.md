@@ -155,9 +155,6 @@ This document provides a comprehensive list of all configuration options availab
 
 | Option | Description | Default | Available Values |
 |--------|-------------|---------|-----------------|
-| `backup.enabled` 🚧 | Enable automatic backups | true | true, false |
-| `backup.interval` 🚧 | Backup interval (days) | 7 | integer |
-| `backup.keep_count` 🚧 | Number of backups to keep | 5 | integer |
 | `backup.directory` 🚧 | Backup directory | ${HOME}/.rick_assistant/backups | string (path) |
 | `backup.compression` 🚧 | Enable backup compression | true | true, false |
 | `backup.include_config` 🚧 | Include configuration in backups | true | true, false |
