@@ -15,6 +15,8 @@ import shutil
 import subprocess
 import re
 import locale
+import logging
+import select
 from typing import Optional, List, Dict, Any, Tuple
 
 # Add parent directory to path to allow importing from src
@@ -24,12 +26,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 try:
     from src.ui.menu import (
         create_hierarchical_menu, navigate_hierarchy, run_test_menu,
-        create_wizard, show_message, create_context_menu, Menu
+        create_wizard, show_message, create_context_menu, Menu,
+        show_menu  # Add the new show_menu function
     )
     from src.utils.logger import get_logger
     from src.utils.errors import safe_execute
     from src.utils.config import get_config_value, set_config_value
-    from src.ui.text import supports_unicode, supports_ansi_color, color_text
+    from src.ui.text import supports_unicode, supports_ansi_color, color_text, clear_screen
 except ImportError as e:
     print(f"Error importing Rick Assistant modules: {e}")
     sys.exit(1)
@@ -415,178 +418,171 @@ def filter_command_output(output: str, error_output: str, command: str) -> str:
 @safe_execute()
 def launch_main_menu():
     """Launch the main Rick Assistant menu."""
-    # Create the main menu structure
-    menu_structure = {
-        "Rick Commands": {
-            "items": [
-                {"text": "Status", "value": "rick status"},
-                {"text": "Debug Mode", "value": "rick debug"},
-                {"text": "Version Info", "value": "rick version"},
-                {"text": "Show Help", "value": "rick help"}
-            ]
-        },
-        "Configuration": {
-            "items": [
-                {"text": "Prompt Integration", "value": "rick prompt"},
-                {"text": "Powerlevel10k Setup", "value": "rick p10k"},
-                {"text": "Run Diagnostics", "value": "rick diagnose"},
-                {"text": "Display Settings", "submenu": {
-                    "items": [
-                        {"text": "Show Welcome Message", "type": "toggle", "key": "general.show_welcome_message", "default": True},
-                        {"text": "Theme Settings 🚧", "value": "theme_settings_placeholder"},
-                        {"text": "Color Scheme 🚧", "value": "color_settings_placeholder"}
-                    ]
-                }},
-                {"text": "Menu Settings", "submenu": {
-                    "items": [
-                        {"text": "Use Python Implementation", "type": "toggle", "key": "menu.use_python_implementation", "default": False},
-                        {"text": "Enable Animations", "type": "toggle", "key": "menu.animations_enabled", "default": False},
-                        {"text": "Use Static Portal", "type": "toggle", "key": "menu.use_static_portal", "default": True},
-                        {"text": "Terminal Compatibility Mode", "type": "toggle", "key": "menu.terminal_compatibility_mode", "default": False}
-                    ]
-                }},
-                {"text": "Prompt Settings", "submenu": {
-                    "items": [
-                        {"text": "Prompt Mode", "value": "rick prompt"},
-                        {"text": "Catchphrases 🚧", "value": "catchphrases_placeholder"},
-                        {"text": "System Info 🚧", "value": "system_info_placeholder"},
-                        {"text": "Exit Code 🚧", "value": "exit_code_placeholder"}
-                    ]
-                }},
-                {"text": "System Monitoring", "submenu": {
-                    "items": [
-                        {"text": "Temperature Settings 🚧", "value": "temperature_placeholder"},
-                        {"text": "CPU Monitoring 🚧", "value": "cpu_placeholder"},
-                        {"text": "RAM Monitoring 🚧", "value": "ram_placeholder"}
-                    ]
-                }},
-                {"text": "Error Message Style", "submenu": {
-                    "items": [
-                        {"text": "Rick Style", "value": {"type": "error_style", "style": "rick"}},
-                        {"text": "Simple", "value": {"type": "error_style", "style": "simple"}},
-                        {"text": "Technical", "value": {"type": "error_style", "style": "technical"}}
-                    ]
-                }}
-            ]
-        },
-        "Tools": {
-            "items": [
-                {"text": "Clean Up Files", "value": "rick cleanup"},
-                {"text": "Setup Wizard", "value": "setup_wizard"},
-                {"text": "Terminal Info", "value": "terminal_info"},
-                {"text": "Menu Diagnostics", "value": "menu_diagnostics"}
-            ]
-        }
-    }
+    logger.debug("Launching main menu")
     
-    # Create and navigate the menu
-    main_menu = create_hierarchical_menu(
-        title="Rick Assistant Menu",
-        structure=menu_structure
-    )
+    # Check if we should use the Python implementation
+    use_python = get_config_value("menu.use_python_implementation", True)
     
-    result = navigate_hierarchy(main_menu)
-    
-    # Handle the result
-    if result:
-        menu, index, value = result
+    if use_python:
+        # Use the new Ricktastic menu implementation
+        logger.debug("Using Python menu implementation")
+        return show_menu()
+    else:
+        # Use the original hierarchical menu implementation
+        logger.debug("Using hierarchical menu implementation")
         
-        # Special handling for certain actions
-        if value == "setup_wizard":
-            run_setup_wizard()
-            return launch_main_menu()  # Return to main menu when done
-        elif value == "terminal_info":
-            show_terminal_info()
-            return launch_main_menu()  # Return to main menu when done
-        elif value == "menu_diagnostics":
-            show_menu_diagnostics()
-            return launch_main_menu()  # Return to main menu when done
-        elif isinstance(value, dict) and value.get("type") == "toggle":
-            # Handle toggle items
-            key = value.get("key")
-            default = value.get("default")
-            if key:
-                success, message = handle_toggle_setting(key, default)
-                
-                # Show feedback to the user
-                if success:
-                    show_message("Setting Updated", message, "success")
-                else:
-                    show_message("Error", message, "error")
-                    
-                # If toggling the menu implementation, ask if user wants to restart
-                if key == "menu.use_python_implementation":
-                    # Get the new setting value
-                    use_python = get_config_value("menu.use_python_implementation", False)
-                    impl_name = "Python" if use_python else "Native ZSH"
-                    
-                    # Ask if user wants to restart menu with new implementation
-                    restart = confirm_action(
-                        f"Switch to {impl_name} Implementation?",
-                        f"Would you like to restart the menu using the {impl_name} implementation?",
-                        "Yes, restart now", "No, continue with current implementation"
-                    )
-                    
-                    if restart and not use_python:
-                        # User wants to restart with Native ZSH
-                        return None  # Exit Python menu to fall back to Native ZSH
-                
-                # Return to the same menu
-                return launch_main_menu()
-        elif isinstance(value, dict) and value.get("type") == "error_style":
-            # Handle error style setting
-            style = value.get("style")
-            if style:
-                success = set_config_value("general.error_style", style)
-                if success:
-                    style_name = "Rick-style" if style == "rick" else style.capitalize()
-                    show_message("Setting Updated", f"Error messages will now use {style_name} format.", "success")
-                else:
-                    show_message("Error", "Failed to update error style setting.", "error")
-                
-                # Return to the same menu
-                return launch_main_menu()
-        elif value in ["theme_settings_placeholder", "color_settings_placeholder", 
-                      "catchphrases_placeholder", "system_info_placeholder", 
-                      "exit_code_placeholder", "temperature_placeholder", 
-                      "cpu_placeholder", "ram_placeholder"]:
-            # Handle placeholder items
-            show_message("Work in Progress", 
-                        "Wh-what do you think I am, Morty? A miracle worker?\nThis feature isn't implemented yet! *burp*", 
-                        "warning")
-            return launch_main_menu()  # Return to main menu
-        elif isinstance(value, Menu):
-            # This is a submenu object - we should never get here because
-            # navigate_hierarchy should handle submenu navigation internally
-            logger.warning("Received Menu object as value - this should not happen")
-            # Just return to the main menu
-            return launch_main_menu()
-        else:
-            # Execute Rick command
-            success, output = execute_rick_command(value)
+        # Create the main menu structure
+        menu_structure = {
+            "Rick Commands": {
+                "items": [
+                    {"text": "Status", "value": "rick status"},
+                    {"text": "Debug Mode", "value": "rick debug"},
+                    {"text": "Version Info", "value": "rick version"},
+                    {"text": "Show Help", "value": "rick help"}
+                ]
+            },
+            "Configuration": {
+                "items": [
+                    {"text": "Prompt Integration", "value": "rick prompt"},
+                    {"text": "Powerlevel10k Setup", "value": "rick p10k"},
+                    {"text": "Run Diagnostics", "value": "rick diagnose"},
+                    {"text": "Display Settings", "submenu": {
+                        "items": [
+                            {"text": "Show Welcome Message", "type": "toggle", "key": "general.show_welcome_message", "default": True},
+                            {"text": "Theme Settings 🚧", "value": "theme_settings_placeholder"},
+                            {"text": "Color Scheme 🚧", "value": "color_settings_placeholder"}
+                        ]
+                    }},
+                    {"text": "Menu Settings", "submenu": {
+                        "items": [
+                            {"text": "Use Python Implementation", "type": "toggle", "key": "menu.use_python_implementation", "default": True},
+                            {"text": "Enable Animations", "type": "toggle", "key": "menu.animations_enabled", "default": False},
+                            {"text": "Use Static Portal", "type": "toggle", "key": "menu.use_static_portal", "default": True},
+                            {"text": "Terminal Compatibility Mode", "type": "toggle", "key": "menu.terminal_compatibility_mode", "default": False}
+                        ]
+                    }},
+                    {"text": "Prompt Settings", "submenu": {
+                        "items": [
+                            {"text": "Prompt Mode", "value": "rick prompt"},
+                            {"text": "Catchphrases 🚧", "value": "catchphrases_placeholder"},
+                            {"text": "System Info 🚧", "value": "system_info_placeholder"},
+                            {"text": "Exit Code 🚧", "value": "exit_code_placeholder"}
+                        ]
+                    }},
+                    {"text": "System Monitoring", "submenu": {
+                        "items": [
+                            {"text": "Temperature Settings 🚧", "value": "temperature_placeholder"},
+                            {"text": "CPU Monitoring 🚧", "value": "cpu_placeholder"},
+                            {"text": "RAM Monitoring 🚧", "value": "ram_placeholder"}
+                        ]
+                    }},
+                    {"text": "Error Message Style", "submenu": {
+                        "items": [
+                            {"text": "Rick Style", "value": {"type": "error_style", "style": "rick"}},
+                            {"text": "Simple", "value": {"type": "error_style", "style": "simple"}},
+                            {"text": "Technical", "value": {"type": "error_style", "style": "technical"}}
+                        ]
+                    }}
+                ]
+            },
+            "Tools": {
+                "items": [
+                    {"text": "Clean Up Files", "value": "rick cleanup"},
+                    {"text": "Setup Wizard", "value": "setup_wizard"},
+                    {"text": "Terminal Info", "value": "terminal_info"},
+                    {"text": "Menu Diagnostics", "value": "menu_diagnostics"}
+                ]
+            }
+        }
+        
+        # Create and navigate the menu
+        main_menu = create_hierarchical_menu(
+            title="Rick Assistant Menu",
+            structure=menu_structure
+        )
+        
+        result = navigate_hierarchy(main_menu)
+        
+        # Handle the result
+        if result:
+            menu, index, value = result
             
-            # Show results
-            if success:
-                show_message("Command Output", output, "info")
+            # Special handling for certain actions
+            if value == "setup_wizard":
+                run_setup_wizard()
+                return launch_main_menu()  # Return to main menu when done
+            elif value == "terminal_info":
+                show_terminal_info()
+                return launch_main_menu()  # Return to main menu when done
+            elif value == "menu_diagnostics":
+                show_menu_diagnostics()
+                return launch_main_menu()  # Return to main menu when done
+            elif isinstance(value, dict) and value.get("type") == "toggle":
+                # Handle toggle items
+                key = value.get("key")
+                default = value.get("default")
+                if key:
+                    success, message = handle_toggle_setting(key, default)
+                    
+                    # Show feedback to the user
+                    if success:
+                        show_message("Setting Updated", message, "success")
+                    else:
+                        show_message("Error", message, "error")
+                        
+                    # If toggling the menu implementation, ask if user wants to restart
+                    if key == "menu.use_python_implementation":
+                        # Get the new setting value
+                        use_python = get_config_value("menu.use_python_implementation", False)
+                        impl_name = "Python" if use_python else "Native ZSH"
+                        
+                        # Ask if user wants to restart menu with new implementation
+                        restart = confirm_action(
+                            f"Switch to {impl_name} Implementation?",
+                            f"Would you like to restart the menu using the {impl_name} implementation?",
+                            "Yes, restart now", "No, continue with current implementation"
+                        )
+                        
+                        if restart:
+                            return launch_main_menu()
+                    
+                    return launch_main_menu()  # Return to main menu when done
+            elif isinstance(value, dict) and value.get("type") == "error_style":
+                # Handle error style selection
+                style = value.get("style")
+                if style:
+                    set_config_value("errors.style", style)
+                    show_message("Setting Updated", f"Error style set to: {style}", "success")
+                return launch_main_menu()  # Return to main menu when done
+            elif value == "theme_settings_placeholder":
+                show_message("Coming Soon", "Theme settings will be available in a future update.", "info")
+                return launch_main_menu()  # Return to main menu when done
+            elif value == "color_settings_placeholder":
+                show_message("Coming Soon", "Color scheme settings will be available in a future update.", "info")
+                return launch_main_menu()  # Return to main menu when done
+            elif value == "catchphrases_placeholder":
+                show_message("Coming Soon", "Catchphrase settings will be available in a future update.", "info")
+                return launch_main_menu()  # Return to main menu when done
+            elif value == "system_info_placeholder":
+                show_message("Coming Soon", "System info settings will be available in a future update.", "info")
+                return launch_main_menu()  # Return to main menu when done
+            elif value == "exit_code_placeholder":
+                show_message("Coming Soon", "Exit code settings will be available in a future update.", "info")
+                return launch_main_menu()  # Return to main menu when done
+            elif value == "temperature_placeholder":
+                show_message("Coming Soon", "Temperature settings will be available in a future update.", "info")
+                return launch_main_menu()  # Return to main menu when done
+            elif value == "cpu_placeholder":
+                show_message("Coming Soon", "CPU monitoring settings will be available in a future update.", "info")
+                return launch_main_menu()  # Return to main menu when done
+            elif value == "ram_placeholder":
+                show_message("Coming Soon", "RAM monitoring settings will be available in a future update.", "info")
+                return launch_main_menu()  # Return to main menu when done
             else:
-                show_message("Command Error", output, "error")
-            
-            # Set flag to indicate we're returning from a command execution
-            # This will prevent unnecessary animations when going back to the menu
-            try:
-                # Import the menu module and set the flag directly
-                import src.ui.menu as menu_module
-                
-                # Set the flag to True to skip animations
-                menu_module.RETURNING_FROM_COMMAND = True
-                logger.debug("Set animation skip flag for returning from command")
-            except (ImportError, AttributeError) as e:
-                logger.debug(f"Could not set animation skip flag: {e}")
-            
-            # Return to main menu when done
-            return launch_main_menu()
-    
-    return None
+                # Return the value for command execution
+                return value
+        
+        return None
 
 @safe_execute()
 def run_setup_wizard():
@@ -945,46 +941,200 @@ def confirm_action(title="Confirm Action", message="Are you sure?", confirm_text
     return result[0]
 
 @safe_execute()
+def show_key_diagnostic():
+    """
+    Show a key diagnostic tool to help debug key input issues.
+    
+    This function will display raw key input information to help
+    diagnose issues with special keys like ESC.
+    """
+    # Clear screen for better visibility
+    clear_screen()
+    
+    # Create header
+    print(color_text("\n  🔍 RICK ASSISTANT KEY DIAGNOSTIC TOOL 🔍\n", "blue", bold=True))
+    print(color_text("  Press keys to see their raw input representation.", "cyan"))
+    print(color_text("  Press Ctrl+C to exit the diagnostic.\n", "yellow"))
+    
+    print(color_text("Key Information:", "green", bold=True))
+    print("┌─────────────┬────────────────┬───────────────────┐")
+    print("│ Pressed     │ Raw Bytes      │ Representation    │")
+    print("├─────────────┼────────────────┼───────────────────┤")
+    
+    try:
+        # Save terminal state
+        import termios
+        import tty
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        
+        # Set terminal to raw mode
+        tty.setraw(sys.stdin.fileno())
+        
+        while True:
+            # Read a character
+            char = sys.stdin.read(1)
+            
+            # Exit on Ctrl+C
+            if char == chr(3):  # Ctrl+C
+                break
+                
+            # Check for escape sequences
+            if char == '\x1b':  # ESC
+                # Start building the escape sequence
+                seq = char
+                
+                # MODIFIED: Use the same 0.03s timeout as our menu system
+                if select.select([sys.stdin], [], [], 0.03)[0]:
+                    # There's more input, it's a special key sequence
+                    nextchar = sys.stdin.read(1)
+                    seq += nextchar
+                    
+                    # If it's a CSI sequence
+                    if nextchar == '[':
+                        # Keep reading until we get a character that's not a number or semicolon
+                        while True:
+                            if select.select([sys.stdin], [], [], 0.03)[0]:
+                                nextchar = sys.stdin.read(1)
+                                seq += nextchar
+                                # If this character ends the sequence, stop reading
+                                if nextchar.isalpha() or nextchar == '~':
+                                    break
+                            else:
+                                break
+                
+                # Display the escape sequence with clear labeling
+                raw_bytes = ' '.join([f"0x{ord(c):02X}" for c in seq])
+                repr_bytes = repr(seq)[1:-1]  # Remove quotes
+                
+                # Use special formatting for ESC key
+                clear_screen()
+                print(color_text("\n  🔍 RICK ASSISTANT KEY DIAGNOSTIC TOOL 🔍\n", "blue", bold=True))
+                print(color_text("  Press keys to see their raw input representation.", "cyan"))
+                print(color_text("  Press Ctrl+C to exit the diagnostic.\n", "yellow"))
+                
+                print(color_text("Key Information:", "green", bold=True))
+                print("┌─────────────┬────────────────┬───────────────────┐")
+                print("│ Pressed     │ Raw Bytes      │ Representation    │")
+                print("├─────────────┼────────────────┼───────────────────┤")
+                
+                print(f"│ {color_text('ESC Sequence', 'yellow', bold=True).ljust(11)} │ {raw_bytes.ljust(14)} │ {repr_bytes.ljust(17)} │")
+                print("└─────────────┴────────────────┴───────────────────┘")
+                
+                # Add helpful explanation for common escape sequences
+                if seq == '\x1b':
+                    print(color_text("\nThis is a standalone ESC key.", "cyan"))
+                elif seq == '\x1b[A':
+                    print(color_text("\nThis is the UP ARROW key.", "cyan"))
+                elif seq == '\x1b[B':
+                    print(color_text("\nThis is the DOWN ARROW key.", "cyan"))
+                elif seq == '\x1b[C':
+                    print(color_text("\nThis is the RIGHT ARROW key.", "cyan"))
+                elif seq == '\x1b[D':
+                    print(color_text("\nThis is the LEFT ARROW key.", "cyan"))
+                elif seq == '\x1b[5~':
+                    print(color_text("\nThis is the PAGE UP key.", "cyan"))
+                elif seq == '\x1b[6~':
+                    print(color_text("\nThis is the PAGE DOWN key.", "cyan"))
+                elif seq == '\x1b[H':
+                    print(color_text("\nThis is the HOME key.", "cyan"))
+                elif seq == '\x1b[F':
+                    print(color_text("\nThis is the END key.", "cyan"))
+                else:
+                    print(color_text(f"\nThis is an unrecognized escape sequence.", "cyan"))
+                
+            else:
+                # Display regular character information
+                raw_bytes = f"0x{ord(char):02X}"
+                repr_bytes = repr(char)[1:-1]  # Remove quotes
+                
+                # Clear screen and show header
+                clear_screen()
+                print(color_text("\n  🔍 RICK ASSISTANT KEY DIAGNOSTIC TOOL 🔍\n", "blue", bold=True))
+                print(color_text("  Press keys to see their raw input representation.", "cyan"))
+                print(color_text("  Press Ctrl+C to exit the diagnostic.\n", "yellow"))
+                
+                print(color_text("Key Information:", "green", bold=True))
+                print("┌─────────────┬────────────────┬───────────────────┐")
+                print("│ Pressed     │ Raw Bytes      │ Representation    │")
+                print("├─────────────┼────────────────┼───────────────────┤")
+                
+                # Special handling for control characters
+                if ord(char) < 32:
+                    key_name = f"Ctrl+{chr(ord(char) + 64)}"
+                    print(f"│ {color_text(key_name, 'yellow', bold=True).ljust(11)} │ {raw_bytes.ljust(14)} │ {repr_bytes.ljust(17)} │")
+                else:
+                    print(f"│ {char.ljust(11)} │ {raw_bytes.ljust(14)} │ {repr_bytes.ljust(17)} │")
+                
+                print("└─────────────┴────────────────┴───────────────────┘")
+    
+    except Exception as e:
+        print(f"Error in diagnostic: {e}")
+    finally:
+        # Restore terminal settings
+        if 'old_settings' in locals():
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        
+        # Make sure we end with a clear screen
+        clear_screen()
+        print(color_text("Exiting key diagnostic tool.", "green"))
+        print("")
+
+@safe_execute()
 def main():
-    """Main entry point for the menu launcher."""
-    parser = argparse.ArgumentParser(description="Rick Assistant Menu Launcher")
-    parser.add_argument("menu_type", nargs="?", default="main", 
-                        help="Type of menu to launch (main, settings, tools)")
-    parser.add_argument("--debug", action="store_true", help="Enable debug output")
-    parser.add_argument("--test-command", help="Test a specific command without menu")
+    """
+    Main entry point for the menu system.
+    
+    Handles command line arguments and launches appropriate menu or command.
+    """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Rick Assistant Menu System")
+    parser.add_argument('command', nargs='?', default='menu',
+                      help='Command to execute (menu, status, debug, help, test, or wizard)')
+    parser.add_argument('--test', action='store_true', help='Run test menu')
+    parser.add_argument('--debug', action='store_true', help='Enable debug mode')
+    parser.add_argument('--diag', action='store_true', help='Run key diagnostic tool')
+    parser.add_argument('--wizard', action='store_true', help='Run setup wizard')
+    parser.add_argument('--menu', default=None, help='Specific menu to open directly')
     
     args = parser.parse_args()
     
-    # Enable debug mode if requested
+    # Configure logging
     if args.debug:
-        logger.setLevel("DEBUG")
-        os.environ['RICK_ASSISTANT_DEBUG'] = '1'
+        # Use the logging module from Python standard library for more detailed output
+        import logging
+        get_logger("menu_launcher").setLevel(logging.DEBUG)
         logger.debug("Debug mode enabled")
     
-    # Test a specific command if requested
-    if args.test_command:
-        logger.debug(f"Testing command: {args.test_command}")
-        success, output = execute_rick_command(args.test_command)
-        print(f"Command {'succeeded' if success else 'failed'}")
-        print("Output:")
-        print(output)
-        return 0
+    # Check for key diagnostic tool
+    if args.diag:
+        logger.debug("Starting key diagnostic tool")
+        return show_key_diagnostic()
     
-    # Launch the appropriate menu based on type
-    if args.menu_type == "main":
-        return launch_main_menu()
-    elif args.menu_type == "settings":
-        return launch_settings_menu()
-    elif args.menu_type == "help":
-        return launch_help_menu()
-    elif args.menu_type == "status":
-        return launch_status_menu()
-    elif args.menu_type == "test":
+    # Check for test mode
+    if args.test:
+        logger.debug("Running test menu")
         return run_test_menu()
+        
+    # Check for wizard mode
+    if args.wizard:
+        logger.debug("Running setup wizard")
+        run_wizard()
+        return
+    
+    # Handle specific command
+    if args.command == 'menu':
+        # Open a specific menu or the main menu
+        if args.menu:
+            logger.debug(f"Opening specific menu: {args.menu}")
+            return open_specific_menu(args.menu)
+        else:
+            logger.debug("Opening main menu")
+            return launch_main_menu()
     else:
-        show_message(f"Unknown menu type: {args.menu_type}", 
-                     title="Error", message_type="error")
-        return None
+        # Handle other commands
+        logger.debug(f"Executing command: {args.command}")
+        return execute_command(args.command)
 
 @safe_execute()
 def launch_settings_menu():
@@ -1127,6 +1277,90 @@ def launch_status_menu():
     # Show status text
     show_message(status_text, title="Rick Assistant Status", message_type="info")
     return 0
+
+@safe_execute()
+def run_wizard():
+    """
+    Run the setup wizard for Rick Assistant.
+    
+    This is a wrapper around the create_wizard function that handles
+    the specific wizard steps for Rick Assistant setup.
+    """
+    logger.debug("Running setup wizard")
+    return run_setup_wizard()
+
+@safe_execute()
+def open_specific_menu(menu_name: str):
+    """
+    Open a specific menu by name.
+    
+    Args:
+        menu_name: The name of the menu to open
+        
+    Returns:
+        The result of navigating the menu
+    """
+    logger.debug(f"Opening specific menu: {menu_name}")
+    
+    # Map menu names to functions
+    menu_map = {
+        "main": launch_main_menu,
+        "settings": launch_settings_menu,
+        "display": launch_display_settings,
+        "prompt": launch_prompt_settings,
+        "animations": launch_animation_settings,
+        "help": launch_help_menu,
+        "status": launch_status_menu
+    }
+    
+    # Check if the menu exists
+    if menu_name in menu_map:
+        return menu_map[menu_name]()
+    else:
+        # Show error message
+        show_message(
+            f"Unknown menu: {menu_name}",
+            title="Error",
+            message_type="error"
+        )
+        # Fall back to main menu
+        return launch_main_menu()
+
+@safe_execute()
+def execute_command(command: str):
+    """
+    Execute a Rick command directly.
+    
+    Args:
+        command: The command to execute (without 'rick' prefix)
+        
+    Returns:
+        The result of executing the command
+    """
+    logger.debug(f"Executing command: {command}")
+    
+    # Add 'rick' prefix if not present
+    if not command.startswith("rick "):
+        command = f"rick {command}"
+    
+    # Execute the command
+    success, output = execute_rick_command(command)
+    
+    # Show results
+    if success:
+        show_message(
+            output,
+            title=f"Command: {command}",
+            message_type="info"
+        )
+    else:
+        show_message(
+            output,
+            title=f"Command Error: {command}",
+            message_type="error"
+        )
+    
+    return success
 
 if __name__ == "__main__":
     main() 

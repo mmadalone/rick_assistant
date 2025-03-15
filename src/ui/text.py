@@ -738,7 +738,7 @@ def format_table(data: List[List[str]], headers: Optional[List[str]] = None,
 
 @safe_execute(default_return="")
 def color_text(text: str, color: str = "", bg_color: Optional[str] = None, 
-               style: Optional[str] = None) -> str:
+               style: Optional[str] = None, bold: bool = False) -> str:
     """
     Apply ANSI color codes to text.
     
@@ -747,13 +747,14 @@ def color_text(text: str, color: str = "", bg_color: Optional[str] = None,
         color: Color name (e.g., 'green', 'red', 'cyan')
         bg_color: Background color name
         style: Optional text style (e.g., 'bold', 'underline')
+        bold: Whether to make the text bold (alternative to style='bold')
         
     Returns:
         Colorized text string
     """
     try:
         # Return original if no formatting requested
-        if not color and not bg_color and not style:
+        if not color and not bg_color and not style and not bold:
             return text
             
         result = ""
@@ -763,6 +764,10 @@ def color_text(text: str, color: str = "", bg_color: Optional[str] = None,
             style_key = style if not style.startswith("bright_") else style[7:]
             if style_key in COLORS:
                 result += COLORS[style_key]
+        
+        # Apply bold if requested through the bold parameter
+        if bold and "bold" in COLORS:
+            result += COLORS["bold"]
         
         # Apply foreground color
         if color:
@@ -778,12 +783,11 @@ def color_text(text: str, color: str = "", bg_color: Optional[str] = None,
             if bg_key in COLORS:
                 result += COLORS[bg_key]
         
-        # Add text and reset
+        # Add the text and reset code
         result += text + COLORS["reset"]
         return result
     except Exception as e:
-        logger.error(f"Error applying color to text: {str(e)}")
-        # Simple fallback
+        logger.error(f"Error in color_text: {str(e)}")
         return text
 
 #

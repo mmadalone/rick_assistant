@@ -39,14 +39,18 @@ _rick_menu_read_key() {
       echo "DEBUG: Detected escape sequence start" >&2
     fi
     
+    # Use a very short timeout for detecting standalone ESC vs. escape sequences
+    # This helps differentiate between a real ESC key press and the start of an escape sequence
+    local escTimeout=0.01
+    
     # Fast check for additional characters to avoid delays
-    if read -t 0.01 -k 1 -s char 2>/dev/null; then
+    if read -t $escTimeout -k 1 -s char 2>/dev/null; then
       key="${key}${char}"
       
       # Handle extended sequences
       if [[ "$char" == "[" || "$char" == "O" ]]; then
         # Read one more character for common sequences
-        if read -t 0.01 -k 1 -s char 2>/dev/null; then
+        if read -t $escTimeout -k 1 -s char 2>/dev/null; then
           key="${key}${char}"
           
           # Handle special keys that might have additional characters
@@ -56,7 +60,7 @@ _rick_menu_read_key() {
                 "$char" == "6" || "$char" == "7" || "$char" == "8" || 
                 "$char" == "9" || "$char" == ";" || "$char" == "~" ]]; then
             # Read one more character
-            if read -t 0.01 -k 1 -s char 2>/dev/null; then
+            if read -t $escTimeout -k 1 -s char 2>/dev/null; then
               key="${key}${char}"
             fi
             
@@ -69,7 +73,7 @@ _rick_menu_read_key() {
                   "$last_char" == "8" || "$last_char" == "9" || 
                   "$last_char" == ";" ]]; then
               # Read one more character
-              if read -t 0.01 -k 1 -s char 2>/dev/null; then
+              if read -t $escTimeout -k 1 -s char 2>/dev/null; then
                 key="${key}${char}"
               fi
             fi
@@ -77,8 +81,11 @@ _rick_menu_read_key() {
         fi
       fi
     else
-      # This is a lone Escape key
+      # This is a lone Escape key - always explicitly set it
       key="escape"
+      if (( RICK_DEBUG )); then
+        echo "DEBUG: Detected standalone ESC key" >&2
+      fi
     fi
     
     # Map common escape sequences to key names
@@ -110,6 +117,14 @@ _rick_menu_read_key() {
       $'\e[21~') key="f10" ;;
       $'\e[23~') key="f11" ;;
       $'\e[24~') key="f12" ;;
+      # Make sure any other escape sequence without a specific
+      # match is still treated as escape for better usability
+      $'\e'*) 
+        if (( RICK_DEBUG )); then
+          echo "DEBUG: Unrecognized escape sequence, treating as escape: $key" >&2
+        fi
+        key="escape" 
+        ;;
     esac
     
     # Debug output

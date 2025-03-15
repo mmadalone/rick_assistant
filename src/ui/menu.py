@@ -27,8 +27,17 @@ import time
 import random
 import shutil
 import locale
+import platform
 from typing import List, Dict, Any, Optional, Union, Tuple, Callable, TypeVar
 import select
+
+from src.ui.text import clear_screen, color_text, get_terminal_width, get_terminal_height, supports_unicode, supports_ansi_color
+from src.utils.logger import get_logger
+from src.utils.errors import safe_execute
+from src.utils.config import get_config_value, set_config_value
+
+# Set up logger
+logger = get_logger(__name__)
 
 # Set up proper encoding for terminal output to fix character display issues
 def setup_terminal_encoding():
@@ -91,7 +100,7 @@ try:
     from src.utils.errors import safe_execute, RickAssistantError
     from src.utils.config import get_config_value
     from src.ui.text import (
-        color_text, format_text, stream_text, 
+        format_text, stream_text, 
         format_error, format_warning, format_success, format_info,
         get_terminal_width, get_terminal_height, supports_ansi_color, supports_unicode,
         clear_screen
@@ -115,7 +124,6 @@ except ImportError as e:
             return wrapper
         return decorator
     def get_config_value(key, default=None): return default
-    def color_text(text, color): return text
     def format_text(text, width=80): return text
     def stream_text(text, speed=0.03): print(text)
     def format_error(message): return f"Error: {message}"
@@ -126,7 +134,19 @@ except ImportError as e:
     def get_terminal_height(): return 24
     def supports_ansi_color(): return False
     def supports_unicode(): return False
-    def clear_screen(): print("\n" * 5)
+    def clear_screen():
+        """Fallback clear screen function that properly clears the terminal."""
+        try:
+            # Check platform
+            if sys.platform == 'win32':
+                os.system('cls')
+            else:
+                os.system('clear')
+            return True
+        except Exception:
+            # Last resort: print newlines
+            print("\n" * 100)
+            return False
     def get_single_key(prompt=None): 
         if prompt: print(prompt)
         return input()[0] if input() else ""
@@ -293,37 +313,16 @@ TYPING_SPEED = DEFAULT_TYPING_SPEED * ANIMATION_SPEED_MULTIPLIER
 # Menu display configuration
 USE_STATIC_PORTAL = True  # Always use static portal
 
-# Static portal ASCII art
+# Static portal ASCII art for the OPEN state (portal when open)
 STATIC_PORTAL_ART_OPEN = """
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡾⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡼⠀⢰⠀⢀⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⢲⠶⣂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡞⠁⠀⠈⣍⣿⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠈⡄⠈⠑⠢⢄⡀⠀⠀⠀⠀⠀⡜⠀⠀⠀⠀⢻⣿⣿⡇⠀⠀⠀⠀⠀⠀⣀⣤⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠠⢵⠀⠀⠀⠀⠈⠓⠤⣤⠄⡼⠀⠀⠀⠀⠀⠘⣿⣿⣿⠤⠄⠀⣠⠴⠊⢡⣿⠀⠠⠤⣤⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⢧⠀⠀⠀⠀⠀⠀⠈⠲⠃⠀⠀⠀⠀⠀⠀⢻⣿⡿⠗⠒⠉⠀⠀⠀⣾⣏⣠⣴⣾⡏⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠈⢆⠀⠀⠀⠀⠀⠀⢀⡠⠤⠔⠒⠂⠤⠄⣈⠁⠀⠀⠀⠀⠀⠀⢰⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢆⠀⠀⠀⡤⠊⠁⠀⠀⠀⠀⠀⠀⠀⠀⠉⠒⢄⠀⠀⠀⠀⣼⣿⣿⣿⣿⡟⠀⠀⠀⠀⠀⠀⠀
-⠔⡀⠉⠉⠉⠉⠈⠉⠉⠉⠀⢀⠎⠀⠀⠀⠀⣀⠤⢒⡠⠖⠂⠀⣀⣀⣀⠱⡀⠀⠀⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀
-⠀⠈⠑⣤⡀⠀⠀⠀⠀⠀⠀⠀⡎⠀⠀⠠⠄⠋⠒⢈⡠⠄⠒⣈⠡⠤⠐⠚⠁⠙⡄⠀⠙⠛⠛⠻⢿⡶⠓⢶⣦⠀⠀⠀⠀
-⠀⠀⠀⠀⠙⢢⡀⠀⠀⠀⠀⢰⢁⡤⠐⠒⠒⢊⣉⡠⠔⠚⠉⡀⠀⠀⠀⠈⠒⢄⠰⡀⠀⠀⠀⣠⠞⢀⣴⣯⣅⣀⣀⠀⠀
-⠀⠀⠀⠀⠀⠀⠓⠤⡀⠀⠀⢸⠈⢉⠁⠉⠉⠀⠉⠢⡀⠀⡘⠀⢀⣀⣠⡤⠀⠘⢇⢣⠀⠀⣴⣭⣶⣿⣿⣿⣿⣿⡿⠟⠁
-⠀⠀⠀⠀⠀⠀⠀⣀⠼⠃⠀⢸⣠⠃⠀⠀⠀⣀⡠⠤⠼⡀⢻⠉⠁⠀⠉⠀⠀⠀⡼⠸⡀⠀⠈⠻⢿⣿⣿⣿⠟⠉⠀⠀⠀
-⠀⠀⢠⣠⠤⠒⠊⠁⠀⠀⠀⠈⡏⡦⠒⠈⠙⠃⠀⠀⢠⠇⠈⠢⣀⠀⠀⠀⣀⠔⠁⠀⣇⠀⠀⠀⢀⡽⠛⣿⣦⣀⡀⠀⠀
-⠀⠀⠀⠈⠑⠢⢄⡀⠀⠀⠀⠀⢇⠘⢆⡀⠀⠀⢀⡠⠊⡄⠀⢰⠀⠉⠉⠉⣠⣴⠏⠀⣻⠒⢄⢰⣏⣤⣾⣿⣿⣿⣦⣄⠀
-⠀⠀⠀⠀⠀⠀⠙⢻⣷⣦⡀⠀⢸⡀⠀⡈⠉⠉⢁⡠⠂⢸⠀⠀⡇⠙⠛⠛⠋⠁⠀⠀⣿⡇⢀⡟⣿⣿⣿⣿⣿⣿⠟⠋⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⢈⠇⠀⡴⠇⠀⠈⠉⠉⠀⠀⠀⠀⢣⣠⠇⠀⠀⠀⠀⠀⠀⠀⣿⣿⡟⠀⢻⠻⣿⡟⠉⠉⠉⠁⠀
-⠀⠀⠀⠀⠀⠀⢀⡠⠖⠁⠀⢸⠀⠘⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⣀⣀⣀⠐⢶⣿⢷⣯⣭⣤⣶⣿⣿⣦⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠒⠛⠒⠒⠤⠤⢲⠑⠦⢧⠀⠀⠀⠀⢀⡤⢖⠂⠉⠉⡸⠁⠀⠀⠀⢀⣾⣾⠈⣿⣿⣿⣿⣿⣿⣿⣷⡄⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠰⠾⣿⠀⠀⠈⢆⠸⣄⠊⠁⠀⠀⡉⢆⠀⡆⣀⠀⠀⠀⣰⢿⣷⣶⣾⣿⣿⣏⠉⠉⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠼⠠⠴⢞⣿⢦⠀⠀⠀⠀⠀⠛⠀⠉⠁⠛⠃⢀⣴⣿⣾⣿⣿⣿⣿⡿⠿⠆⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣶⡷⢄⡀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠀⠀⠀⣿⠷⡖⠢⠤⠔⠒⠻⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠉⢉⡩⢽⢻⠗⠤⢀⣀⣀⡠⢿⣿⣿⠿⣏⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠴⠊⠁⢠⠊⣸⠀⠀⠀⠀⠀⠀⠀⢻⠈⢖⠂⢉⠒⢤⣀⠀⠀⠀⠀⠀⠀⠀⠀
-"""
-
-STATIC_PORTAL_ART = """
-    art
+    .-'""""""-.
+  ,'           `.
+ /               \\
+|                 |
+|                 |
+ \\    RICK AND   /
+  `.   MORTY    ,'
+    `'-......-'´
 """
 
 # Flag to track if we're returning from a command execution
@@ -332,41 +331,26 @@ RETURNING_FROM_COMMAND = False
 
 # Static portal ASCII art for the CLOSED state (portal when closed)
 STATIC_PORTAL_ART_CLOSED = """
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠛⢿⣿⠙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠈⠀⢘⢹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣧⣀⠀⠀⠀⠀⠀⠐⠽⣿⣿⣿⣏⠀⢈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⢀⣿⣿⣿⣿⡇⠈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠀⠐⠀⠀⠀⢀⡐⣿⣿⣿⣿⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣤⣠⠀⠀⠀⣸⣿⣿⣿⣿⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠋⠉⢛⠋⠉⣁⣀⣠⣤⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠉⢀⣤⡆⠀⠀⠙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⠉⠉⠀⠉⣻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⡿⠋⠀⣠⣶⣿⣿⣇⠀⠂⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⠀⠀⠀⠀⠀⠀⠀⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⡿⠁⢠⣾⣿⣿⣿⣿⣿⠀⠀⠀⠈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⡀⢀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⠃⢀⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡄⠐⠀⠀⢠⣤⣤⣾⣿⣿⡿⠿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⡏⠀⣼⣿⣿⣿⣿⣿⡟⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠿⠟⠉⠁⠀⠀⠀⢠⠀⠈⠱⢿⡿⠟⠋⣠⣤⣾⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⡟⠁⠐⣆⠙⠛⠛⠛⠉⠀⠀⠐⡤⠤⠄⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⢁⣤⣶⠖⠈⠀⠀⠀⣼⣷⣦⣷⣤⣤⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣦⣴⣿⣷⣤⣀⣀⣠⣴⣷⣾⣆⠀⠀⠈⠉⠉⠛⠛⠻⠿⢿⣿⣿⣿⣿⣿⠟⠃⣴⣿⣿⠏⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⢠⣿⣷⣶⣶⣦⣤⠀⠀⣾⣿⣿⣿⣿⣦⣼⣿⣿⠏⠀⠀⠀⢀⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⣾⣿⣿⣿⣿⡿⠃⢀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣇⠀⠀⠀⢀⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠀⣸⣿⣿⣿⣿⡟⠁⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠀⣰⣿⣿⣿⣿⠟⢀⣾⣿⣿⡿⢃⣈⡛⠛⠿⣿⡿⠋⠀⣠⣶⣤⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⢀⣴⣿⣿⣿⣿⣧⡀⠈⢿⣿⣿⣿⣿⣿⣿⣶⣤⣀⢀⣴⣾⣿⣿⣿⣿⣷⣄⠈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠏⠀⣠⣿⣿⣿⣿⣿⣿⣿⣿⣷⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡆⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⠅⣀⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣟⠁⠐⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣬⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+    .-'""""""-.
+  ,'           `.
+ /               \\
+|                 |
+|     PORTAL      |
+ \\    CLOSED     /
+  `.             ,'
+    `'-......-'´
 """
 
 # Original braille art portal (just for backwards compatibility)
 STATIC_PORTAL_ART = """
-⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+    .-'""""""-.
+  ,'           `.
+ /               \\
+|                 |
+|   RICK MENU     |
+ \\   SYSTEM      /
+  `.             ,'
+    `'-......-'´
 """
 
 # Rick's menu commentary phrases
@@ -385,149 +369,60 @@ RICK_MENU_COMMENTS = [
 
 # Base classes for menu components
 class MenuItem:
-    """Individual selectable menu item"""
+    """Base class for menu items."""
     
-    def __init__(self, text: str, value: Any = None, enabled: bool = True, 
-                 callback: Callable = None, icon: str = None):
+    def __init__(self, text: str, action=None, enabled: bool = True, coming_soon: bool = False):
         """
         Initialize a menu item.
         
         Args:
-            text: Display text for the item
-            value: Value associated with this item (optional)
-            enabled: Whether this item can be selected
-            callback: Function to call when this item is selected
-            icon: Custom icon to display (will use default if None)
+            text: Text to display
+            action: Function to call when selected
+            enabled: Whether item is enabled
+            coming_soon: Mark item as "coming soon" with 🚧
         """
         self.text = text
-        self.value = value if value is not None else text
+        self.action = action
         self.enabled = enabled
-        self.callback = callback
+        self.coming_soon = coming_soon
         
-        # Auto-determine icon based on value if it's a rick command
-        if icon is None:
-            self.icon = self._determine_icon()
-        else:
-            # Validate the icon to ensure it's displayable
-            self.icon = self._validate_icon(icon)
-            
-        self.parent = None  # Will be set when added to a menu/category
+        # Add 🚧 marker if coming soon
+        if coming_soon:
+            self.text = f"🚧 {self.text}"
+            self.enabled = False  # Disable coming soon items
     
-    def _validate_icon(self, icon: str) -> str:
+    def render(self, width: int = 80, selected: bool = False) -> str:
         """
-        Validate that an icon is displayable and fall back if needed.
+        Render the menu item.
         
         Args:
-            icon: The icon to validate
+            width: Width to render to
+            selected: Whether item is selected
             
         Returns:
-            str: The validated icon or a fallback
+            str: Rendered text
         """
-        if not icon:
-            return MENU_SYMBOLS.get("action")
-            
-        try:
-            # Try to encode/decode the icon to check if it renders properly
-            encoded = icon.encode(sys.stdout.encoding or 'utf-8', errors='replace')
-            decoded = encoded.decode(sys.stdout.encoding or 'utf-8')
-            
-            # If the decoded char doesn't match or contains replacement char, use ASCII fallback
-            if decoded != icon or '' in decoded:
-                return MENU_SYMBOLS.get("action")
-            return icon
-        except Exception:
-            # On any error, use the fallback
-            return MENU_SYMBOLS.get("action")
+        # Basic rendering just returns the text
+        return self.text
     
-    def _determine_icon(self) -> str:
+    def activate(self):
         """
-        Determine the appropriate icon for this menu item based on its value.
+        Activate the menu item.
         
         Returns:
-            str: Icon appropriate for this menu item
+            Any: Result of action function
         """
-        # If it's a string value, check if it's a rick command
-        if isinstance(self.value, str):
-            cmd_value = self.value.lower()
-            
-            # For rick commands, match specific commands
-            if cmd_value.startswith("rick "):
-                cmd_parts = cmd_value.split()
-                if len(cmd_parts) > 1:
-                    subcmd = cmd_parts[1]
-                    
-                    # Map specific commands to their icons
-                    if subcmd == "status":
-                        return MENU_SYMBOLS.get("status")
-                    elif subcmd == "debug":
-                        return MENU_SYMBOLS.get("debug")
-                    elif subcmd == "version":
-                        return MENU_SYMBOLS.get("version")
-                    elif subcmd == "help":
-                        return MENU_SYMBOLS.get("help")
-                    elif subcmd in ["prompt", "p10k"]:
-                        return MENU_SYMBOLS.get("settings")
-                    elif subcmd in ["cleanup", "diagnose"]:
-                        return MENU_SYMBOLS.get("tools")
-            
-            # Check for text-based matching
-            lower_text = self.text.lower()
-            if "status" in lower_text:
-                return MENU_SYMBOLS.get("status")
-            elif "debug" in lower_text:
-                return MENU_SYMBOLS.get("debug")
-            elif "version" in lower_text or "info" in lower_text:
-                return MENU_SYMBOLS.get("version")
-            elif "help" in lower_text:
-                return MENU_SYMBOLS.get("help")
-            elif "settings" in lower_text or "config" in lower_text:
-                return MENU_SYMBOLS.get("settings")
-            elif "tool" in lower_text or "utility" in lower_text:
-                return MENU_SYMBOLS.get("tools")
+        if self.enabled and self.action:
+            logger.debug(f"Activating menu item: {self.text}")
+            if callable(self.action):
+                return self.action()
+            return self.action
+        return None
         
-        # Default action icon
-        return MENU_SYMBOLS.get("action")
-    
-    def execute(self):
-        """Execute the callback function if it exists"""
-        if self.callback and callable(self.callback):
-            return self.callback(self.value)
-        return self.value
-    
-    def render(self, width: int, selected: bool = False) -> str:
-        """
-        Render the menu item with consistent icon display.
-        
-        Args:
-            width: Available width for rendering
-            selected: Whether this item is currently selected
-            
-        Returns:
-            str: Formatted string representation of the item
-        """
-        # Ensure icon is defined and valid
-        if not hasattr(self, 'icon') or self.icon is None:
-            self.icon = MENU_SYMBOLS.get("action", "*")
-        
-        # Format the text with icon - ensure space between icon and text
-        item_text = f"{self.icon} {self.text}"
-        
-        # If disabled, gray it out
-        if not self.enabled:
-            formatted = color_text(item_text, "gray")
-        # If selected, highlight it
-        elif selected:
-            formatted = color_text(f"{BOLD}{item_text}{RESET}", "cyan")
-        # Otherwise, normal formatting
-        else:
-            formatted = item_text
-        
-        # Ensure the item fits within the width
-        if width and len(item_text) > width:
-            # Truncate and add ellipsis
-            formatted = formatted[:width-3] + "..."
-            
-        return formatted
+    def __str__(self):
+        """String representation."""
+        status = "enabled" if self.enabled else "disabled"
+        return f"MenuItem('{self.text}', {status})"
 
 class MenuCategory(MenuItem):
     """Grouping of related menu items"""
@@ -542,7 +437,7 @@ class MenuCategory(MenuItem):
             expanded: Whether this category is expanded by default
         """
         # Use folder icon for categories (will update based on expanded state)
-        super().__init__(text=text, value=text, icon=MENU_SYMBOLS["folder"])
+        super().__init__(text=text, action=None, enabled=True, coming_soon=False)
         self.items = items or []
         self._expanded = expanded
         
@@ -610,8 +505,7 @@ class MenuAction(MenuItem):
             value: Value to pass to the callback (optional)
             enabled: Whether this action can be selected
         """
-        super().__init__(text=text, value=value, enabled=enabled, 
-                         callback=callback, icon=MENU_SYMBOLS["action"])
+        super().__init__(text=text, action=callback, enabled=enabled, coming_soon=False)
         
 class MenuToggle(MenuItem):
     """Menu item that can be toggled on/off"""
@@ -630,8 +524,7 @@ class MenuToggle(MenuItem):
         """
         self.state = default
         self.key = key
-        super().__init__(text=text, value=self.state, enabled=enabled, 
-                         callback=callback, icon=self._get_icon())
+        super().__init__(text=text, action=callback, enabled=enabled, coming_soon=False)
     
     def _get_icon(self) -> str:
         """Get the appropriate icon based on state"""
@@ -660,8 +553,8 @@ class MenuToggle(MenuItem):
             self.update_config(self.key, self.state)
             
         # Execute callback if provided
-        if self.callback and callable(self.callback):
-            return self.callback(self.state)
+        if self.action and callable(self.action):
+            return self.action()
             
         return self.state
     
@@ -859,7 +752,7 @@ class Menu:
             return item.toggle()
         else:
             # Execute the item
-            return item.execute()
+            return item.activate()
     
     def exit(self):
         """Exit the menu"""
@@ -953,16 +846,18 @@ def colorize_portal_frame(frame: str) -> str:
     return colorize_portal(frame)
 
 @safe_execute()
-def animate_portal_open(width: int = None, height: int = None, frames: int = None, 
-                        frame_duration: float = None) -> None:
+def animate_portal_open(width: int = None, height: int = None, frames: int = 1, 
+                        frame_duration: float = 0.2) -> None:
     """
-    Show portal opening animation, properly centered in the terminal.
+    Show simplified portal opening animation, properly centered in the terminal.
     
     Args:
         width: Terminal width (auto-detected if None)
         height: Terminal height (auto-detected if None)
+        frames: Number of animation cycles (reduced for speed)
+        frame_duration: Duration of each frame (reduced for speed)
     """
-    logger.debug("Showing portal open animation")
+    logger.debug("Showing simplified portal open animation")
     
     # If returning from a command execution, skip animation
     global RETURNING_FROM_COMMAND
@@ -975,33 +870,11 @@ def animate_portal_open(width: int = None, height: int = None, frames: int = Non
     # Determine if animations should be shown or if we should use static portal
     try:
         # Default to static portal and no animations for safety
-        use_static = True
-        animations_enabled = False
+        use_static = get_config_value("menu.use_static_portal", True)
+        animations_enabled = get_config_value("menu.animations_enabled", False)
         
-        # Check if the config system is available
-        try:
-            from src.utils.config import get_config_value, CONFIG_LOADED
-            
-            # Only query config if it's been properly loaded
-            if CONFIG_LOADED:
-                # Get animation settings from config
-                use_static = get_config_value("menu.use_static_portal", True)
-                animations_enabled = get_config_value("menu.animations_enabled", False)
-                logger.debug(f"Animation settings from config: static={use_static}, enabled={animations_enabled}")
-            else:
-                logger.debug("Config not loaded, using default animation settings")
-        except ImportError:
-            logger.debug("Config module not available, using default animation settings")
-        except Exception as e:
-            logger.debug(f"Error accessing config: {e}, using default animation settings")
-            
         # Check for terminal compatibility mode
-        terminal_compatibility_mode = False
-        try:
-            if CONFIG_LOADED:
-                terminal_compatibility_mode = get_config_value("menu.terminal_compatibility_mode", False)
-        except Exception:
-            pass
+        terminal_compatibility_mode = get_config_value("menu.terminal_compatibility_mode", False)
             
         # Use static portal if animations are disabled or static portal is enabled
         if use_static or not animations_enabled or terminal_compatibility_mode:
@@ -1009,55 +882,67 @@ def animate_portal_open(width: int = None, height: int = None, frames: int = Non
             display_static_portal_open()
             return
             
-       
-        # Select portal size based on terminal dimensions
+        # Width and height for centering
         width = width or get_terminal_width()
         height = height or get_terminal_height()
         
-        if height < 10:
-            portal_frames = PORTAL_SMALL
-        elif width < 50:
-            portal_frames = PORTAL_SMALL
-        else:
-            portal_frames = PORTAL_MEDIUM
+        # Simplified portal animation - just 2 frames for speed
+        portal_frames = [
+            # Frame 1 - Portal starting to open
+            """
+    .-'""""""-.
+  ,'           `.
+ /               \\
+|                 |
+|     ~~~~~~      |
+ \\    ~~~~~~     /
+  `.             ,'
+    `'-......-'´
+            """,
+            # Frame 2 - Portal open
+            """
+    .-'""""""-.
+  ,'           `.
+ /               \\
+|                 |
+|                 |
+ \\    RICK AND   /
+  `.   MORTY    ,'
+    `'-......-'´
+            """
+        ]
         
-        # Run the animation
-        for _ in range(frames):
-            for i, frame in enumerate(portal_frames):
-                # Clear screen for clean animation
-                clear_screen()
+        # Very quick animation loop (just 2 frames)
+        for frame in portal_frames:
+            # Clear screen for clean animation
+            clear_screen()
+            
+            # Split frame into lines
+            frame_lines = frame.strip().split('\n')
+            
+            # Add vertical spacing to center in terminal
+            print("\n" * int((height - len(frame_lines)) // 4))
+            
+            # Center and colorize each line
+            for line in frame_lines:
+                # Colorize with Rick & Morty colors
+                colorized = ""
+                for char in line:
+                    if char in ".-'`\\/ ":
+                        colorized += PORTAL_GREEN + char + RESET
+                    elif char in "(),|":
+                        colorized += PORTAL_BLUE + char + RESET
+                    else:
+                        colorized += PORTAL_CYAN + char + RESET
+                        
+                # Center the line
+                centered_line = colorized.center(width)
                 
-                # Split frame into lines
-                frame_lines = frame.strip().split('\n')
-                
-                # Center each line
-                centered_frame = []
-                for line in frame_lines:
-                    centered_line = line.center(width)
-                    centered_frame.append(centered_line)
-                
-                # Add some vertical spacing
-                print("\n" * 2)
-                
-                # Colorize and print the portal frame
-                try:
-                    for line in centered_frame:
-                        colored_line = colorize_portal(line)
-                        print(colored_line)
-                except Exception as e:
-                    # Fallback if colorize_portal fails
-                    logger.debug(f"Error in portal animation colorizing: {e}")
-                    for line in centered_frame:
-                        print(line)
-                
-                # Add some bottom spacing
-                print("\n" * 2)
-                
-                # Wait for next frame
-                time.sleep(frame_duration)
-        
-        # Pause on the final frame
-        time.sleep(frame_duration * 2)
+                # Print the line
+                print(centered_line)
+            
+            # Wait briefly for next frame
+            time.sleep(frame_duration)
         
     except KeyboardInterrupt:
         # Allow cancelling the animation
@@ -1069,8 +954,6 @@ def animate_portal_open(width: int = None, height: int = None, frames: int = Non
         display_static_portal_open()
 
 @safe_execute()
-
-@safe_execute()
 def animate_transition(from_menu: Optional[Menu] = None, to_menu: Optional[Menu] = None, 
                        frame_duration: float = None) -> None:
     """
@@ -1079,41 +962,14 @@ def animate_transition(from_menu: Optional[Menu] = None, to_menu: Optional[Menu]
     Args:
         from_menu: Source menu (optional)
         to_menu: Destination menu (optional)
-        frame_duration: Seconds per frame (uses FRAME_DURATION if None)
+        frame_duration: Seconds per frame (no longer used)
     """
-    # Use default animation parameters if not specified
-    frame_duration = FRAME_DURATION if frame_duration is None else frame_duration
+    # Log transition only - no screen clearing or animations
+    # This prevents potential flickering or rendering issues
+    logger.debug(f"Menu transition from {from_menu.title if from_menu else 'None'} to {to_menu.title if to_menu else 'None'}")
     
-    # Skip if animations disabled
-    if not get_config_value("animations_enabled", True):
-        return
-    
-    # Get terminal dimensions
-    width = get_terminal_width()
-    
-    logger.debug("Showing menu transition animation")
-    
-    # Simplified portal swirl animation
-    swirl_chars = ['*', '.', 'o', 'O', '@', '*']
-    swirl_frames = []
-    
-    # Build the swirl frames
-    for i in range(5):
-        # Pattern gets more intense with each frame
-        pattern = swirl_chars[i % len(swirl_chars)] * (i + 1)
-        line = pattern.center(width)
-        colored_line = ""
-        for j, char in enumerate(line):
-            if char in swirl_chars:
-                if random.random() < 0.5:
-                    colored_line += PORTAL_GREEN + char + RESET
-                else:
-                    colored_line += PORTAL_BLUE + char + RESET
-            else:
-                colored_line += char
-        swirl_frames.append(colored_line)
-
-        clear_screen()
+    # Very short delay for stability
+    time.sleep(0.05)
 
 @safe_execute()
 def animate_item_selection(item: MenuItem, index: int, width: int) -> None:
@@ -1279,77 +1135,67 @@ def create_spinner(message: str = "Processing", spinner_type: str = "portal",
 # =====================================================================
 
 @safe_execute()
-def create_menu_border(width: int, height: int, style: str = "portal") -> List[str]:
+def create_menu_border(width: int, height: int, style: str = "slash") -> List[str]:
     """
-    Create Rick-themed border for menus.
+    Create fancy borders for the menu.
     
     Args:
-        width: Width of the border
-        height: Height of the border
-        style: Border style ('portal', 'simple', 'double')
+        width: Width of the menu
+        height: Height of the menu
+        style: Border style ('slash', 'unicode', 'simple')
         
     Returns:
-        List[str]: Lines of the border
+        List[str]: List of border strings (top, sides, bottom)
     """
-    logger.debug(f"Creating menu border with style: {style}")
+    logger.debug(f"Creating menu border with style: {style}, width: {width}, height: {height}")
     
-    # Ensure minimum dimensions
-    width = max(width, 20)
-    height = max(height, 5)
+    # Use ANSI green color if available
+    color_code = "\033[32m" if supports_ansi_color() else ""
+    reset_code = "\033[0m" if supports_ansi_color() else ""
     
-    # Available border styles
-    styles = {
-        "portal": {
-            "top_left": "╭",
-            "top_right": "╮",
-            "bottom_left": "╰",
-            "bottom_right": "╯",
-            "horizontal": "─",
-            "vertical": "│"
-        },
-        "simple": {
-            "top_left": "+",
-            "top_right": "+",
-            "bottom_left": "+",
-            "bottom_right": "+",
-            "horizontal": "-",
-            "vertical": "|"
-        },
-        "double": {
-            "top_left": "╔",
-            "top_right": "╗",
-            "bottom_left": "╚",
-            "bottom_right": "╝",
-            "horizontal": "═",
-            "vertical": "║"
-        }
-    }
-    
-    # Use simple style if unicode not supported
-    if not supports_unicode():
-        style = "simple"
+    if style == "slash":
+        # New Rick & Morty themed border with slashes and dashes
+        top_border = f"{color_code}/-{'-' * (width - 4)}-\\{reset_code}"
+        side_left = f"{color_code}|{reset_code}"
+        side_right = f"{color_code}|{reset_code}"
+        bottom_border = f"{color_code}\\-{'-' * (width - 4)}-/{reset_code}"
         
-    # Get border characters for the style
-    border = styles.get(style, styles["simple"])
+        return [top_border, [side_left, side_right], bottom_border]
     
-    # Create border lines
-    top = border["top_left"] + border["horizontal"] * (width - 2) + border["top_right"]
-    middle = border["vertical"] + " " * (width - 2) + border["vertical"]
-    bottom = border["bottom_left"] + border["horizontal"] * (width - 2) + border["bottom_right"]
+    elif style == "unicode":
+        # Unicode box drawing characters (if terminal supports it)
+        if supports_unicode():
+            top_border = f"{color_code}┌{'─' * (width - 2)}┐{reset_code}"
+            side_left = f"{color_code}│{reset_code}"
+            side_right = f"{color_code}│{reset_code}"
+            bottom_border = f"{color_code}└{'─' * (width - 2)}┘{reset_code}"
+        else:
+            # Fallback to simple borders if unicode is not supported
+            top_border = f"{color_code}+{'-' * (width - 2)}+{reset_code}"
+            side_left = f"{color_code}|{reset_code}"
+            side_right = f"{color_code}|{reset_code}"
+            bottom_border = f"{color_code}+{'-' * (width - 2)}+{reset_code}"
+        
+        return [top_border, [side_left, side_right], bottom_border]
     
-    # Colorize if supported
-    if supports_ansi_color():
-        top = color_text(top, "cyan")
-        middle = color_text(middle, "cyan")
-        bottom = color_text(bottom, "cyan")
+    elif style == "simple":
+        # Simple box border
+        top_border = f"{color_code}+{'-' * (width - 2)}+{reset_code}"
+        side_left = f"{color_code}|{reset_code}"
+        side_right = f"{color_code}|{reset_code}"
+        bottom_border = f"{color_code}+{'-' * (width - 2)}+{reset_code}"
+        
+        return [top_border, [side_left, side_right], bottom_border]
     
-    # Create all lines
-    lines = [top]
-    for _ in range(height - 2):
-        lines.append(middle)
-    lines.append(bottom)
-    
-    return lines
+    else:
+        # Default to slash style if invalid style provided
+        logger.warning(f"Invalid border style '{style}', using default 'slash' style")
+        top_border = f"{color_code}/-{'-' * (width - 4)}-\\{reset_code}"
+        side_left = f"{color_code}|{reset_code}"
+        side_right = f"{color_code}|{reset_code}"
+        bottom_border = f"{color_code}\\-{'-' * (width - 4)}-/{reset_code}"
+        
+        return [top_border, [side_left, side_right], bottom_border]
 
 @safe_execute()
 def create_portal_background(width: int, height: int, density: float = 0.05) -> List[str]:
@@ -1393,55 +1239,69 @@ def create_portal_background(width: int, height: int, density: float = 0.05) -> 
     return lines
 
 @safe_execute()
-def create_menu_header(title: str, width: int, with_quote: bool = True) -> List[str]:
+def create_menu_header(title: str, width: int) -> List[str]:
     """
-    Create styled menu header with title.
+    Create header for the menu.
     
     Args:
-        title: Menu title
-        width: Available width
-        with_quote: Whether to include a Rick quote
+        title: Title text
+        width: Width to format to
         
     Returns:
         List[str]: Lines of the header
     """
-    logger.debug(f"Creating menu header for: {title}")
+    logger.debug(f"Creating menu header with title: {title}")
     
-    # Make sure title fits within width
-    max_title_width = width - 10
-    if len(title) > max_title_width:
-        title = title[:max_title_width-3] + "..."
+    # Use colors if supported
+    use_color = supports_ansi_color()
+    green = "\033[32m" if use_color else ""
+    cyan = "\033[36m" if use_color else ""
+    bright_cyan = "\033[1;36m" if use_color else ""
+    reset = "\033[0m" if use_color else ""
     
-    # Create header separator
-    separator = "═" * width if supports_unicode() else "=" * width
+    # Center the title
+    centered_title = title.center(width - 2)
     
-    # Format title
-    formatted_title = title.center(width)
-    if supports_ansi_color():
-        formatted_title = color_text(BOLD + formatted_title + RESET, "green")
-        separator = color_text(separator, "blue")
-    
-    # Add Rick quote if requested
-    lines = [formatted_title, separator]
-    
-    if with_quote and random.random() < 0.7:
-        # Add a random Rick menu comment
-        quote = random.choice(RICK_MENU_COMMENTS)
-        
-        if supports_ansi_color():
-            quote = color_text(quote, "yellow")
+    # Create title with colors
+    if use_color:
+        # Colorize title: RICK AND MORTY in cyan, ASSISTANT CONTROL PANEL in green
+        if "RICK AND MORTY" in title and "ASSISTANT CONTROL PANEL" in title:
+            parts = title.split("ASSISTANT")
+            rick_part = parts[0]
+            assistant_part = "ASSISTANT" + parts[1]
             
-        lines.append(quote.center(width))
-        lines.append("")
+            # Calculate spacing to maintain centering
+            total_len = len(rick_part) + len(assistant_part)
+            padding = (width - 2 - total_len) // 2
+            left_padding = " " * padding
+            
+            # Create the colored title
+            colored_title = f"{left_padding}{bright_cyan}{rick_part}{reset}{green}{assistant_part}{reset}"
+        else:
+            # If not the specific title format, just color the whole thing cyan
+            colored_title = f"{bright_cyan}{centered_title}{reset}"
     else:
-        lines.append("")
-        
-    return lines
+        colored_title = centered_title
+    
+    # Create a separator line
+    separator = "-" * (width - 2)
+    if use_color:
+        separator = f"{green}{separator}{reset}"
+    
+    # Create the header lines
+    header = [
+        "",  # Blank line
+        colored_title,
+        separator,
+        ""   # Blank line
+    ]
+    
+    return header
 
 @safe_execute()
 def create_menu_footer(controls: Dict[str, str], width: int) -> List[str]:
     """
-    Create footer with key controls and system metrics if enabled.
+    Create footer with key controls based on ricktastic_menu.md style.
     
     Args:
         controls: Dict mapping keys to actions
@@ -1452,33 +1312,24 @@ def create_menu_footer(controls: Dict[str, str], width: int) -> List[str]:
     """
     logger.debug("Creating menu footer")
     
-    # Check if metrics should be displayed
-    show_metrics = get_config_value("ui.show_metrics", None)
-    # Try alternate format if not found
-    if show_metrics is None:
-        show_metrics = get_config_value("ui___show_metrics", True)
-    else:
-        # Convert to boolean if needed
-        show_metrics = str(show_metrics).lower() == "true"
-    
-    # Create separator
-    separator = "─" * width if supports_unicode() else "-" * width
+    # Create separator matching the border style
+    separator = "―" * width if supports_unicode() else "-" * width
     if supports_ansi_color():
-        separator = color_text(separator, "blue")
+        separator = color_text(separator, "green")
     
-    # Format controls
+    # Format controls with brackets as shown in ricktastic_menu.md
     control_parts = []
     for key, action in controls.items():
         if supports_ansi_color():
-            formatted = f"{color_text(key, 'cyan')}: {action}"
+            formatted = f"[ {color_text(key, 'cyan')} = {action} ]"
         else:
-            formatted = f"{key}: {action}"
+            formatted = f"[ {key} = {action} ]"
         control_parts.append(formatted)
     
-    # Join controls with separators
-    control_text = " | ".join(control_parts)
+    # Join controls with spaces
+    control_text = "  ".join(control_parts)
     
-    # Ensure control text fits
+    # Ensure control text fits and is centered
     if len(control_text) > width:
         # Create multiple lines of controls if needed
         control_lines = []
@@ -1486,9 +1337,9 @@ def create_menu_footer(controls: Dict[str, str], width: int) -> List[str]:
         current_width = 0
         
         for part in control_parts:
-            part_width = len(part) + 3  # +3 for the separator
+            part_width = len(part) + 2  # +2 for spacing
             if current_width + part_width > width and current_line:
-                control_lines.append(" | ".join(current_line))
+                control_lines.append("  ".join(current_line))
                 current_line = [part]
                 current_width = part_width
             else:
@@ -1496,124 +1347,97 @@ def create_menu_footer(controls: Dict[str, str], width: int) -> List[str]:
                 current_width += part_width
                 
         if current_line:
-            control_lines.append(" | ".join(current_line))
+            control_lines.append("  ".join(current_line))
         
         footer_lines = [separator] + [line.center(width) for line in control_lines]
     else:
         # Single line of controls
         footer_lines = [separator, control_text.center(width)]
     
-    # Add system metrics if enabled
-    if show_metrics:
-        try:
-            # Get current menu implementation
-            use_python_impl = get_config_value("ui.menu.use_python_implementation", True)
-            impl_indicator = "PY-MENU" if use_python_impl else "ZSH-MENU"
-            
-            # Try to get system metrics
-            import psutil
-            
-            # Get CPU usage
-            cpu_usage = f"{psutil.cpu_percent(interval=0.1)}%" if hasattr(psutil, 'cpu_percent') else "??%"
-            
-            # Get RAM usage
-            mem_usage = f"{psutil.virtual_memory().percent}%" if hasattr(psutil, 'virtual_memory') else "??%"
-            
-            # Get temperature (platform specific)
-            temperature = "??"
-            try:
-                if hasattr(psutil, 'sensors_temperatures'):
-                    temps = psutil.sensors_temperatures()
-                    if temps and 'coretemp' in temps:
-                        temperature = f"{temps['coretemp'][0].current}°C"
-                    elif temps and 'cpu_thermal' in temps:
-                        temperature = f"{temps['cpu_thermal'][0].current}°C"
-            except:
-                pass
-                
-            # Create metrics line
-            metrics_text = f"CPU: {cpu_usage} | RAM: {mem_usage} | TEMP: {temperature} | {impl_indicator}"
-            
-            # Add Rick quote if there's space
-            rick_quotes = [
-                "Wubba lubba dub dub!",
-                "I'm not drunk! *burp*",
-                "I've got a portal gun and a bad attitude!",
-                "Science isn't about why, it's about why not!",
-                "Nobody exists on purpose. Nobody belongs anywhere."
-            ]
-            
-            # Select random quote
-            import random
-            rick_quote = random.choice(rick_quotes)
-            
-            # Add quote to metrics if there's space
-            if len(metrics_text) + len(rick_quote) + 5 < width:
-                metrics_text = f"{metrics_text} | {rick_quote}"
-                
-            # Add metrics line to footer
-            metrics_line = metrics_text.center(width)
-            if supports_ansi_color():
-                metrics_line = color_text(metrics_line, "blue")
-                
-            footer_lines.insert(1, metrics_line)
-        except Exception as e:
-            logger.error(f"Error displaying system metrics in footer: {str(e)}")
+    # Add version info line in ricktastic_menu.md style
+    version_info = "YOU'RE RUNNING RICK ASSISTANT v0.1.0 - C-137 MORTY EDITION"
+    if supports_ansi_color():
+        version_info = color_text(version_info, "cyan")
+    
+    # Insert version info before controls
+    footer_lines.insert(1, "")  # Blank line
+    footer_lines.insert(2, version_info.center(width))
+    footer_lines.append("")  # Blank line at the end
     
     return footer_lines
 
 @safe_execute()
-def highlight_selection(item: MenuItem, selected: bool = True, width: int = 80) -> str:
+def highlight_selection(item: MenuItem, selected: bool, width: int) -> str:
     """
-    Highlight current item with Rick-themed styling.
+    Highlight the selected menu item.
     
     Args:
         item: MenuItem to highlight
-        selected: Whether item is selected
-        width: Available width
+        selected: Whether the item is selected
+        width: Width to format to
         
     Returns:
-        str: Highlighted item text
+        str: Formatted menu item line
     """
-    # Get base rendering from the item
-    item_text = item.render(width, selected)
+    # Check if the item is enabled
+    enabled = item.enabled
     
-    # For selected items, add additional styling
-    if selected and supports_ansi_color():
-        # Add arrow indicator
-        arrow = MENU_SYMBOLS["arrow"] + " "
-        item_text = arrow + item_text
-        
-        # Add portal icon for extra flair
-        if random.random() < 0.1:  # Occasional portal decoration
-            portal = " " + MENU_SYMBOLS["portal"]
-            item_text += portal
+    # Create prefix for "coming soon" items
+    prefix = "🚧 " if '🚧' in item.text else ""
+    # Remove the emoji from the text for length calculations
+    display_text = item.text.replace('🚧 ', '')
     
-    return item_text
+    # Set colors based on ANSI support
+    if supports_ansi_color():
+        if selected and enabled:
+            # Cyan for selected items
+            return f"\033[1;36m{prefix}{display_text}\033[0m".ljust(width)
+        elif selected and not enabled:
+            # Dim cyan for selected but disabled items
+            return f"\033[2;36m{prefix}{display_text}\033[0m".ljust(width)
+        elif not selected and enabled:
+            # Green for normal items
+            return f"\033[32m{prefix}{display_text}\033[0m".ljust(width)
+        else:
+            # Dim green for disabled items
+            return f"\033[2;32m{prefix}{display_text}\033[0m".ljust(width)
+    else:
+        # Fallback for terminals without color support
+        if selected:
+            return f"-> {prefix}{display_text}".ljust(width)
+        else:
+            return f"   {prefix}{display_text}".ljust(width)
 
 @safe_execute()
-def highlight_category(category: MenuCategory, selected: bool = True, width: int = 80) -> str:
+def highlight_category(category: MenuCategory, selected: bool, width: int) -> str:
     """
-    Highlight current category with Rick-themed styling.
+    Format a menu category with appropriate styling.
     
     Args:
         category: MenuCategory to highlight
-        selected: Whether category is selected
-        width: Available width
+        selected: Whether the category is selected
+        width: Width to format to
         
     Returns:
-        str: Highlighted category text
+        str: Formatted menu category line
     """
-    # Get base rendering from the category
-    category_text = category.render(width, selected)
+    # Get the category text
+    display_text = category.text.upper()
     
-    # For selected categories, add additional styling
-    if selected and supports_ansi_color():
-        # Add arrow indicator
-        arrow = MENU_SYMBOLS["arrow"] + " "
-        category_text = arrow + category_text
-    
-    return category_text
+    # Set colors based on ANSI support
+    if supports_ansi_color():
+        if selected:
+            # Bright cyan for selected categories
+            return f"\033[1;36m>> {display_text} <<\033[0m".ljust(width)
+        else:
+            # Bright green for normal categories
+            return f"\033[1;32m== {display_text} ==\033[0m".ljust(width)
+    else:
+        # Fallback for terminals without color support
+        if selected:
+            return f">> {display_text} <<".ljust(width)
+        else:
+            return f"== {display_text} ==".ljust(width)
 
 @safe_execute()
 def create_rick_menu_comment() -> str:
@@ -1667,7 +1491,7 @@ def display_menu(title: str, items: List[Union[MenuItem, str]], width: int = Non
     menu_items = []
     for item in items:
         if isinstance(item, str):
-            menu_items.append(MenuItem(text=item, value=item))
+            menu_items.append(MenuItem(text=item, action=None, enabled=True, coming_soon=False))
         else:
             menu_items.append(item)
     
@@ -1678,7 +1502,7 @@ def display_menu(title: str, items: List[Union[MenuItem, str]], width: int = Non
     return navigate_menu(menu, border_style=border_style, with_portal_bg=with_portal_bg)
 
 @safe_execute()
-def navigate_menu(menu: Menu, parent_menu: Menu = None, border_style: str = "portal",
+def navigate_menu(menu: Menu, parent_menu: Menu = None, border_style: str = "slash",
                   with_portal_bg: bool = False) -> Optional[Tuple[int, Any]]:
     """
     Handle menu navigation and selection.
@@ -1710,7 +1534,7 @@ def navigate_menu(menu: Menu, parent_menu: Menu = None, border_style: str = "por
     controls = {
         "↑/↓": "Navigate", 
         "Enter": "Select",
-        "Esc": "Exit"
+        "Q": "Exit"
     }
     
     # Add back control if there's a parent menu
@@ -1725,148 +1549,186 @@ def navigate_menu(menu: Menu, parent_menu: Menu = None, border_style: str = "por
     
     # Main menu navigation loop
     while not menu.exit_requested:
-        # Clear screen
-        clear_screen()
-        
-        # Create menu elements
-        border = create_menu_border(menu.width, menu.height, style=border_style)
-        header = create_menu_header(menu.title, menu.width)
-        footer = create_menu_footer(controls, menu.width)
-        
-        # Get visible items
-        visible_items = menu.get_visible_items()
-        
-        # Calculate available space for items
-        available_height = menu.height - len(header) - len(footer) - 2
-        
-        # Handle scrolling if needed
-        total_items = len(visible_items)
-        if total_items > available_height:
-            # Adjust scroll offset if needed
-            if menu.selected_index < menu.scroll_offset:
-                menu.scroll_offset = menu.selected_index
-            elif menu.selected_index >= menu.scroll_offset + available_height:
-                menu.scroll_offset = menu.selected_index - available_height + 1
-                
-            # Get visible items after scrolling
-            visible_range = visible_items[menu.scroll_offset:menu.scroll_offset + available_height]
-            
-            # Add scroll indicators
-            has_scroll_up = menu.scroll_offset > 0
-            has_scroll_down = menu.scroll_offset + available_height < total_items
-            
-            # Update controls for scrolling
-            if has_scroll_up:
-                controls["PgUp"] = "Scroll Up"
-            elif "PgUp" in controls:
-                del controls["PgUp"]
-                
-            if has_scroll_down:
-                controls["PgDn"] = "Scroll Down"
-            elif "PgDn" in controls:
-                del controls["PgDn"]
-        else:
-            visible_range = visible_items
-            menu.scroll_offset = 0
-        
-        # Portal background (if requested)
-        background = None
-        if with_portal_bg and supports_ansi_color():
-            background = create_portal_background(menu.width - 2, menu.height - 2)
-        
-        # Start rendering
-        content = []
-        
-        # Add header
-        for line in header:
-            content.append(line)
-        
-        # Add items
-        for i, item in enumerate(visible_range):
-            # Get global index (accounting for scroll)
-            global_index = i + menu.scroll_offset
-            
-            # Format the item
-            if isinstance(item, MenuCategory):
-                formatted = highlight_category(item, global_index == menu.selected_index, menu.width)
+        try:
+            # Clear screen with direct method
+            if sys.platform == 'win32':
+                os.system('cls')
             else:
-                formatted = highlight_selection(item, global_index == menu.selected_index, menu.width)
+                os.system('clear')
+            
+            # Force terminal cursor to home position
+            print("\033[H", end='', flush=True)
+            
+            # Create menu elements
+            border = create_menu_border(menu.width, menu.height, style=border_style)
+            header = create_menu_header(menu.title, menu.width)
+            footer = create_menu_footer(controls, menu.width)
+            
+            # Get visible items
+            visible_items = menu.get_visible_items()
+            
+            # Calculate available space for items
+            available_height = menu.height - len(header) - len(footer) - 2
+            
+            # Handle scrolling if needed
+            total_items = len(visible_items)
+            if total_items > available_height:
+                # Adjust scroll offset if needed
+                if menu.selected_index < menu.scroll_offset:
+                    menu.scroll_offset = menu.selected_index
+                elif menu.selected_index >= menu.scroll_offset + available_height:
+                    menu.scroll_offset = menu.selected_index - available_height + 1
+                    
+                # Get visible items after scrolling
+                visible_range = visible_items[menu.scroll_offset:menu.scroll_offset + available_height]
                 
-            content.append(formatted)
-        
-        # Add padding if needed
-        padding_needed = available_height - len(visible_range)
-        for _ in range(padding_needed):
-            content.append("")
-        
-        # Add footer
-        for line in footer:
-            content.append(line)
-        
-        # Render the menu
-        print(border[0])  # Top border
-        
-        for i, line in enumerate(content):
-            # Add background if available
-            if background and 0 <= i < len(background):
-                bg_line = background[i]
+                # Add scroll indicators
+                has_scroll_up = menu.scroll_offset > 0
+                has_scroll_down = menu.scroll_offset + available_height < total_items
+                
+                # Update controls for scrolling
+                if has_scroll_up:
+                    controls["PgUp"] = "Scroll Up"
+                elif "PgUp" in controls:
+                    del controls["PgUp"]
+                    
+                if has_scroll_down:
+                    controls["PgDn"] = "Scroll Down"
+                elif "PgDn" in controls:
+                    del controls["PgDn"]
+            else:
+                visible_range = visible_items
+                menu.scroll_offset = 0
+            
+            # Portal background (if requested)
+            background = None
+            if with_portal_bg:
+                background = create_portal_background(menu.width, menu.height)
+            
+            # Render menu
+            print("\033[H", end='', flush=True)  # Force cursor to home position again
+            
+            # Print top border
+            print(border[0])
+            
+            # Print content (header, items, padding, footer)
+            content = []
+            
+            # Add header
+            for line in header:
+                content.append(line)
+            
+            # Add items
+            for i, item in enumerate(visible_range):
+                # Format the item
+                if isinstance(item, MenuCategory):
+                    formatted = highlight_category(item, i == menu.selected_index - menu.scroll_offset, menu.width-2)
+                else:
+                    formatted = highlight_selection(item, i == menu.selected_index - menu.scroll_offset, menu.width-2)
+                content.append(formatted)
+            
+            # Add padding if needed
+            padding_needed = max(0, available_height - len(visible_range))
+            for _ in range(padding_needed):
+                content.append("")
+            
+            # Add footer
+            for line in footer:
+                content.append(line)
+            
+            # Print the content with borders
+            for line in content:
+                # Add left and right borders
                 padded_line = line.ljust(menu.width - 2)
-                # Print with border
                 print(f"{border[1][0]}{padded_line}{border[1][-1]}")
-            else:
-                # Print with border
-                print(f"{border[1][0]}{line.ljust(menu.width - 2)}{border[1][-1]}")
-        
-        print(border[-1])  # Bottom border
-        
-        # Get user input
-        key = get_single_key()
-        
-        # Process key input
-        if key in ('b', 'B') and parent_menu:  # Back
-            # Go back to parent menu
-            animate_transition(from_menu=menu, to_menu=parent_menu)
-            return (-1, "BACK")
             
-        elif key in ('?', 'h', 'H'):  # Help
-            show_menu_help(menu, controls)
+            # Print bottom border
+            print(border[-1])
             
-        elif key in ('\r', '\n', ' '):  # Enter or space
-            # Activate the selected item
-            result = menu.activate_selected()
+            # Flush output to ensure everything is displayed
+            sys.stdout.flush()
             
-            # If it's a category, just redraw
-            current_item = menu.get_current_item()
-            if isinstance(current_item, MenuCategory):
-                continue
+            # Small delay to ensure menu is visible before processing input
+            time.sleep(0.05)
             
+            # Get key input - use a blocking approach to prevent racing
+            key = get_menu_key()
+            logger.debug(f"Key pressed: '{key}'")
             
+            # Process key input
+            if key in ('b', 'B') and parent_menu:  # Back
+                # Go back to parent menu
+                logger.debug("'Back' key detected, returning to parent menu")
+                animate_transition(from_menu=menu, to_menu=parent_menu)
+                return (-1, "BACK")
                 
-        elif key in ('j', 'J', '\x1b[B'):  # Down arrow or j
-            menu.select_next()
-            
-        elif key in ('k', 'K', '\x1b[A'):  # Up arrow or k
-            menu.select_previous()
-            
-        elif key in ('g', 'G', 'Home'):  # Home or g
-            # Go to first item
-            menu.selected_index = 0
-            
-        elif key in ('G', 'End'):  # End or G
-            # Go to last item
-            menu.selected_index = len(visible_items) - 1
-            
-        elif key in ('PgDn', '\x1b[6~'):  # Page Down
-            # Page down (move multiple items)
-            new_index = min(menu.selected_index + available_height, len(visible_items) - 1)
-            menu.selected_index = new_index
-            
-        elif key in ('PgUp', '\x1b[5~'):  # Page Up
-            # Page up (move multiple items)
-            new_index = max(menu.selected_index - available_height, 0)
-            menu.selected_index = new_index
+            elif key in ('?', 'h', 'H'):  # Help
+                logger.debug("Help key detected, showing menu help")
+                show_menu_help(menu, controls)
+                
+            elif key in ('\r', '\n', ' '):  # Enter or space
+                logger.debug("Enter/space key detected, activating selected item")
+                # Activate the selected item
+                result = menu.activate_selected()
+                
+                # If it's a category, just redraw
+                current_item = menu.get_current_item()
+                if isinstance(current_item, MenuCategory):
+                    continue
+                
+                # Otherwise, return the result
+                if result is not None and result != False:
+                    # If the item has a value, return it
+                    logger.debug(f"Menu item activated, returning result: {result}")
+                    animate_transition(from_menu=menu)
+                    return (menu.selected_index, result)
+                elif current_item and hasattr(current_item, 'value') and current_item.value is not None:
+                    # Otherwise return the item's value
+                    logger.debug(f"Menu item selected, returning value: {current_item.value}")
+                    animate_transition(from_menu=menu)
+                    return (menu.selected_index, current_item.value)
+                    
+            elif key == '\x1b' or key in ('q', 'Q', 'ESC'):  # ESC key or q
+                logger.debug(f"ESC/q key detected (key='{key}'), exiting menu")
+                # Exit menu
+                animate_transition(from_menu=menu)
+                return None
+                    
+            elif key in ('j', 'J', '\x1b[B', 'DOWN'):  # Down arrow or j
+                logger.debug("Down navigation key detected")
+                menu.select_next()
+                
+            elif key in ('k', 'K', '\x1b[A', 'UP'):  # Up arrow or k
+                logger.debug("Up navigation key detected")
+                menu.select_previous()
+                
+            elif key in ('g', '\x1b[H', 'HOME'):  # Home key or g
+                logger.debug("Home key detected")
+                menu.selected_index = 0
+                
+            elif key in ('G', '\x1b[F', 'END'):  # End key or G
+                logger.debug("End key detected")
+                menu.selected_index = len(visible_items) - 1
+                
+            elif key in ('\x1b[5~', 'PGUP'):  # Page up
+                logger.debug("Page Up key detected")
+                # Page up (move multiple items)
+                move_up = min(available_height, menu.selected_index)
+                menu.selected_index -= move_up
+                
+            elif key in ('\x1b[6~', 'PGDN'):  # Page down
+                logger.debug("Page Down key detected")
+                # Page down (move multiple items)
+                items_left = len(visible_items) - menu.selected_index - 1
+                move_down = min(available_height, items_left)
+                menu.selected_index += move_down
+        
+        except Exception as e:
+            logger.error(f"Error in menu navigation loop: {e}")
+            # If there's an error, sleep briefly to prevent tight loop
+            time.sleep(0.2)
     
-    # Menu was exited
+    # Menu was exited via exit_requested
     return None
 
 @safe_execute()
@@ -1897,12 +1759,12 @@ def get_selection(items: List[Union[str, Dict[str, Any], MenuItem]], prompt: str
             value = item.get('value', text)
             enabled = item.get('enabled', True)
             icon = item.get('icon', None)
-            menu_items.append(MenuItem(text=text, value=value, enabled=enabled, icon=icon))
+            menu_items.append(MenuItem(text=text, action=None, enabled=enabled, coming_soon=False))
         else:
             # Add number prefix if requested
             prefix = f"{i+1}. " if numbered else ""
             text = prefix + str(item)
-            menu_items.append(MenuItem(text=text, value=item))
+            menu_items.append(MenuItem(text=text, action=None, enabled=True, coming_soon=False))
     
     # Set default selection
     menu = Menu(title=prompt, items=menu_items)
@@ -2246,42 +2108,87 @@ def get_menu_key() -> str:
     Returns:
         str: Key pressed by user
     """
-    # Use input system's single key function
-    key = get_single_key()
-    
-    # Process special key sequences
-    if key == '\x1b':  # Escape sequence
-        # Check if there's more input (arrow keys, etc.)
-        if hasattr(sys.stdin, 'fileno') and select.select([sys.stdin], [], [], 0.1)[0]:
-            seq = sys.stdin.read(2)
-            
-            # Arrow keys
-            if seq == '[A':
-                return 'UP'
-            elif seq == '[B':
-                return 'DOWN'
-            elif seq == '[C':
-                return 'RIGHT'
-            elif seq == '[D':
-                return 'LEFT'
-            elif seq == '[5':  # PgUp
-                # Consume trailing ~
-                sys.stdin.read(1)
-                return 'PGUP'
-            elif seq == '[6':  # PgDn
-                # Consume trailing ~
-                sys.stdin.read(1)
-                return 'PGDN'
-            elif seq == '[H':  # Home
-                return 'HOME'
-            elif seq == '[F':  # End
-                return 'END'
+    try:
+        # Use input system's single key function
+        key = get_single_key()
         
-        # Just Escape key
-        return 'ESC'
+        if not key:
+            # If no key is returned, just return an empty string
+            return ""
+        
+        # Process special key sequences
+        if key == '\x1b':  # Escape sequence
+            logger.debug("ESC key detected in get_menu_key")
+            
+            # Check if this is a standalone ESC key or the start of a sequence
+            if not hasattr(sys.stdin, 'fileno'):
+                # Can't check for more input, treat as standalone ESC
+                return 'ESC'
+            
+            # Try to read more with a short timeout
+            ready = select.select([sys.stdin], [], [], 0.05)[0]
+            if not ready:
+                # No more input available, so it's a standalone ESC key
+                return 'ESC'
+            
+            # There's more input, so it's probably an arrow key or function key
+            seq = sys.stdin.read(1)
+            
+            if seq == '[':
+                # ANSI escape sequence
+                next_char = sys.stdin.read(1)
+                
+                # Arrow keys
+                if next_char == 'A':
+                    return 'UP'
+                elif next_char == 'B':
+                    return 'DOWN'
+                elif next_char == 'C':
+                    return 'RIGHT'
+                elif next_char == 'D':
+                    return 'LEFT'
+                elif next_char == 'H':
+                    return 'HOME'
+                elif next_char == 'F':
+                    return 'END'
+                elif next_char == '5':
+                    # PgUp - consume the ~ character
+                    sys.stdin.read(1)
+                    return 'PGUP'
+                elif next_char == '6':
+                    # PgDn - consume the ~ character
+                    sys.stdin.read(1)
+                    return 'PGDN'
+                else:
+                    # Unknown escape sequence
+                    return f"ESC[{next_char}"
+            
+            # Other escape sequences
+            return f"ESC{seq}"
+        
+        # Regular keys for navigation
+        if key in ('j', 'J'):
+            return 'DOWN'
+        elif key in ('k', 'K'):
+            return 'UP'
+        elif key in ('h', 'H'):
+            return 'LEFT'
+        elif key in ('l', 'L'):
+            return 'RIGHT'
+        elif key in ('g'):
+            return 'HOME'
+        elif key in ('G'):
+            return 'END'
+        elif key in ('q', 'Q'):
+            return 'ESC'
+        
+        # Return the key as is
+        return key
     
-    # Regular key - return as is
-    return key
+    except Exception as e:
+        logger.error(f"Error in get_menu_key: {e}")
+        # Return a safe default
+        return ''
 
 @safe_execute()
 def process_menu_input(key: str, menu: Menu, selection: int) -> Tuple[bool, int, Any]:
@@ -2327,7 +2234,7 @@ def process_menu_input(key: str, menu: Menu, selection: int) -> Tuple[bool, int,
                 
             # Otherwise, execute the item
             else:
-                result = item.execute()
+                result = item.activate()
                 return True, selection, result
                 
     # Navigation keys
@@ -2404,14 +2311,14 @@ def handle_menu_action(action_item: MenuItem, show_animations: bool = True) -> A
     
     # Skip animations if disabled
     if not show_animations or not should_animate():
-        return action_item.execute()
+        return action_item.activate()
     
     # Show spinner while executing
     spinner_stop = create_spinner(f"Executing: {action_item.text}", spinner_type="portal")
     
     try:
         # Execute the action
-        result = action_item.execute()
+        result = action_item.activate()
         
         # Stop spinner
         spinner_stop()
@@ -2485,40 +2392,6 @@ def handle_toggle(toggle_item: MenuToggle, show_animations: bool = True) -> bool
         sys.stdout.flush()
     
     return new_state
-
-@safe_execute()
-def register_menu_with_powerlevel10k() -> bool:
-    """
-    Register menu system with Powerlevel10k if available.
-    
-    Returns:
-        bool: True if registration was successful
-    """
-    logger.debug("Attempting to register menu with Powerlevel10k")
-    
-    # Check if powerlevel10k integration is enabled
-    if not get_config_value('powerlevel10k_integration', True):
-        logger.debug("Powerlevel10k integration is disabled in config")
-        return False
-    
-    # Define function to be called by Powerlevel10k
-    def prompt_rick_menu_segment():
-        # This would be called by Powerlevel10k to show menu status
-        # Return appropriate format for Powerlevel10k
-        menu_enabled = get_config_value('menu_enabled', True)
-        
-        if menu_enabled:
-            return "%F{green}🧪 MENU%f"
-        else:
-            return ""
-    
-    # We would need to save this function somewhere accessible to ZSH
-    # This is just a placeholder - actual implementation would depend
-    # on how Powerlevel10k integration is set up
-    
-    # For demonstration purposes, we'll just log that it was registered
-    logger.info("Menu system registered with Powerlevel10k")
-    return True
 
 @safe_execute()
 def format_menu_for_p10k(menu_title: str, is_active: bool = True) -> str:
@@ -3082,12 +2955,34 @@ def display_static_portal_open() -> None:
     # Get terminal dimensions
     width = get_terminal_width()
     
-    # Select the appropriate portal art
-    portal_art = STATIC_PORTAL_ART_OPEN.strip().split('\n')
+    # Portal ASCII art in Rick & Morty colors (green/cyan)
+    portal_art = """
+    .-'""""""-.
+  ,'           `.
+ /               \\
+|                 |
+|                 |
+ \\    RICK AND   /
+  `.   MORTY    ,'
+    `'-......-'´
+    """.strip().split('\n')
     
     # Center each line of the portal art
     centered_portal = []
     for line in portal_art:
+        # Colorize the line with green and cyan highlights
+        if supports_ansi_color():
+            # Color the outer parts green, inner text cyan
+            colorized = ""
+            for char in line:
+                if char in ".-'`\\/ ":
+                    colorized += PORTAL_GREEN + char + RESET
+                elif char in "(),|":
+                    colorized += PORTAL_BLUE + char + RESET
+                else:
+                    colorized += PORTAL_CYAN + char + RESET
+            line = colorized
+            
         centered_line = line.center(width)
         centered_portal.append(centered_line)
     
@@ -3096,6 +2991,9 @@ def display_static_portal_open() -> None:
     for line in centered_portal:
         print(line)
     print("\n" * 2)  # Add some spacing at the bottom
+    
+    # Short pause to ensure visibility
+    time.sleep(0.3)
 
 @safe_execute()
 def display_static_portal_closed() -> None:
@@ -3108,12 +3006,34 @@ def display_static_portal_closed() -> None:
     # Get terminal dimensions
     width = get_terminal_width()
     
-    # Select the appropriate portal art
-    portal_art = STATIC_PORTAL_ART_CLOSED.strip().split('\n')
+    # Portal ASCII art in Rick & Morty colors (green/cyan)
+    portal_art = """
+    .-'""""""-.
+  ,'           `.
+ /               \\
+|                 |
+|     PORTAL      |
+ \\    CLOSED     /
+  `.             ,'
+    `'-......-'´
+    """.strip().split('\n')
     
     # Center each line of the portal art
     centered_portal = []
     for line in portal_art:
+        # Colorize the line with green and cyan highlights
+        if supports_ansi_color():
+            # Color the outer parts green, inner text cyan
+            colorized = ""
+            for char in line:
+                if char in ".-'`\\/ ":
+                    colorized += PORTAL_GREEN + char + RESET
+                elif char in "(),|":
+                    colorized += PORTAL_BLUE + char + RESET
+                else:
+                    colorized += PORTAL_CYAN + char + RESET
+            line = colorized
+            
         centered_line = line.center(width)
         centered_portal.append(centered_line)
     
@@ -3122,6 +3042,9 @@ def display_static_portal_closed() -> None:
     for line in centered_portal:
         print(line)
     print("\n" * 2)  # Add some spacing at the bottom
+    
+    # Short pause to ensure visibility
+    time.sleep(0.3)
 
 # =====================================================================
 # Module Exports
@@ -3151,35 +3074,491 @@ __all__ = [
     'animate_typing',
     'create_spinner',
     
-    # Visual elements
+    # Menu creation and rendering
     'create_menu_border',
-    'create_portal_background',
     'create_menu_header',
     'create_menu_footer',
     'highlight_selection',
     'highlight_category',
+    'create_ricktastic_menu',
+    'show_menu',
     
-    # Integration functions
-    'get_menu_key',
-    'process_menu_input',
-    'get_animation_preferences',
-    'should_animate',
-    'handle_menu_action',
-    'handle_toggle',
-    
-    # Advanced features
-    'create_submenu',
-    'navigate_hierarchy',
+    # Hierarchical menu functions
     'create_hierarchical_menu',
-    'save_menu_state',
-    'restore_menu_state',
-    'create_context_menu',
-    'create_wizard',
+    'navigate_hierarchy',
+    'create_submenu',
     
-    # Test function
+    # Wizard and context menus
+    'create_wizard',
+    'create_context_menu',
+    
+    # Static portal displays
+    'display_static_portal_open',
+    'display_static_portal_closed',
+    
+    # Test functions
     'run_test_menu'
 ]
 
 # If this module is run directly, execute test function
 if __name__ == "__main__":
     run_test_menu()
+
+@safe_execute()
+def render_menu(border: List[str], header: List[str], items: List[MenuItem], footer: List[str], 
+               selected_index: int, background: Optional[List[str]] = None) -> None:
+    """
+    Render a complete menu with border, header, items, and footer.
+    
+    Args:
+        border: Border lines (top, sides, bottom)
+        header: Header section lines
+        items: Menu items to display
+        footer: Footer section lines
+        selected_index: Index of the selected item (relative to visible items)
+        background: Optional background to display behind the menu
+    """
+    # Start rendering
+    content = []
+    
+    # Add header
+    for line in header:
+        content.append(line)
+    
+    # Add items
+    for i, item in enumerate(items):
+        # Format the item
+        if isinstance(item, MenuCategory):
+            formatted = highlight_category(item, i == selected_index, len(border[0])-2)
+        else:
+            formatted = highlight_selection(item, i == selected_index, len(border[0])-2)
+            
+        content.append(formatted)
+    
+    # Add padding if needed
+    available_height = len(border[0]) - len(header) - len(footer) - 2
+    padding_needed = max(0, available_height - len(items))
+    for _ in range(padding_needed):
+        content.append("")
+    
+    # Add footer
+    for line in footer:
+        content.append(line)
+    
+    # Calculate total available width
+    border_width = len(border[0])
+    
+    # Position cursor at top-left before rendering
+    sys.stdout.write("\033[H")
+    sys.stdout.flush()
+    
+    # Render the menu
+    print(border[0])  # Top border
+    
+    for i, line in enumerate(content):
+        # Add background if available
+        if background and i < len(background):
+            bg_line = background[i]
+            padded_line = line.ljust(border_width - 2)
+            # Print with border
+            print(f"{border[1][0]}{padded_line}{border[1][-1]}")
+        else:
+            # Print with border
+            print(f"{border[1][0]}{line.ljust(border_width - 2)}{border[1][-1]}")
+    
+    print(border[-1])  # Bottom border
+    
+    # Flush output
+    sys.stdout.flush()
+
+@safe_execute()
+def create_ricktastic_menu() -> Menu:
+    """
+    Create the main Rick menu with categories and items based on ricktastic_menu.md.
+    
+    Returns:
+        Menu: The complete Rick menu structure
+    """
+    logger.debug("Creating Ricktastic menu")
+    
+    # Create the main menu
+    main_menu = Menu(title="🧪 RICK ASSISTANT CONTROL PANEL 🧪")
+    
+    # Add Settings category
+    settings_category = MenuCategory("Settings", expanded=False)
+    settings_category.add_item(MenuItem("Color Scheme", action=lambda: show_submenu_placeholder("Color Scheme")))
+    settings_category.add_item(MenuItem("Interface Options", action=lambda: show_submenu_placeholder("Interface Options")))
+    settings_category.add_item(MenuItem("Sound Effects", action=lambda: show_submenu_placeholder("Sound Effects"), coming_soon=True))
+    settings_category.add_item(MenuItem("Reset to Defaults", action=lambda: confirm_action("Reset all settings to defaults?", reset_all_settings)))
+    main_menu.add_item(settings_category)
+    
+    # Add Tools category
+    tools_category = MenuCategory("Tools", expanded=False)
+    tools_category.add_item(MenuItem("System Diagnostics", action=lambda: show_system_diagnostics()))
+    tools_category.add_item(MenuItem("Cleanup Temporary Files", action=lambda: confirm_action("Clean up temporary files?", cleanup_temp_files)))
+    tools_category.add_item(MenuItem("Update Check", action=lambda: check_for_updates()))
+    tools_category.add_item(MenuItem("Advanced Terminal Tools", action=lambda: show_submenu_placeholder("Advanced Terminal Tools"), coming_soon=True))
+    main_menu.add_item(tools_category)
+    
+    # Add Help & Info category
+    help_category = MenuCategory("Help & Info", expanded=False)
+    help_category.add_item(MenuItem("Quick Tips", action=lambda: show_quick_tips()))
+    help_category.add_item(MenuItem("Command Reference", action=lambda: show_command_reference()))
+    help_category.add_item(MenuItem("About", action=lambda: show_about_info()))
+    help_category.add_item(MenuItem("View Documentation", action=lambda: show_documentation(), coming_soon=True))
+    main_menu.add_item(help_category)
+    
+    # Add Actions category
+    actions_category = MenuCategory("Actions", expanded=False)
+    actions_category.add_item(MenuItem("Restart ZSH", action=lambda: confirm_action("Restart ZSH session?", restart_zsh)))
+    actions_category.add_item(MenuItem("Test Portal Gun", action=lambda: test_portal_gun()))
+    actions_category.add_item(MenuItem("Toggle Debug Mode", action=lambda: toggle_debug_mode()))
+    actions_category.add_item(MenuItem("Portal to Dimension C-137", action=lambda: show_submenu_placeholder("Portal to Dimension C-137"), coming_soon=True))
+    main_menu.add_item(actions_category)
+    
+    # Exit item
+    main_menu.add_item(MenuItem("Exit Menu", action=lambda: exit_menu()))
+    
+    return main_menu
+
+# Placeholder functions for menu actions
+@safe_execute()
+def show_submenu_placeholder(submenu_name: str):
+    """Show a placeholder for submenu items"""
+    clear_screen()
+    print(f"\n  {submenu_name} submenu coming soon!\n")
+    time.sleep(1.5)
+    return None
+
+@safe_execute()
+def confirm_action(message: str, action_func) -> Any:
+    """
+    Show a confirmation dialog and execute action if confirmed.
+    
+    Args:
+        message: Confirmation message to display
+        action_func: Function to execute if confirmed
+        
+    Returns:
+        Any: Result of action or None if cancelled
+    """
+    clear_screen()
+    print(f"\n  {message}")
+    print("\n  Press Y to confirm, any other key to cancel.")
+    
+    key = getch()
+    if key.lower() == 'y':
+        return action_func()
+    return None
+
+@safe_execute()
+def reset_all_settings():
+    """Reset all settings to defaults"""
+    clear_screen()
+    print("\n  Resetting all settings to defaults...")
+    time.sleep(1)
+    print("  Settings have been reset!")
+    time.sleep(1.5)
+    return None
+
+@safe_execute()
+def show_system_diagnostics():
+    """Show system diagnostics"""
+    clear_screen()
+    print("\n  System Diagnostics")
+    print("  =================")
+    print(f"\n  OS: {platform.system()} {platform.release()}")
+    print(f"  Python: {platform.python_version()}")
+    print(f"  Terminal: {os.environ.get('TERM', 'Unknown')}")
+    print(f"  Shell: {os.environ.get('SHELL', 'Unknown')}")
+    
+    # Add more diagnostic info here
+    
+    print("\n  Press any key to return...")
+    getch()
+    return None
+
+@safe_execute()
+def cleanup_temp_files():
+    """Clean up temporary files"""
+    clear_screen()
+    print("\n  Cleaning up temporary files...")
+    time.sleep(1)
+    print("  Cleanup complete!")
+    time.sleep(1.5)
+    return None
+
+@safe_execute()
+def check_for_updates():
+    """Check for updates"""
+    clear_screen()
+    print("\n  Checking for updates...")
+    time.sleep(1)
+    print("  You're running the latest version!")
+    time.sleep(1.5)
+    return None
+
+@safe_execute()
+def show_quick_tips():
+    """Show quick tips"""
+    clear_screen()
+    print("\n  Quick Tips")
+    print("  ==========")
+    print("\n  1. Use arrow keys or number keys to navigate the menu")
+    print("  2. Press Q to exit menus")
+    print("  3. Type 'rick help' in your terminal for command help")
+    
+    print("\n  Press any key to return...")
+    getch()
+    return None
+
+@safe_execute()
+def show_command_reference():
+    """Show command reference"""
+    clear_screen()
+    print("\n  Command Reference")
+    print("  ================")
+    print("\n  rick menu       - Open this menu")
+    print("  rick status     - Show assistant status")
+    print("  rick help       - Show help information")
+    print("  rick version    - Show version information")
+    
+    print("\n  Press any key to return...")
+    getch()
+    return None
+
+@safe_execute()
+def show_about_info():
+    """Show about information"""
+    clear_screen()
+    print("\n  Rick Assistant")
+    print("  =============")
+    print("\n  Version: 0.1.0")
+    print("  C-137 Morty Edition")
+    print("\n  A Rick and Morty themed ZSH assistant")
+    print("  Licensed under MIT")
+    
+    print("\n  Press any key to return...")
+    getch()
+    return None
+
+@safe_execute()
+def show_documentation():
+    """Show documentation"""
+    clear_screen()
+    print("\n  Opening documentation...")
+    time.sleep(1.5)
+    return None
+
+@safe_execute()
+def restart_zsh():
+    """Restart ZSH"""
+    clear_screen()
+    print("\n  Restarting ZSH...")
+    time.sleep(1)
+    return "restart_zsh"  # Special return value to trigger ZSH restart
+
+@safe_execute()
+def test_portal_gun():
+    """Test the portal gun"""
+    # Display portal animation
+    animate_portal_open()
+    time.sleep(0.5)
+    animate_portal_close()
+    return None
+
+@safe_execute()
+def toggle_debug_mode():
+    """Toggle debug mode"""
+    clear_screen()
+    print("\n  Toggling debug mode...")
+    time.sleep(1)
+    print("  Debug mode toggled!")
+    time.sleep(1.5)
+    return None
+
+@safe_execute()
+def exit_menu():
+    """Exit the menu"""
+    # Return special value to indicate exit
+    return "exit"
+
+@safe_execute()
+def show_menu() -> Optional[str]:
+    """
+    Show the main Rick menu with the new Ricktastic style.
+    
+    Returns:
+        Optional[str]: Result of menu selection or None
+    """
+    logger.debug("Showing main Rick menu")
+    
+    try:
+        # Create the menu structure
+        menu = create_ricktastic_menu()
+        
+        # Navigate the menu with slash borders
+        result = navigate_menu(menu, border_style="slash")
+        
+        # Handle specific return values
+        if result:
+            index, value = result
+            if value == "restart_zsh":
+                # Handle ZSH restart
+                return "restart_zsh"
+            elif value == "exit":
+                # Exit menu
+                return None
+            else:
+                # Return the value
+                return value
+        
+        return None
+    
+    except Exception as e:
+        logger.error(f"Error in show_menu: {str(e)}")
+        if supports_ansi_color():
+            print(f"\033[31mError showing menu: {str(e)}\033[0m")
+        else:
+            print(f"Error showing menu: {str(e)}")
+        time.sleep(2)
+        return None
+
+@safe_execute()
+def animate_portal_close(width: int = None, height: int = None, frames: int = 1, 
+                         frame_duration: float = 0.2) -> None:
+    """
+    Animate a portal closing with simplified animation.
+    
+    Args:
+        width: Terminal width (auto-detected if None)
+        height: Terminal height (auto-detected if None)
+        frames: Number of animation frames (default: 1)
+        frame_duration: Duration of each frame in seconds (default: 0.2)
+    """
+    logger.debug("Animating portal close")
+    
+    # Skip animation if static portal is preferred
+    if USE_STATIC_PORTAL:
+        display_static_portal_closed()
+        return
+    
+    try:
+        # Get terminal dimensions if not provided
+        width = width or get_terminal_width()
+        height = height or get_terminal_height()
+        
+        # Clear screen
+        clear_screen()
+        
+        # Create portal closing animation frames
+        portal_frames = []
+        
+        # Frame 1: Portal starting to close
+        portal_frame1 = [
+            "     /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\     ",
+            "   /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\   ",
+            "  /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  ",
+            " /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ",
+            "/\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
+            "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//",
+            " \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\// ",
+            "  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//  ",
+            "   \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//   ",
+            "     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//     "
+        ]
+        
+        # Frame 2: Portal closed
+        portal_frame2 = [
+            "     /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\     ",
+            "   /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\   ",
+            "  /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  ",
+            " /\\\\\\\\\\\\\\\\PORTAL\\\\\\\\\\\\\\\\\\\ ",
+            "/\\\\\\\\\\\\\\\\\\CLOSED\\\\\\\\\\\\\\\\\\\\",
+            "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//",
+            " \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\// ",
+            "  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//  ",
+            "   \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//   ",
+            "     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//     "
+        ]
+        
+        # Add frames to animation
+        portal_frames.append(portal_frame1)
+        portal_frames.append(portal_frame2)
+        
+        # Animate the portal closing
+        for frame in portal_frames:
+            # Clear screen
+            clear_screen()
+            
+            # Calculate centering
+            frame_width = len(frame[0])
+            frame_height = len(frame)
+            
+            x_offset = (width - frame_width) // 2
+            y_offset = (height - frame_height) // 2
+            
+            # Print empty lines for top padding
+            for _ in range(y_offset):
+                print()
+            
+            # Print the frame with colors
+            for line in frame:
+                # Add left padding
+                padding = " " * x_offset
+                
+                # Colorize the line
+                colored_line = ""
+                for char in line:
+                    if char == "/":
+                        # Green for outer portal
+                        colored_line += "\033[32m/\033[0m" if supports_ansi_color() else "/"
+                    elif char == "\\":
+                        # Green for outer portal
+                        colored_line += "\033[32m\\\033[0m" if supports_ansi_color() else "\\"
+                    elif char in "PORTALCLOSED":
+                        # Cyan for text
+                        colored_line += "\033[36m" + char + "\033[0m" if supports_ansi_color() else char
+                    else:
+                        # Blue for inner portal
+                        colored_line += "\033[34m" + char + "\033[0m" if supports_ansi_color() else char
+                
+                # Print the line
+                print(padding + colored_line)
+            
+            # Wait for the specified duration
+            time.sleep(frame_duration)
+        
+        # Small pause at the end
+        time.sleep(0.3)
+        
+    except Exception as e:
+        logger.error(f"Error in animate_portal_close: {str(e)}")
+        # Fallback to static display
+        display_static_portal_closed()
+
+@safe_execute()
+def getch() -> str:
+    """
+    Get a single character from the user without requiring Enter.
+    
+    Returns:
+        str: The character pressed by the user
+    """
+    if sys.platform == 'win32':
+        # Windows implementation
+        import msvcrt
+        return msvcrt.getch().decode('utf-8')
+    else:
+        # Unix/Linux/MacOS implementation
+        import termios
+        import tty
+        
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch

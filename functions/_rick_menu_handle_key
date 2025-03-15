@@ -10,7 +10,12 @@
 #   max_index - The maximum index (number of items - 1)
 #
 # Returns:
-#   Prints the new index or command to stdout
+#   Prints the action or new index to stdout:
+#     - UP: Move selection up
+#     - DOWN: Move selection down
+#     - SELECT: Select current item
+#     - CANCEL: Exit menu
+#     - numeric value: Set selection to this index
 #
 # Example:
 #   _rick_menu_handle_key "down" 0 5
@@ -26,65 +31,53 @@ _rick_menu_handle_key() {
   local current_index="$2"
   local max_index="$3"
   
-  # Default to keeping the same index
-  local new_index=$current_index
+  # Debug output for ESC key
+  if [[ "$key" == "escape" && -n "$RICK_DEBUG" && "$RICK_DEBUG" -eq 1 ]]; then
+    echo "DEBUG: _rick_menu_handle_key received ESC key, will send CANCEL" >&2
+  fi
   
-  # Handle key press
+  # Process key and determine action
   case "$key" in
-    # Navigation keys - Down
-    down|j)
-      # Using arithmeric calculation within a safe wrapper
-      if [[ $current_index -eq $max_index ]]; then
-        new_index=0
-      else
-        new_index=$(( current_index + 1 ))
-      fi
+    # Navigation keys
+    "up")
+      echo "UP"
       ;;
-    
-    # Navigation keys - Up
-    up|k)
-      if [[ $current_index -eq 0 ]]; then
-        new_index=$max_index
-      else
-        new_index=$(( current_index - 1 ))
-      fi
+    "down")
+      echo "DOWN"
       ;;
-    
-    # Navigation keys - Home
-    home|g)
-      new_index=0
+    "left")
+      echo "LEFT"
       ;;
-    
-    # Navigation keys - End
-    end|G)
-      new_index=$max_index
+    "right")
+      echo "RIGHT"
       ;;
-    
-    # Selection
-    enter|space)
+      
+    # Selection keys
+    "enter")
       echo "SELECT"
-      return 0
       ;;
-    
-    # Cancellation
-    escape|q|Q)
+      
+    # Exit/cancel keys
+    "escape"|"q"|"Q")
       echo "CANCEL"
-      return 0
       ;;
-    
-    # Toggle (for checkbox menus)
-    t|T)
-      echo "TOGGLE"
-      return 0
+      
+    # Number keys for direct selection
+    [0-9])
+      # Check if number is in valid range
+      if (( key >= 0 && key <= max_index )); then
+        echo "$key"
+      else
+        # If out of range, keep current selection
+        echo "$current_index"
+      fi
       ;;
-    
-    # Default - keep current selection
+      
+    # Default: maintain current selection
     *)
+      echo "$current_index"
       ;;
   esac
-  
-  # Return the new index as a clean number
-  printf "%d" "$new_index"
 }
 
 # Call the function with the arguments passed to this script
