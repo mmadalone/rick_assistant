@@ -28,7 +28,6 @@ This plan outlines the approach to revamp the existing menu code to match the vi
    - Use the established pattern in the codebase for consistency
 
 5. **Performance**
-   - Keep animations simple and fast
    - Minimize screen redrawing for better performance
 
 ## Implementation Phases
@@ -36,7 +35,6 @@ This plan outlines the approach to revamp the existing menu code to match the vi
 ### Phase 1: Core Visual Update
 - Update the border, header, and footer styling
 - Implement the basic visual appearance
-- Update portal animations to be simple and fast
 
 ### Phase 2: Navigation Update
 - Implement number selection
@@ -225,11 +223,6 @@ def navigate_menu(menu: Menu, parent_menu: Menu = None, border_style: str = "sla
     # Add back control if there's a parent menu
     if parent_menu:
         controls["B"] = "Back"
-    
-    # Show portal entry animation (simple version)
-    if USE_STATIC_PORTAL:
-        display_static_portal_open()
-        time.sleep(0.3)  # Brief pause for animation effect
     
     # Initialize selection
     menu.selected_index = 0

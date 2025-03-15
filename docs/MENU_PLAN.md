@@ -9,7 +9,6 @@ The Rick Assistant menu system will be redesigned following the aesthetics and s
 - **Hierarchical Structure**: Clear parent-child relationships with breadcrumbs
 - **Incremental Implementation**: Progressive development with placeholder indicators
 - **Configuration Management**: Unified JSON-based configuration system
-- **Animations**: Brief portal animations only for entry/exit (no inter-screen transitions)
 
 ## 2. Technical Architecture
 
@@ -26,7 +25,6 @@ The Rick Assistant menu system will be redesigned following the aesthetics and s
    - ASCII/Unicode box drawing focused on terminal compatibility
    - Text coloring using ANSI escape sequences with fallbacks
    - Dynamic sizing based on terminal dimensions with minimum size detection
-   - Portal animation components (entry/exit only)
 
 3. **Input Handling**
    - Arrow key navigation through cursor position tracking
@@ -60,7 +58,6 @@ The Rick Assistant menu system will be redesigned following the aesthetics and s
    - Implement box drawing with ASCII characters
    - Apply green/cyan color scheme
    - Handle terminal size constraints with warnings
-   - Create portal entry/exit animations
 
 2. **Main Menu Implementation**
    - Follow exact layout from `ricktastic_menu.md`
@@ -111,7 +108,6 @@ The Rick Assistant menu system will be redesigned following the aesthetics and s
 
 1. **Performance Optimization**
    - Minimize screen redraw operations
-   - Optimize animation rendering
    - Add caching for repeated operations
 
 2. **Edge Case Handling**
@@ -120,8 +116,6 @@ The Rick Assistant menu system will be redesigned following the aesthetics and s
    - Support unexpected terminal conditions
 
 3. **Visual Refinements**
-   - Improve highlight animations
-   - Refine portal animations
    - Polish overall visual appearance
 
 ## 4. Technical Details
@@ -195,10 +189,6 @@ The configuration will be stored in `~/.rick_assistant/config.json` with this ba
         "primary": "green",
         "accent": "cyan"
       },
-      "animations": {
-        "enabled": true,
-        "duration": 0.5
-      },
       "navigation": {
         "arrow_keys": true,
         "number_keys": true
@@ -219,9 +209,8 @@ The configuration will be stored in `~/.rick_assistant/config.json` with this ba
 2. Main menu screen
 3. Settings menu and submenus
 4. Brain module menu
-5. Portal animations
-6. Remaining top-level menus (marked with 🚧)
-7. Testing and refinement
+5. Remaining top-level menus (marked with 🚧)
+6. Testing and refinement
 
 ### 5.2 Testing Strategy
 
