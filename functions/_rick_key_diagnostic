@@ -1,0 +1,87 @@
+#!/usr/bin/env zsh
+# _rick_key_diagnostic - Display key codes for debugging
+#
+# Usage:
+#   _rick_key_diagnostic
+#
+# Returns:
+#   0 on success, non-zero on error
+#
+# Example:
+#   _rick_key_diagnostic
+
+_rick_key_diagnostic() {
+  local original_debug=$RICK_DEBUG
+  
+  # Enable debug mode temporarily
+  RICK_DEBUG=1
+  
+  # Clear screen
+  clear
+  
+  # Display instructions
+  echo -e "\033[1;32m# Rick Assistant Key Diagnostic Tool\033[0m"
+  echo -e "\033[1;34m# Press keys to see how they are detected\033[0m"
+  echo -e "\033[1;34m# Press Ctrl+C to exit\033[0m"
+  echo ""
+  echo -e "\033[3;36mThis tool helps troubleshoot key detection issues\033[0m"
+  echo "--------------------------------------------"
+  
+  # Save terminal settings
+  local stty_settings
+  stty_settings=$(stty -g)
+  
+  # Set raw mode
+  stty -echo raw
+  
+  # Trap for clean exit
+  trap 'stty "$stty_settings"; echo ""; echo "Diagnostic tool exited."; return 0' INT TERM EXIT
+  
+  # Counter
+  local count=1
+  
+  # Main loop
+  echo "Key detection started. Press keys to test (Ctrl+C to exit)..."
+  echo ""
+  
+  while true; do
+    # Read key
+    local key
+    key=$(_rick_menu_read_key)
+    local status=$?
+    
+    # Display info
+    echo -e "\033[1;33mKey #$count:\033[0m"
+    echo "  Raw key name: '$key'"
+    echo "  Return status: $status"
+    echo ""
+    
+    # Process in handle_key function
+    local action
+    action=$(_rick_menu_handle_key "$key" 0 10)
+    local handle_status=$?
+    
+    echo "  Handled as action: '$action'"
+    echo "  Handle status: $handle_status"
+    echo "--------------------------------------------"
+    
+    # Increment counter
+    ((count++))
+    
+    # Add small delay to make output readable
+    sleep 0.2
+  done
+  
+  # Restore terminal settings (shouldn't get here because of trap)
+  stty "$stty_settings"
+  
+  # Restore original debug setting
+  RICK_DEBUG=$original_debug
+  
+  return 0
+}
+
+# Check if being called directly
+if [[ "${(%):-%N}" == "_rick_key_diagnostic" ]]; then
+  _rick_key_diagnostic "$@"
+fi 

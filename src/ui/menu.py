@@ -1069,123 +1069,6 @@ def animate_portal_open(width: int = None, height: int = None, frames: int = Non
         display_static_portal_open()
 
 @safe_execute()
-def animate_portal_close(width: int = None, height: int = None, frames: int = None, 
-                         frame_duration: float = None) -> None:
-    """
-    Show portal closing animation, properly centered in the terminal.
-    
-    Args:
-        width: Terminal width (auto-detected if None)
-        height: Terminal height (auto-detected if None)
-    """
-    logger.debug("Showing portal close animation")
-    
-    # If returning from a command execution, skip animation
-    global RETURNING_FROM_COMMAND
-    if RETURNING_FROM_COMMAND:
-        logger.debug("Skipping close animation as returning from command")
-        display_static_portal_closed()
-        RETURNING_FROM_COMMAND = False
-        return
-    
-    # Determine if animations should be shown or if we should use static portal
-    try:
-        # Default to static portal and no animations for safety
-        use_static = True
-        animations_enabled = False
-        
-        # Check if the config system is available
-        try:
-            from src.utils.config import get_config_value, CONFIG_LOADED
-            
-            # Only query config if it's been properly loaded
-            if CONFIG_LOADED:
-                # Get animation settings from config
-                use_static = get_config_value("menu.use_static_portal", True)
-                animations_enabled = get_config_value("menu.animations_enabled", False)
-                logger.debug(f"Animation settings from config: static={use_static}, enabled={animations_enabled}")
-            else:
-                logger.debug("Config not loaded, using default animation settings")
-        except ImportError:
-            logger.debug("Config module not available, using default animation settings")
-        except Exception as e:
-            logger.debug(f"Error accessing config: {e}, using default animation settings")
-            
-        # Check for terminal compatibility mode
-        terminal_compatibility_mode = False
-        try:
-            if CONFIG_LOADED:
-                terminal_compatibility_mode = get_config_value("menu.terminal_compatibility_mode", False)
-        except Exception:
-            pass
-            
-        # Use static portal if animations are disabled or static portal is enabled
-        if use_static or not animations_enabled or terminal_compatibility_mode:
-            logger.debug(f"Using static portal (static={use_static}, animations={animations_enabled}, compat={terminal_compatibility_mode})")
-            display_static_portal_closed()
-            return
-        
-        # Use default animation parameters if not specified
-        frame_duration = FRAME_DURATION if frame_duration is None else frame_duration
-        
-        # Select portal size based on terminal dimensions
-        width = width or get_terminal_width()
-        height = height or get_terminal_height()
-        
-        if height < 10:
-            portal_frames = PORTAL_SMALL
-        elif width < 50:
-            portal_frames = PORTAL_SMALL
-        else:
-            portal_frames = PORTAL_MEDIUM
-        
-        # Run the animation - reversed frames for closing
-        for _ in range(frames):
-            for i, frame in enumerate(reversed(portal_frames)):
-                # Clear screen for clean animation
-                clear_screen()
-                
-                # Split frame into lines
-                frame_lines = frame.strip().split('\n')
-                
-                # Center each line
-                centered_frame = []
-                for line in frame_lines:
-                    centered_line = line.center(width)
-                    centered_frame.append(centered_line)
-                
-                # Add some vertical spacing
-                print("\n" * 2)
-                
-                # Colorize and print the portal frame
-                try:
-                    for line in centered_frame:
-                        colored_line = colorize_portal(line)
-                        print(colored_line)
-                except Exception as e:
-                    # Fallback if colorize_portal fails
-                    logger.debug(f"Error in portal animation colorizing: {e}")
-                    for line in centered_frame:
-                        print(line)
-                
-                # Add some bottom spacing
-                print("\n" * 2)
-                
-                # Wait for next frame
-                time.sleep(frame_duration)
-        
-        # Final clear after closing
-        clear_screen()
-        
-    except KeyboardInterrupt:
-        # Allow cancelling the animation
-        logger.debug("Animation cancelled by keyboard interrupt")
-        clear_screen()
-    except Exception as e:
-        # Fallback to static display if animation fails
-        logger.error(f"Error in portal animation: {e}")
-        display_static_portal_closed()
-        clear_screen()
 
 @safe_execute()
 def animate_transition(from_menu: Optional[Menu] = None, to_menu: Optional[Menu] = None, 
@@ -1940,13 +1823,7 @@ def navigate_menu(menu: Menu, parent_menu: Menu = None, border_style: str = "por
         key = get_single_key()
         
         # Process key input
-        if key in ('\x1b', 'q', 'Q'):  # Escape or q
-            # Exit the menu
-            menu.exit()
-            animate_portal_close()
-            return None
-            
-        elif key in ('b', 'B') and parent_menu:  # Back
+        if key in ('b', 'B') and parent_menu:  # Back
             # Go back to parent menu
             animate_transition(from_menu=menu, to_menu=parent_menu)
             return (-1, "BACK")
@@ -1963,10 +1840,7 @@ def navigate_menu(menu: Menu, parent_menu: Menu = None, border_style: str = "por
             if isinstance(current_item, MenuCategory):
                 continue
             
-            # Otherwise return the result
-            if result is not None:
-                animate_portal_close()
-                return (menu.selected_index, result)
+            
                 
         elif key in ('j', 'J', '\x1b[B'):  # Down arrow or j
             menu.select_next()
@@ -1993,7 +1867,6 @@ def navigate_menu(menu: Menu, parent_menu: Menu = None, border_style: str = "por
             menu.selected_index = new_index
     
     # Menu was exited
-    animate_portal_close()
     return None
 
 @safe_execute()
@@ -2729,8 +2602,7 @@ def navigate_hierarchy(root_menu: Menu) -> Optional[Tuple[Menu, int, Any]]:
         if result is None:
             # Menu was exited/cancelled
             if not menu_stack:
-                # At root menu, exit completely
-                animate_portal_close()
+                
                 return None
             else:
                 # Go back to parent menu
@@ -2744,7 +2616,6 @@ def navigate_hierarchy(root_menu: Menu) -> Optional[Tuple[Menu, int, Any]]:
                 continue
             else:
                 # At root menu, exit completely
-                animate_portal_close()
                 return None
                 
         # Get selected item
@@ -2768,9 +2639,7 @@ def navigate_hierarchy(root_menu: Menu) -> Optional[Tuple[Menu, int, Any]]:
                 logger.error(f"Invalid submenu object: {submenu}")
                 # Skip this invalid item
                 continue
-            
-        # Regular item selection - return result
-        animate_portal_close()
+
         return (current_menu, index, value)
 
 @safe_execute()
@@ -3111,8 +2980,7 @@ def create_wizard(steps: List[Dict], title: str = "Rick's Wizard") -> Optional[D
                 if select_result:
                     result[field_name] = select_result[1]  # Get value
                 else:
-                    # Selection cancelled
-                    animate_portal_close()
+
                     return None
             
             else:
@@ -3120,8 +2988,7 @@ def create_wizard(steps: List[Dict], title: str = "Rick's Wizard") -> Optional[D
                 value = get_input(prompt=field_prompt, default=field_default)
                 
                 if value is None:
-                    # Input cancelled
-                    animate_portal_close()
+
                     return None
                     
                 result[field_name] = value
@@ -3133,7 +3000,6 @@ def create_wizard(steps: List[Dict], title: str = "Rick's Wizard") -> Optional[D
         # Show confirmation for this step
         if i < len(steps) - 1:  # Not the last step
             if not confirm_action(f"Step {i+1} complete! {progress_bar} Continue to next step?", default=True):
-                animate_portal_close()
                 return None
     
     # Show completion message
@@ -3144,8 +3010,6 @@ def create_wizard(steps: List[Dict], title: str = "Rick's Wizard") -> Optional[D
         
     show_message(completion_message, title=f"{title} - Complete", message_type="success")
     
-    # Close wizard
-    animate_portal_close()
     
     return result
 
