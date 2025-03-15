@@ -1,11 +1,11 @@
-# 🧪 Rick Assistant ZSH Plugin - Non-Coder Copilot Plan
+# 🧪 Rick Assistant ZSH Plugin - Non-Coder Cursor Plan
 
 ## 📊 Project Overview
 
-This document provides a **Copilot-optimized development plan** for creating a Rick Sanchez-themed ZSH plugin with zero coding knowledge required. Each section contains **copy-paste ready Copilot prompts** designed for direct use.
+This document provides a **Cursor-optimized development plan** for creating a Rick Sanchez-themed ZSH plugin with zero coding knowledge required. Each section contains **copy-paste ready Cursor prompts** designed for direct use.
 
 ### 🎯 Development Approach
-- **100% Copilot-Driven**: All code generation handled by AI
+- **100% Cursor-Driven**: All code generation handled by AI
 - **Copy & Paste Workflow**: Simple prompt-to-editor workflow
 - **Visual Validation**: Clear indicators of correct implementation
 - **Non-Technical Success Criteria**: Easily verifiable outputs
@@ -17,8 +17,8 @@ This document provides a **Copilot-optimized development plan** for creating a R
 
 ### 🚀 How To Use This Plan
 1. **Copy** a numbered prompt from this document
-2. **Paste** it directly to your code editor with Copilot
-3. **Wait** for Copilot to generate the implementation
+2. **Paste** it directly to your code editor with Cursor
+3. **Wait** for Cursor to generate the implementation
 4. **Visually verify** the output matches expectations
 5. **Save** the file if correct, or try an alternative prompt
 
@@ -77,8 +77,8 @@ cd ~/.oh-my-zsh/custom/plugins/rick_assistant
 For each implementation prompt:
 1. Navigate to the correct directory
 2. Create the file using a text editor or `touch` command
-3. Paste the corresponding Copilot prompt
-4. Let Copilot generate the implementation
+3. Paste the corresponding Cursor prompt
+4. Let Cursor generate the implementation
 5. Save the file
 
 ---
@@ -99,7 +99,7 @@ For each implementation prompt:
 
 **📄 File**: src/utils/logger.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a Python logging module for a Rick Sanchez-themed ZSH assistant with these features:
 1. Write logs to ~/.rick_assistant/logs/
@@ -134,7 +134,7 @@ logger.error("Something went wrong")
 
 **📄 File**: src/utils/errors.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create an error handling module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -176,7 +176,7 @@ Include extensive try/except blocks to make everything bulletproof.
 
 **📄 File**: src/utils/config.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a configuration management module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -234,7 +234,7 @@ Default config should look like:
 
 **📄 File**: src/utils/validation.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a validation module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -275,7 +275,7 @@ Make all functions extremely safe with thorough error handling.
 
 **📄 File**: /src/__init__.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a Python package initialization file for a Rick Sanchez-themed ZSH assistant with:
 
@@ -321,7 +321,7 @@ print(f"Running {METADATA['name']} version {METADATA['version']}")
 
 **📄 File**: src/core/hooks.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a ZSH hook manager module for a Rick Sanchez-themed assistant with these features:
 
@@ -370,7 +370,7 @@ register_precmd_hook(my_precmd_function)
 
 **📄 File**: src/core/prompt.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a prompt formatter module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -418,7 +418,7 @@ Make all functions safe with error handling.
 
 **📄 File**: src/core/commands.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a command processor module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -468,7 +468,7 @@ Examples of assistant commands:
 
 **📄 File**: src/core/messages.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a message storage module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -513,7 +513,7 @@ Make all functions safe with error handling to prevent crashes.
 
 **📄 File**: src/core/rick.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a "Fake Rick" response module for a Rick Sanchez-themed ZSH assistant that provides Rick-style responses without requiring AI:
 
@@ -559,7 +559,7 @@ Add occasional burps with "*burp*" in the text.
 
 **📄 File**: src/core/setup.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a first-time setup wizard module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -611,7 +611,7 @@ Ensure the wizard completes successfully even if some steps fail.
 
 **📄 File**: src/utils/system.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a system information module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -659,7 +659,7 @@ Implement efficient caching to avoid excessive system calls.
 
 **📄 File**: src/core/prompt.py (update)
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Enhance the prompt formatter module for a Rick Sanchez-themed ZSH assistant with these new features:
 
@@ -704,7 +704,7 @@ Ensure compatibility with different terminal types.
 
 **📄 File**: src/ui/text.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a text formatting module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -752,7 +752,7 @@ Add configuration options for text styling and speed preferences.
 
 **📄 File**: src/ui/input.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create an input handling module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -800,7 +800,7 @@ Support command history navigation with up/down arrows.
 
 **📄 File**: src/ui/menu.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a menu system module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -855,7 +855,7 @@ Add Rick-style comments in menus like "What are you looking at? Just pick someth
 
 **📄 Additional File**: functions/_rick_menu_main
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a ZSH native implementation of the main menu function for Rick Assistant with these features:
 
@@ -897,7 +897,7 @@ This function will be used as a fallback when Python is unavailable or when the 
 
 **📄 File**: src/ui/status.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a status bar manager module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -913,7 +913,7 @@ Create a status bar manager module for a Rick Sanchez-themed ZSH assistant with 
    - SystemComponent: Show system metrics (CPU, RAM, temp)
    - AIComponent: Show AI model information
    - CatchphraseComponent: Show Rick catchphrases
-   - UniverseComponent: Show portal universe indicator
+   - UniverseComponent: Show portal universe indicator - ASK ME ABOUT THIS!
 
 3. Add these layout options:
    - create_full_layout(): Complete status bar with all components
@@ -948,7 +948,7 @@ Include configuration options to enable/disable components.
 
 **📄 File**: src/ui/universe.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a Portal Universe indicator module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1000,7 +1000,7 @@ Change universes on certain events (directory change, time interval, etc.).
 
 **📄 File**: src/core/safety.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a command safety module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1049,7 +1049,7 @@ Log all dangerous command attempts for security auditing.
 
 **📄 File**: src/core/commands.py (update)
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Enhance the command processor module for a Rick Sanchez-themed ZSH assistant with these improvements:
 
@@ -1097,7 +1097,7 @@ Keep Rick's personality in all interactions with sarcastic comments.
 
 **📄 File**: src/core/executor.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a command execution module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1149,7 +1149,7 @@ Log all command executions for reference.
 
 **📄 File**: src/core/personalities.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a personalities module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1199,7 +1199,7 @@ Allow configuration of personality characteristics.
 
 **📄 File**: src/utils/backup.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a backup and restore module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1248,7 +1248,7 @@ Include Rick-style messages during backup/restore operations.
 
 **📄 File**: src/ui/menu.py (update)
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Enhance the menu system module for a Rick Sanchez-themed ZSH assistant with popup functionality:
 
@@ -1297,7 +1297,7 @@ Add Rick quotes when selecting options like "Oh, you're picking THAT option? Rea
 
 **📄 File**: src/utils/media.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a media analysis module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1352,7 +1352,7 @@ Format output in an easy-to-read style with colors.
 
 **📄 File**: src/ai/models.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create an AI model framework for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1400,7 +1400,7 @@ Add comprehensive logging for troubleshooting API issues.
 
 **📄 File**: src/ai/personality.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create an AI-driven personality module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1448,7 +1448,7 @@ Enhance AI responses with Rick's speech patterns without compromising content.
 
 **📄 File**: src/ui/settings.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a settings menu module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1497,7 +1497,7 @@ Include Rick-style commentary on settings like "Only a 5 for sass level? You're 
 
 **📄 File**: src/ai/tokens.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a token management module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1546,7 +1546,7 @@ Store historical data in a compact, JSON format.
 
 **📄 File**: src/utils/advanced_settings.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create an advanced settings module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1599,7 +1599,7 @@ Store implementation preference in configuration file.
 
 **📄 File**: src/utils/performance.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a performance optimization module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1652,7 +1652,7 @@ Implement measurable improvements with before/after metrics.
 
 **📄 File**: src/ui/input.py (update)
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Enhance the input handling module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1701,7 +1701,7 @@ Maintain performance and responsiveness throughout.
 
 **📄 File**: src/core/suggestions.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create an enhanced command suggestion module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1752,7 +1752,7 @@ Make suggestions genuinely helpful while maintaining Rick's personality.
 
 **📄 File**: src/ai/errors.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create an AI-powered error analysis module for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1803,7 +1803,7 @@ Make error messages more understandable while keeping Rick's character.
 
 **📄 File**: docs/README.md`
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create a comprehensive README for a Rick Sanchez-themed ZSH assistant with these sections:
 
@@ -1846,7 +1846,7 @@ Format with proper Markdown including code blocks and screenshots.
 
 **📄 File**: setup.py
 
-**🔤 Copilot Prompt**:
+**🔤 Cursor Prompt**:
 ```
 Create an installation script for a Rick Sanchez-themed ZSH assistant with these features:
 
@@ -1941,7 +1941,7 @@ rick_assistant_setup
   - [x] 3.1: System Information Monitor
   - [x] 3.2: Enhanced Prompt Formatter
   - [x] 3.3: Text Formatting Utilities
-  - [ ] 3.4: Input Handling System
+  - [x] 3.4: Input Handling System
   - [ ] 3.5: Menu System with Animations
   - [ ] 3.6: Status Bar Manager
   - [ ] 3.7: Portal Universe Indicator
