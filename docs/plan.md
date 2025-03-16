@@ -43,7 +43,6 @@ This project implements a dual architecture approach that provides both Python-b
 3. **Implementation Differences**:
    - **Python Implementation**:
      - Richer user interface with more visual elements
-     - Enhanced animations and formatting capabilities
      - More sophisticated menu navigation
      - Better unicode and color support
    
@@ -213,7 +212,6 @@ Default config should look like:
   },
   "ui": {
     "theme": "portal",
-    "animations": true
   },
   "personality": {
     "sass_level": 7,
@@ -796,7 +794,7 @@ Support command history navigation with up/down arrows.
 - Implements completion functions for tab completion
 - Contains safety features for error recovery
 
-### 3.5: Menu System with Animations
+### 3.5: Menu System
 
 **📄 File**: src/ui/menu.py
 
@@ -833,8 +831,6 @@ Create a menu system module for a Rick Sanchez-themed ZSH assistant with these f
    - highlight_selection(item, selected=True): Highlight current item
 
 Style all menus with Rick & Morty portal theme (green/blue colors).
-Make animations smooth but not excessive.
-Include configuration option to disable animations.
 Adapt menu display to different terminal sizes.
 Add Rick-style comments in menus like "What are you looking at? Just pick something!"
 

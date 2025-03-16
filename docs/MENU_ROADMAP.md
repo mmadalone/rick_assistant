@@ -133,7 +133,8 @@ SUB PAGES
 | colors:              |                    
 |  - primary: green    |                    
 |  - accent: cyan      |                    
-| stream_speed: 0.03   |                    
+| stream_speed: 0.03   |
+| default menu: py     |                    
 \――――――――――――――――――――――/                                                    
                                                     
 
@@ -205,7 +206,34 @@ The plugin implements proper configuration versioning to handle schema migration
 - menu should be at center of the terminal
 - animations referenced in separate file located in human readable ~/.oh-my-zsh/custom/plugins/rick_assistant/animations/menu.json. generate this file with placeholders
 - use readchar to make sure menu navigation works
+- python implementation as main. zsh as fallback
+- should always start at the top
+- include Rick-style commentary/quotes in the menu
 
+🎨 Rick and Morty Themed Terminal Colors
+Apply these colors strategically to different aspects of your terminal for a true Rick & Morty aesthetic!
 
+🧪 Rick's Colors (Darker Blue Shades)
+Use these darker blue shades for text highlights, prompts, and UI elements.
 
+Terminal Element	Hex Color	Usage
+Prompt Text (Rick’s Replies)	#5FA8D3	Slightly darker, still has that Rick vibe.
+Active Window Border	#66A0C9	Used to highlight the focused terminal window.
+Cursor (Insertion Point)	#57A5BF	Gives a cool blue cursor effect.
+Directory Paths ($PWD)	#4C94B6	A darker blue to contrast with the background.
 
+👹 Morty’s Colors (Yellow/Dark Blue Shades)
+Morty’s yellow & dark blue work well for text highlights and warning indicators.
+
+Terminal Element	Hex Color	Usage
+Username (Miquel > )	#FFE100	Morty's yellow for a bold username.
+Error Messages	#282F63	Dark blue errors to keep things subtle but readable.
+Command Autocompletion	#B7E4F9	Morty’s blue for suggested commands.
+💚 Portal Green (Glows & Accents)
+The portal glow should be used for dynamic effects, success messages, and animations.
+
+Terminal Element	Hex Color	Usage
+Success Messages (✔ Done!)	#32CD32	Green to indicate successful executions.
+Command Execution Timestamp	#17A72D	Low-key but still visible.
+AI-Generated Suggestions	#41F079	For when AI makes a snarky Rick response.
+ASCII Art Borders	#128C28	If you add ASCII Rick animations, use this deep green.
