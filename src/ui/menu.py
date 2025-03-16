@@ -30,6 +30,7 @@ import locale
 import platform
 from typing import List, Dict, Any, Optional, Union, Tuple, Callable, TypeVar
 import select
+import json
 
 from src.ui.text import clear_screen, color_text, get_terminal_width, get_terminal_height, supports_unicode, supports_ansi_color
 from src.utils.logger import get_logger
@@ -38,6 +39,106 @@ from src.utils.config import get_config_value, set_config_value
 
 # Set up logger
 logger = get_logger(__name__)
+
+# Rick and Morty themed color definitions
+RICK_COLORS = {
+    "normal": {"fg": "blue", "bg": "black"},
+    "highlight": {"fg": "cyan", "bg": "black"},
+    "selected": {"fg": "black", "bg": "blue"},
+    "disabled": {"fg": "white", "bg": "black"},
+    "header": {"fg": "blue", "bg": "black"},
+    "footer": {"fg": "cyan", "bg": "black"},
+    "border": {"fg": "blue", "bg": "black"},
+    "error": {"fg": "red", "bg": "black"},
+    "success": {"fg": "green", "bg": "black"},
+    "warning": {"fg": "yellow", "bg": "black"}
+}
+
+MORTY_COLORS = {
+    "normal": {"fg": "yellow", "bg": "black"},
+    "highlight": {"fg": "cyan", "bg": "black"},
+    "selected": {"fg": "black", "bg": "yellow"},
+    "disabled": {"fg": "white", "bg": "black"},
+    "header": {"fg": "yellow", "bg": "black"},
+    "footer": {"fg": "cyan", "bg": "black"},
+    "border": {"fg": "yellow", "bg": "black"},
+    "error": {"fg": "red", "bg": "black"},
+    "success": {"fg": "green", "bg": "black"},
+    "warning": {"fg": "magenta", "bg": "black"}
+}
+
+PORTAL_COLORS = {
+    "normal": {"fg": "green", "bg": "black"},
+    "highlight": {"fg": "cyan", "bg": "black"},
+    "selected": {"fg": "black", "bg": "green"},
+    "disabled": {"fg": "white", "bg": "black"},
+    "header": {"fg": "green", "bg": "black"},
+    "footer": {"fg": "cyan", "bg": "black"},
+    "border": {"fg": "green", "bg": "black"},
+    "error": {"fg": "red", "bg": "black"},
+    "success": {"fg": "green", "bg": "black"},
+    "warning": {"fg": "yellow", "bg": "black"}
+}
+
+# Default theme
+DEFAULT_THEME = PORTAL_COLORS
+
+class ThemeManager:
+    """
+    Manages color themes for the Rick Assistant menu.
+    
+    This class provides methods to get and set themes.
+    """
+    
+    @staticmethod
+    def get_theme(theme_name):
+        """
+        Get a theme by name.
+        
+        Args:
+            theme_name: Name of the theme
+            
+        Returns:
+            Dict: Theme color definitions
+        """
+        themes = {
+            "Portal Green": PORTAL_COLORS,
+            "Rick Blue": RICK_COLORS,
+            "Morty Yellow": MORTY_COLORS,
+            "Terminal Default": DEFAULT_THEME
+        }
+        
+        return themes.get(theme_name, DEFAULT_THEME)
+    
+    @staticmethod
+    def get_current_theme():
+        """
+        Get the current theme based on configuration.
+        
+        Returns:
+            Dict: Theme color definitions
+        """
+        theme_name = get_config_value("ui.theme", "Portal Green")
+        return ThemeManager.get_theme(theme_name)
+    
+    @staticmethod
+    def set_theme(theme_name):
+        """
+        Set the current theme.
+        
+        Args:
+            theme_name: Name of the theme
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        valid_themes = ["Portal Green", "Rick Blue", "Morty Yellow", "Terminal Default"]
+        
+        if theme_name not in valid_themes:
+            logger.error(f"Invalid theme name: {theme_name}")
+            return False
+            
+        return set_config_value("ui.theme", theme_name)
 
 # Set up proper encoding for terminal output to fix character display issues
 def setup_terminal_encoding():
@@ -123,7 +224,8 @@ except ImportError as e:
                     return default_return
             return wrapper
         return decorator
-    def get_config_value(key, default=None): return default
+    def get_config_value(key, default=None):
+        return default
     def format_text(text, width=80): return text
     def stream_text(text, speed=0.03): print(text)
     def format_error(message): return f"Error: {message}"
@@ -367,2501 +469,492 @@ RICK_MENU_COMMENTS = [
     "Your indecisiveness is physically painful to watch, you know that?"
 ]
 
-# Base classes for menu components
+# Base class for menu items before the Menu class
 class MenuItem:
-    """Base class for menu items."""
+    """
+    Base class for menu items.
     
-    def __init__(self, text: str, action=None, enabled: bool = True, coming_soon: bool = False):
+    This class represents a menu item with text and an optional action.
+    
+    Attributes:
+        text (str): Display text for this item
+        action (Callable): Function to call when this item is activated
+        parent: Parent object (Menu or MenuCategory)
+        enabled (bool): Whether this item is enabled
+        key (str): Configuration key (for toggleable items)
+        coming_soon (bool): Whether this item is marked as coming soon
+        item_type (str): Type of menu item (used for styling)
+    """
+    
+    def __init__(self, text: str, action=None, enabled: bool = True, 
+                 key: str = None, coming_soon: bool = False, 
+                 item_type: str = "standard"):
         """
         Initialize a menu item.
         
         Args:
-            text: Text to display
-            action: Function to call when selected
-            enabled: Whether item is enabled
-            coming_soon: Mark item as "coming soon" with 🚧
+            text: Display text for this item
+            action: Function to call when this item is activated
+            enabled: Whether this item is enabled
+            key: Configuration key (for toggleable items)
+            coming_soon: Whether this item is marked as coming soon
+            item_type: Type of menu item (used for styling)
         """
         self.text = text
         self.action = action
         self.enabled = enabled
+        self.key = key
         self.coming_soon = coming_soon
-        
-        # Add 🚧 marker if coming soon
-        if coming_soon:
-            self.text = f"🚧 {self.text}"
-            self.enabled = False  # Disable coming soon items
-    
-    def render(self, width: int = 80, selected: bool = False) -> str:
-        """
-        Render the menu item.
-        
-        Args:
-            width: Width to render to
-            selected: Whether item is selected
-            
-        Returns:
-            str: Rendered text
-        """
-        # Basic rendering just returns the text
-        return self.text
+        self.parent = None
+        self.item_type = item_type
     
     def activate(self):
         """
-        Activate the menu item.
-        
+        Activate this item.
+            
         Returns:
-            Any: Result of action function
+            Result of the action or None
         """
-        if self.enabled and self.action:
-            logger.debug(f"Activating menu item: {self.text}")
+        if not self.enabled:
+            return None
+    
+        if self.coming_soon:
+            return "coming_soon"
+        
             if callable(self.action):
                 return self.action()
-            return self.action
+            
         return None
         
-    def __str__(self):
-        """String representation."""
-        status = "enabled" if self.enabled else "disabled"
-        return f"MenuItem('{self.text}', {status})"
-
-class MenuCategory(MenuItem):
-    """Grouping of related menu items"""
-    
-    def __init__(self, text: str, items: List[MenuItem] = None, expanded: bool = False):
+    def get_display_text(self) -> str:
         """
-        Initialize a menu category.
-        
-        Args:
-            text: Display text for the category
-            items: List of menu items in this category
-            expanded: Whether this category is expanded by default
-        """
-        # Use folder icon for categories (will update based on expanded state)
-        super().__init__(text=text, action=None, enabled=True, coming_soon=False)
-        self.items = items or []
-        self._expanded = expanded
-        
-        # Set parent reference for all items
-        for item in self.items:
-            item.parent = self
-    
-    @property
-    def expanded(self) -> bool:
-        """Get the expanded state"""
-        return self._expanded
-    
-    @expanded.setter
-    def expanded(self, value: bool):
-        """Set the expanded state and update icon accordingly"""
-        self._expanded = value
-        # Update the icon based on expanded state
-        self.icon = MENU_SYMBOLS["folder_open"] if value else MENU_SYMBOLS["folder"]
-    
-    def add_item(self, item: MenuItem):
-        """Add an item to this category"""
-        self.items.append(item)
-        item.parent = self
-    
-    def render(self, width: int, selected: bool = False) -> str:
-        """
-        Render the menu category with an indicator if it has items.
-        
-        Args:
-            width: Available width for rendering
-            selected: Whether this item is currently selected
+        Get the display text for this item.
             
         Returns:
-            str: Formatted string representation of the category
+            str: Formatted display text
         """
-        # Update icon based on expanded state
-        self.icon = MENU_SYMBOLS["folder_open"] if self._expanded else MENU_SYMBOLS["folder"]
+        text = self.text
         
-        # Create the category text with the appropriate icon
-        text = super().render(width, selected)
-        
-        # Add a submenu indicator if there are items
-        if self.items:
-            # Use an arrow symbol if it's selected or expanded
-            if selected or self._expanded:
-                indicator = MENU_SYMBOLS["arrow"] + " "
-            else:
-                indicator = "  "
-            
-            # Add the indicator to show it has items
-            return text + indicator
+        if self.coming_soon:
+            text = f"{text} 🚧"
         
         return text
 
-class MenuAction(MenuItem):
-    """Item that triggers a function"""
-    
-    def __init__(self, text: str, callback: Callable, value: Any = None, enabled: bool = True):
-        """
-        Initialize a menu action item.
-        
-        Args:
-            text: Display text for the action
-            callback: Function to call when this action is selected
-            value: Value to pass to the callback (optional)
-            enabled: Whether this action can be selected
-        """
-        super().__init__(text=text, action=callback, enabled=enabled, coming_soon=False)
-        
-class MenuToggle(MenuItem):
-    """Menu item that can be toggled on/off"""
-    
-    def __init__(self, text: str, key: str = None, default: bool = False, 
-                 callback: Callable = None, enabled: bool = True):
-        """
-        Create a toggle menu item.
-        
-        Args:
-            text: Display text
-            key: Configuration key to update when toggled
-            default: Initial toggle state
-            callback: Function to call when toggled
-            enabled: Whether this toggle can be selected
-        """
-        self.state = default
-        self.key = key
-        super().__init__(text=text, action=callback, enabled=enabled, coming_soon=False)
-    
-    def _get_icon(self) -> str:
-        """Get the appropriate icon based on state"""
-        return MENU_SYMBOLS["toggle_on"] if self.state else MENU_SYMBOLS["toggle_off"]
-    
-    def update_config(self, key: str, value: bool):
-        """Update configuration with the toggle value"""
-        try:
-            # Import here to avoid circular imports
-            from src.utils.config import set_config_value
-            logger.debug(f"Updating config: {key} = {value}")
-            set_config_value(key, value)
-            return True
-        except Exception as e:
-            logger.error(f"Failed to update config {key}: {e}")
-            return False
-    
-    def toggle(self):
-        """Toggle the state"""
-        self.state = not self.state
-        self.value = self.state
-        self.icon = self._get_icon()
-        
-        # Update configuration if key is provided
-        if self.key:
-            self.update_config(self.key, self.state)
-            
-        # Execute callback if provided
-        if self.action and callable(self.action):
-            return self.action()
-            
-        return self.state
-    
-    def render(self, width: int, selected: bool = False) -> str:
-        """
-        Render the toggle item.
-        
-        Args:
-            width: Available width for rendering
-            selected: Whether this item is currently selected
-            
-        Returns:
-            str: Formatted string representation of the toggle
-        """
-        # Update icon based on current state
-        self.icon = self._get_icon()
-        
-        # Format the text with state-dependent icon
-        item_text = f"{self.icon} {self.text}"
-        
-        # If disabled, gray it out
-        if not self.enabled:
-            formatted = color_text(item_text, "gray")
-        # If selected, highlight it
-        elif selected:
-            formatted = color_text(f"{BOLD}{item_text}{RESET}", "cyan")
-        # Otherwise, normal formatting
-        else:
-            formatted = item_text
-            
-        return formatted
-
+# Forward declaration to avoid circular imports
 class Menu:
-    """Base class for all menus"""
+    """
+    Menu class for representing a navigable menu.
     
-    def __init__(self, title: str, items: List[MenuItem] = None, width: int = None, 
-                 height: int = None, parent: 'Menu' = None):
+    This class represents a menu with a title, items, and parent reference.
+    It supports pagination for displaying a large number of items.
+    
+    Attributes:
+        title (str): Menu title
+        items (List[MenuItem]): List of menu items
+        parent (Menu): Parent menu
+        border_style (str): Border style
+        theme (Dict): Color theme
+        current_page (int): Current page number (0-based)
+        items_per_page (int): Number of items to show per page
+        breadcrumbs (List[str]): Path of menus leading to this one
+    """
+    
+    def __init__(self, title="Menu", items=None, parent=None, border_style="single", theme=None):
         """
         Initialize a menu.
         
         Args:
             title: Menu title
             items: List of menu items
-            width: Custom width (uses terminal width if None)
-            height: Custom height (uses terminal height if None)
-            parent: Parent menu if this is a submenu
+            parent: Parent menu
+            border_style: Border style
+            theme: Color theme
         """
         self.title = title
         self.items = items or []
-        self.width = width or get_terminal_width()
-        self.height = height or get_terminal_height()
         self.parent = parent
-        self.selected_index = 0
-        self.scroll_offset = 0
-        self.exit_requested = False
+        self.border_style = border_style
+        self.theme = theme or DEFAULT_THEME
+        self.current_page = 0
+        self.items_per_page = 10
         
-        # Set parent reference for all items
-        for item in self.items:
-            item.parent = self
+        # Build breadcrumb path if parent is provided
+        self.breadcrumbs = []
+        if parent:
+            # Start with parent's breadcrumbs
+            self.breadcrumbs = parent.breadcrumbs.copy() if hasattr(parent, 'breadcrumbs') else []
+            
+            # Add parent's title if not already in breadcrumbs
+            if parent.title and (not self.breadcrumbs or self.breadcrumbs[-1] != parent.title):
+                self.breadcrumbs.append(parent.title)
     
-    def add_item(self, item: MenuItem) -> MenuItem:
+    def add_item(self, item):
         """
         Add an item to the menu.
         
         Args:
             item: MenuItem to add
-            
-        Returns:
-            MenuItem: The added item (for chaining)
         """
         item.parent = self
         self.items.append(item)
-        return item
     
-    def add_category(self, text: str, items: List[MenuItem] = None) -> MenuCategory:
+    def get_page_count(self):
         """
-        Add a category to the menu.
-        
-        Args:
-            text: Category display text
-            items: List of items in the category
+        Get the number of pages in this menu.
             
         Returns:
-            MenuCategory: The added category (for chaining)
+            int: Number of pages
         """
-        category = MenuCategory(text=text, items=items or [])
-        self.add_item(category)
-        return category
+        if not self.items:
+            return 1
+            
+        return (len(self.items) + self.items_per_page - 1) // self.items_per_page
     
-    def add_action(self, text: str, callback: Callable, value: Any = None) -> MenuAction:
+    def get_current_page_items(self):
         """
-        Add an action item to the menu.
-        
-        Args:
-            text: Action display text
-            callback: Function to call when selected
-            value: Value to pass to callback
+        Get the items on the current page.
             
         Returns:
-            MenuAction: The added action (for chaining)
+            List[MenuItem]: Items on the current page
         """
-        action = MenuAction(text=text, callback=callback, value=value)
-        self.add_item(action)
-        return action
-    
-    def add_toggle(self, text: str, key: str = None, default: bool = False) -> MenuToggle:
-        """
-        Add a toggle item to the menu.
+        if not self.items:
+            return []
+            
+        start_idx = self.current_page * self.items_per_page
+        end_idx = start_idx + self.items_per_page
         
-        Args:
-            text: Toggle display text
+        return self.items[start_idx:end_idx]
+    
+    def next_page(self):
+        """
+        Go to the next page.
+            
+        Returns:
+            int: New page number
+        """
+        page_count = self.get_page_count()
+        if self.current_page < page_count - 1:
+            self.current_page += 1
+        return self.current_page
+    
+    def prev_page(self):
+        """
+        Go to the previous page.
+        
+        Returns:
+            int: New page number
+        """
+        if self.current_page > 0:
+            self.current_page -= 1
+        return self.current_page
+    
+    def get_breadcrumbs(self):
+        """
+        Get the breadcrumb path for this menu.
+        
+    Returns:
+            List[str]: Breadcrumb path
+        """
+        # Return combined breadcrumbs plus current title
+        return self.breadcrumbs + [self.title]
+
+# Now define specialized menu item types
+class MenuCategory(MenuItem):
+    """
+    Category menu item that can contain sub-items.
+    
+    This class represents a menu category that can contain other menu items.
+    
+    Attributes:
+        text (str): Display text for this item
+        items (List[MenuItem]): List of sub-items
+        expanded (bool): Whether this category is expanded
+        parent: Parent menu
+        enabled (bool): Whether this item is enabled
+    """
+    
+    def __init__(self, text: str, items: List[MenuItem] = None, 
+                 expanded: bool = False, enabled: bool = True):
+        """
+        Initialize a category menu item.
+    
+    Args:
+            text: Display text for this item
+            items: List of sub-items
+            expanded: Whether this category is expanded
+            enabled: Whether this item is enabled
+        """
+        super().__init__(text, None, enabled, None, False, "category")
+        self.items = items or []
+        self.expanded = expanded
+        
+        # Set parent reference for all items
+        for item in self.items:
+            item.parent = self
+            
+    def add_item(self, item: MenuItem):
+        """
+        Add an item to this category.
+    
+    Args:
+            item: Item to add
+        """
+        item.parent = self
+        self.items.append(item)
+        
+    def activate(self):
+        """
+        Activate this category (toggle expansion).
+    
+    Returns:
+            str: "expanded" or "collapsed"
+        """
+        if not self.enabled:
+            return None
+            
+        self.expanded = not self.expanded
+        return "expanded" if self.expanded else "collapsed"
+        
+    def get_display_text(self) -> str:
+        """
+        Get the display text for this item, including expansion state.
+        
+    Returns:
+            str: Formatted display text with expansion indicator
+        """
+        indicator = "▼" if self.expanded else "▶"
+        return f"{indicator} {self.text}"
+
+    def create_submenu(self) -> 'Menu':
+        """
+        Create a submenu from this category.
+        
+    Returns:
+            Menu: Submenu containing this category's items
+        """
+        # Create submenu with this category's title and items
+        submenu = Menu(title=self.text, parent=self.parent)
+        
+        # Add all items to the submenu
+        for item in self.items:
+            submenu.add_item(item)
+            
+        return submenu
+
+class MenuToggle(MenuItem):
+    """
+    Toggleable menu item.
+    
+    This class represents a menu item that can be toggled on/off.
+    
+    Attributes:
+        text (str): Display text for this item
+        key (str): Configuration key
+        default (bool): Default state
+        parent: Parent menu
+        enabled (bool): Whether this item is enabled
+    """
+    
+    def __init__(self, text: str, key: str, default: bool = False, enabled: bool = True):
+        """
+        Initialize a toggle menu item.
+    
+    Args:
+            text: Display text for this item
             key: Configuration key
             default: Default state
-            
-        Returns:
-            MenuToggle: The added toggle (for chaining)
+            enabled: Whether this item is enabled
         """
-        toggle = MenuToggle(text=text, key=key, default=default)
-        self.add_item(toggle)
-        return toggle
-    
-    def get_visible_items(self) -> List[MenuItem]:
+        super().__init__(text, None, enabled, key, False, "toggle")
+        self.default = default
+        
+    def get_state(self) -> bool:
         """
-        Get all visible items, including those in expanded categories.
+        Get the current toggle state.
         
-        Returns:
-            List[MenuItem]: All visible menu items
+    Returns:
+            bool: Current state
         """
-        visible_items = []
+        if self.key:
+            return get_config_value(self.key, self.default)
+        return self.default
         
-        for item in self.items:
-            visible_items.append(item)
-            
-            # If this is an expanded category, add its items
-            if isinstance(item, MenuCategory) and item.expanded:
-                for sub_item in item.items:
-                    visible_items.append(sub_item)
-                    
-        return visible_items
-    
-    def get_item_at_index(self, index: int) -> Optional[MenuItem]:
+    def toggle(self) -> bool:
         """
-        Get the item at the specified index from visible items.
+        Toggle the state.
         
-        Args:
-            index: Index to get
-            
-        Returns:
-            Optional[MenuItem]: The item at that index or None if invalid
+    Returns:
+            bool: New state
         """
-        visible_items = self.get_visible_items()
+        new_state = not self.get_state()
         
-        if 0 <= index < len(visible_items):
-            return visible_items[index]
+        if self.key:
+            set_config_value(self.key, new_state)
             
-        return None
-    
-    def get_current_item(self) -> Optional[MenuItem]:
+        return new_state
+        
+    def activate(self):
         """
-        Get the currently selected item.
+        Activate (toggle) this item.
         
-        Returns:
-            Optional[MenuItem]: Currently selected item or None
+    Returns:
+            bool: New state
         """
-        return self.get_item_at_index(self.selected_index)
-    
-    def select_next(self):
-        """Select the next item in the menu"""
-        visible_items = self.get_visible_items()
-        
-        if visible_items:
-            self.selected_index = (self.selected_index + 1) % len(visible_items)
-    
-    def select_previous(self):
-        """Select the previous item in the menu"""
-        visible_items = self.get_visible_items()
-        
-        if visible_items:
-            self.selected_index = (self.selected_index - 1) % len(visible_items)
-    
-    def activate_selected(self):
-        """Activate the currently selected item"""
-        item = self.get_current_item()
-        
-        if not item or not item.enabled:
-            return None
-            
-        # Handle different item types
-        if isinstance(item, MenuCategory):
-            # Toggle category expansion
-            item.expanded = not item.expanded
-            return None
-        elif isinstance(item, MenuToggle):
-            # Toggle the item
-            return item.toggle()
-        else:
-            # Execute the item
-            return item.activate()
-    
-    def exit(self):
-        """Exit the menu"""
-        self.exit_requested = True
-
-# =====================================================================
-# Animation Functions
-# =====================================================================
-
-# Portal animation ASCII art for different sizes
-PORTAL_SMALL = [
-    # Frame 1
-    """
-    1
-    """,
-    # Frame 2
-    """
-    2
-    """,
-    # Frame 3
-    """
-    3
-    """
-]
-
-PORTAL_MEDIUM = [
-    # Frame 1
-    """
-    1
-    """,
-    # Frame 2
-    """
-    2
-    """,
-    # Frame 3
-    """
-    3
-    """
-]
-
-PORTAL_LARGE = [
-    # Frame 1
-    """
-    1
-    """,
-    # Frame 2
-    """
-    2
-    """,
-    # Frame 3
-    """
-    3
-    """
-]
-
-@safe_execute()
-def colorize_portal(frame: str) -> str:
-    """
-    Colorize a portal frame with the Rick & Morty color scheme.
-    
-    Args:
-        frame: ASCII art frame to colorize
-        
-    Returns:
-        str: Colorized frame
-    """
-    result = ""
-    for i, char in enumerate(frame):
-        if char in "*/\\":
-            result += PORTAL_GREEN + char + RESET
-        elif char in "~.'-":
-            result += PORTAL_BLUE + char + RESET
-        elif char in "|":
-            result += PORTAL_CYAN + char + RESET
-        else:
-            result += char
-            
-    return result
-
-@safe_execute()
-def colorize_portal_frame(frame: str) -> str:
-    """
-    Wrapper function for colorize_portal to fix naming issue.
-    
-    Args:
-        frame: ASCII art frame to colorize
-        
-    Returns:
-        str: Colorized frame
-    """
-    return colorize_portal(frame)
-
-@safe_execute()
-def animate_portal_open(width: int = None, height: int = None, frames: int = 1, 
-                        frame_duration: float = 0.2) -> None:
-    """
-    Show simplified portal opening animation, properly centered in the terminal.
-    
-    Args:
-        width: Terminal width (auto-detected if None)
-        height: Terminal height (auto-detected if None)
-        frames: Number of animation cycles (reduced for speed)
-        frame_duration: Duration of each frame (reduced for speed)
-    """
-    logger.debug("Showing simplified portal open animation")
-    
-    # If returning from a command execution, skip animation
-    global RETURNING_FROM_COMMAND
-    if RETURNING_FROM_COMMAND:
-        logger.debug("Skipping animation as returning from command")
-        display_static_portal_open()
-        RETURNING_FROM_COMMAND = False
-        return
-    
-    # Determine if animations should be shown or if we should use static portal
-    try:
-        # Default to static portal and no animations for safety
-        use_static = get_config_value("menu.use_static_portal", True)
-        animations_enabled = get_config_value("menu.animations_enabled", False)
-        
-        # Check for terminal compatibility mode
-        terminal_compatibility_mode = get_config_value("menu.terminal_compatibility_mode", False)
-            
-        # Use static portal if animations are disabled or static portal is enabled
-        if use_static or not animations_enabled or terminal_compatibility_mode:
-            logger.debug(f"Using static portal (static={use_static}, animations={animations_enabled}, compat={terminal_compatibility_mode})")
-            display_static_portal_open()
-            return
-            
-        # Width and height for centering
-        width = width or get_terminal_width()
-        height = height or get_terminal_height()
-        
-        # Simplified portal animation - just 2 frames for speed
-        portal_frames = [
-            # Frame 1 - Portal starting to open
-            """
-    .-'""""""-.
-  ,'           `.
- /               \\
-|                 |
-|     ~~~~~~      |
- \\    ~~~~~~     /
-  `.             ,'
-    `'-......-'´
-            """,
-            # Frame 2 - Portal open
-            """
-    .-'""""""-.
-  ,'           `.
- /               \\
-|                 |
-|                 |
- \\    RICK AND   /
-  `.   MORTY    ,'
-    `'-......-'´
-            """
-        ]
-        
-        # Very quick animation loop (just 2 frames)
-        for frame in portal_frames:
-            # Clear screen for clean animation
-            clear_screen()
-            
-            # Split frame into lines
-            frame_lines = frame.strip().split('\n')
-            
-            # Add vertical spacing to center in terminal
-            print("\n" * int((height - len(frame_lines)) // 4))
-            
-            # Center and colorize each line
-            for line in frame_lines:
-                # Colorize with Rick & Morty colors
-                colorized = ""
-                for char in line:
-                    if char in ".-'`\\/ ":
-                        colorized += PORTAL_GREEN + char + RESET
-                    elif char in "(),|":
-                        colorized += PORTAL_BLUE + char + RESET
-                    else:
-                        colorized += PORTAL_CYAN + char + RESET
-                        
-                # Center the line
-                centered_line = colorized.center(width)
-                
-                # Print the line
-                print(centered_line)
-            
-            # Wait briefly for next frame
-            time.sleep(frame_duration)
-        
-    except KeyboardInterrupt:
-        # Allow cancelling the animation
-        logger.debug("Animation cancelled by keyboard interrupt")
-        clear_screen()
-    except Exception as e:
-        # Fallback to static display if animation fails
-        logger.error(f"Error in portal animation: {e}")
-        display_static_portal_open()
-
-@safe_execute()
-def animate_transition(from_menu: Optional[Menu] = None, to_menu: Optional[Menu] = None, 
-                       frame_duration: float = None) -> None:
-    """
-    Transition between menus with portal effect.
-    
-    Args:
-        from_menu: Source menu (optional)
-        to_menu: Destination menu (optional)
-        frame_duration: Seconds per frame (no longer used)
-    """
-    # Log transition only - no screen clearing or animations
-    # This prevents potential flickering or rendering issues
-    logger.debug(f"Menu transition from {from_menu.title if from_menu else 'None'} to {to_menu.title if to_menu else 'None'}")
-    
-    # Very short delay for stability
-    time.sleep(0.05)
-
-@safe_execute()
-def animate_item_selection(item: MenuItem, index: int, width: int) -> None:
-    """
-    Highlight selected item with animation.
-    
-    Args:
-        item: MenuItem being selected
-        index: Index of the item
-        width: Available width for rendering
-    """
-    # Skip if animations disabled
-    if not get_config_value("animations_enabled", True):
-        return
-        
-    # Skip if terminal doesn't support ANSI colors
-    if not supports_ansi_color():
-        return
-        
-    # Get item text
-    item_text = item.render(width, selected=False)
-    
-    # Simple pulse animation
-    highlight_colors = ["cyan", "blue", "cyan"]
-    
-    for color in highlight_colors:
-        # Create highlighted version
-        highlighted = color_text(f"{BOLD}{item_text}{RESET}", color)
-        
-        # Print the highlighted item
-        sys.stdout.write(f"\r{highlighted}")
-        sys.stdout.flush()
-        
-        # Short delay
-        time.sleep(0.05)
-        
-    # Restore normal selection
-    final_text = item.render(width, selected=True)
-    sys.stdout.write(f"\r{final_text}")
-    sys.stdout.flush()
-
-@safe_execute()
-def animate_typing(text: str, speed: float = None, variations: bool = True) -> None:
-    """
-    Show typing animation for text.
-    
-    Args:
-        text: Text to display
-        speed: Base typing speed in seconds per character (uses TYPING_SPEED if None)
-        variations: Whether to vary typing speed for natural effect
-    """
-    # Use default typing speed if not specified
-    speed = TYPING_SPEED if speed is None else speed
-    
-    # Skip if animations disabled
-    if not get_config_value("animations_enabled", True):
-        print(text)
-        return
-    
-    # Add random burps if this is a Rick message
-    if random.random() < 0.3 and "*burp*" not in text:
-        parts = text.split()
-        if len(parts) > 3:
-            burp_index = random.randint(1, len(parts) - 2)
-            parts.insert(burp_index, "*burp*")
-            text = " ".join(parts)
-    
-    # Character by character output
-    for char in text:
-        # Print the character without newline
-        sys.stdout.write(char)
-        sys.stdout.flush()
-        
-        # Vary speed if requested
-        if variations:
-            if char == '.':
-                time.sleep(speed * 3)
-            elif char == ',' or char == ';':
-                time.sleep(speed * 2)
-            elif char == ' ':
-                time.sleep(speed)
-            else:
-                time.sleep(speed)
-        else:
-            time.sleep(speed)
-    
-    print()  # End with newline
-
-@safe_execute()
-def create_spinner(message: str = "Processing", spinner_type: str = "portal", 
-                   duration: float = None, fps: int = 10) -> None:
-    """
-    Show loading spinner animation.
-    
-    Args:
-        message: Message to display alongside spinner
-        spinner_type: Type of spinner ('portal', 'dots', 'bar')
-        duration: How long to run spinner (None = manual stop required)
-        fps: Frames per second
-    
-    Returns:
-        Callable: Function to stop the spinner
-    """
-    # Skip if animations disabled or terminal doesn't support it
-    if not get_config_value("animations_enabled", True) or not supports_ansi_color():
-        print(f"{message}...")
-        return lambda: None
-    
-    # Different spinner styles
-    spinners = {
-        "portal": ["◐", "◓", "◑", "◒"],
-        "dots": ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"],
-        "bar": ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█", "▇", "▆", "▅", "▄", "▃", "▂"],
-    }
-    
-    # Use dots as fallback if requested type isn't available
-    frames = spinners.get(spinner_type, spinners["dots"])
-    
-    # Setup for spinner
-    import threading
-    import itertools
-    
-    # Flag to control the spinner
-    stop_spinner = threading.Event()
-    
-    def spin():
-        # Loop through spinner frames
-        for frame in itertools.cycle(frames):
-            if stop_spinner.is_set():
-                break
-                
-            # Print the spinner frame
-            sys.stdout.write(f"\r{PORTAL_GREEN}{frame}{RESET} {message}... ")
-            sys.stdout.flush()
-            
-            # Wait for next frame
-            time.sleep(1.0 / fps)
-            
-        # Clear the line when done
-        sys.stdout.write("\r" + " " * (len(message) + 10) + "\r")
-        sys.stdout.flush()
-    
-    # Start spinner in a separate thread
-    spinner_thread = threading.Thread(target=spin)
-    spinner_thread.daemon = True
-    spinner_thread.start()
-    
-    # If duration specified, sleep and then stop
-    if duration is not None:
-        def auto_stop():
-            time.sleep(duration)
-            stop_spinner.set()
-            
-        auto_stop_thread = threading.Thread(target=auto_stop)
-        auto_stop_thread.daemon = True
-        auto_stop_thread.start()
-    
-    # Return function to stop the spinner
-    return lambda: stop_spinner.set()
-
-# =====================================================================
-# Visual Elements
-# =====================================================================
-
-@safe_execute()
-def create_menu_border(width: int, height: int, style: str = "slash") -> List[str]:
-    """
-    Create fancy borders for the menu.
-    
-    Args:
-        width: Width of the menu
-        height: Height of the menu
-        style: Border style ('slash', 'unicode', 'simple')
-        
-    Returns:
-        List[str]: List of border strings (top, sides, bottom)
-    """
-    logger.debug(f"Creating menu border with style: {style}, width: {width}, height: {height}")
-    
-    # Use ANSI green color if available
-    color_code = "\033[32m" if supports_ansi_color() else ""
-    reset_code = "\033[0m" if supports_ansi_color() else ""
-    
-    if style == "slash":
-        # New Rick & Morty themed border with slashes and dashes
-        top_border = f"{color_code}/-{'-' * (width - 4)}-\\{reset_code}"
-        side_left = f"{color_code}|{reset_code}"
-        side_right = f"{color_code}|{reset_code}"
-        bottom_border = f"{color_code}\\-{'-' * (width - 4)}-/{reset_code}"
-        
-        return [top_border, [side_left, side_right], bottom_border]
-    
-    elif style == "unicode":
-        # Unicode box drawing characters (if terminal supports it)
-        if supports_unicode():
-            top_border = f"{color_code}┌{'─' * (width - 2)}┐{reset_code}"
-            side_left = f"{color_code}│{reset_code}"
-            side_right = f"{color_code}│{reset_code}"
-            bottom_border = f"{color_code}└{'─' * (width - 2)}┘{reset_code}"
-        else:
-            # Fallback to simple borders if unicode is not supported
-            top_border = f"{color_code}+{'-' * (width - 2)}+{reset_code}"
-            side_left = f"{color_code}|{reset_code}"
-            side_right = f"{color_code}|{reset_code}"
-            bottom_border = f"{color_code}+{'-' * (width - 2)}+{reset_code}"
-        
-        return [top_border, [side_left, side_right], bottom_border]
-    
-    elif style == "simple":
-        # Simple box border
-        top_border = f"{color_code}+{'-' * (width - 2)}+{reset_code}"
-        side_left = f"{color_code}|{reset_code}"
-        side_right = f"{color_code}|{reset_code}"
-        bottom_border = f"{color_code}+{'-' * (width - 2)}+{reset_code}"
-        
-        return [top_border, [side_left, side_right], bottom_border]
-    
-    else:
-        # Default to slash style if invalid style provided
-        logger.warning(f"Invalid border style '{style}', using default 'slash' style")
-        top_border = f"{color_code}/-{'-' * (width - 4)}-\\{reset_code}"
-        side_left = f"{color_code}|{reset_code}"
-        side_right = f"{color_code}|{reset_code}"
-        bottom_border = f"{color_code}\\-{'-' * (width - 4)}-/{reset_code}"
-        
-        return [top_border, [side_left, side_right], bottom_border]
-
-@safe_execute()
-def create_portal_background(width: int, height: int, density: float = 0.05) -> List[str]:
-    """
-    Create portal background effect.
-    
-    Args:
-        width: Width of the background
-        height: Height of the background
-        density: Density of portal elements (0.0-1.0)
-        
-    Returns:
-        List[str]: Lines of the background
-    """
-    logger.debug("Creating portal background")
-    
-    # Portal elements
-    elements = ["*", "~", ".", "°", "·"]
-    
-    # Create background
-    lines = []
-    for _ in range(height):
-        line = ""
-        for _ in range(width):
-            # Add portal element based on density
-            if random.random() < density:
-                element = random.choice(elements)
-                # Colorize if supported
-                if supports_ansi_color():
-                    if element in "*°":
-                        element = color_text(element, "green")
-                    elif element in "~":
-                        element = color_text(element, "blue")
-                    else:
-                        element = color_text(element, "cyan")
-                line += element
-            else:
-                line += " "
-        lines.append(line)
-        
-    return lines
-
-@safe_execute()
-def create_menu_header(title: str, width: int) -> List[str]:
-    """
-    Create header for the menu.
-    
-    Args:
-        title: Title text
-        width: Width to format to
-        
-    Returns:
-        List[str]: Lines of the header
-    """
-    logger.debug(f"Creating menu header with title: {title}")
-    
-    # Use colors if supported
-    use_color = supports_ansi_color()
-    green = "\033[32m" if use_color else ""
-    cyan = "\033[36m" if use_color else ""
-    bright_cyan = "\033[1;36m" if use_color else ""
-    reset = "\033[0m" if use_color else ""
-    
-    # Center the title
-    centered_title = title.center(width - 2)
-    
-    # Create title with colors
-    if use_color:
-        # Colorize title: RICK AND MORTY in cyan, ASSISTANT CONTROL PANEL in green
-        if "RICK AND MORTY" in title and "ASSISTANT CONTROL PANEL" in title:
-            parts = title.split("ASSISTANT")
-            rick_part = parts[0]
-            assistant_part = "ASSISTANT" + parts[1]
-            
-            # Calculate spacing to maintain centering
-            total_len = len(rick_part) + len(assistant_part)
-            padding = (width - 2 - total_len) // 2
-            left_padding = " " * padding
-            
-            # Create the colored title
-            colored_title = f"{left_padding}{bright_cyan}{rick_part}{reset}{green}{assistant_part}{reset}"
-        else:
-            # If not the specific title format, just color the whole thing cyan
-            colored_title = f"{bright_cyan}{centered_title}{reset}"
-    else:
-        colored_title = centered_title
-    
-    # Create a separator line
-    separator = "-" * (width - 2)
-    if use_color:
-        separator = f"{green}{separator}{reset}"
-    
-    # Create the header lines
-    header = [
-        "",  # Blank line
-        colored_title,
-        separator,
-        ""   # Blank line
-    ]
-    
-    return header
-
-@safe_execute()
-def create_menu_footer(controls: Dict[str, str], width: int) -> List[str]:
-    """
-    Create footer with key controls based on ricktastic_menu.md style.
-    
-    Args:
-        controls: Dict mapping keys to actions
-        width: Available width
-        
-    Returns:
-        List[str]: Lines of the footer
-    """
-    logger.debug("Creating menu footer")
-    
-    # Create separator matching the border style
-    separator = "―" * width if supports_unicode() else "-" * width
-    if supports_ansi_color():
-        separator = color_text(separator, "green")
-    
-    # Format controls with brackets as shown in ricktastic_menu.md
-    control_parts = []
-    for key, action in controls.items():
-        if supports_ansi_color():
-            formatted = f"[ {color_text(key, 'cyan')} = {action} ]"
-        else:
-            formatted = f"[ {key} = {action} ]"
-        control_parts.append(formatted)
-    
-    # Join controls with spaces
-    control_text = "  ".join(control_parts)
-    
-    # Ensure control text fits and is centered
-    if len(control_text) > width:
-        # Create multiple lines of controls if needed
-        control_lines = []
-        current_line = []
-        current_width = 0
-        
-        for part in control_parts:
-            part_width = len(part) + 2  # +2 for spacing
-            if current_width + part_width > width and current_line:
-                control_lines.append("  ".join(current_line))
-                current_line = [part]
-                current_width = part_width
-            else:
-                current_line.append(part)
-                current_width += part_width
-                
-        if current_line:
-            control_lines.append("  ".join(current_line))
-        
-        footer_lines = [separator] + [line.center(width) for line in control_lines]
-    else:
-        # Single line of controls
-        footer_lines = [separator, control_text.center(width)]
-    
-    # Add version info line in ricktastic_menu.md style
-    version_info = "YOU'RE RUNNING RICK ASSISTANT v0.1.0 - C-137 MORTY EDITION"
-    if supports_ansi_color():
-        version_info = color_text(version_info, "cyan")
-    
-    # Insert version info before controls
-    footer_lines.insert(1, "")  # Blank line
-    footer_lines.insert(2, version_info.center(width))
-    footer_lines.append("")  # Blank line at the end
-    
-    return footer_lines
-
-@safe_execute()
-def highlight_selection(item: MenuItem, selected: bool, width: int) -> str:
-    """
-    Highlight the selected menu item.
-    
-    Args:
-        item: MenuItem to highlight
-        selected: Whether the item is selected
-        width: Width to format to
-        
-    Returns:
-        str: Formatted menu item line
-    """
-    # Check if the item is enabled
-    enabled = item.enabled
-    
-    # Create prefix for "coming soon" items
-    prefix = "🚧 " if '🚧' in item.text else ""
-    # Remove the emoji from the text for length calculations
-    display_text = item.text.replace('🚧 ', '')
-    
-    # Set colors based on ANSI support
-    if supports_ansi_color():
-        if selected and enabled:
-            # Cyan for selected items
-            return f"\033[1;36m{prefix}{display_text}\033[0m".ljust(width)
-        elif selected and not enabled:
-            # Dim cyan for selected but disabled items
-            return f"\033[2;36m{prefix}{display_text}\033[0m".ljust(width)
-        elif not selected and enabled:
-            # Green for normal items
-            return f"\033[32m{prefix}{display_text}\033[0m".ljust(width)
-        else:
-            # Dim green for disabled items
-            return f"\033[2;32m{prefix}{display_text}\033[0m".ljust(width)
-    else:
-        # Fallback for terminals without color support
-        if selected:
-            return f"-> {prefix}{display_text}".ljust(width)
-        else:
-            return f"   {prefix}{display_text}".ljust(width)
-
-@safe_execute()
-def highlight_category(category: MenuCategory, selected: bool, width: int) -> str:
-    """
-    Format a menu category with appropriate styling.
-    
-    Args:
-        category: MenuCategory to highlight
-        selected: Whether the category is selected
-        width: Width to format to
-        
-    Returns:
-        str: Formatted menu category line
-    """
-    # Get the category text
-    display_text = category.text.upper()
-    
-    # Set colors based on ANSI support
-    if supports_ansi_color():
-        if selected:
-            # Bright cyan for selected categories
-            return f"\033[1;36m>> {display_text} <<\033[0m".ljust(width)
-        else:
-            # Bright green for normal categories
-            return f"\033[1;32m== {display_text} ==\033[0m".ljust(width)
-    else:
-        # Fallback for terminals without color support
-        if selected:
-            return f">> {display_text} <<".ljust(width)
-        else:
-            return f"== {display_text} ==".ljust(width)
-
-@safe_execute()
-def create_rick_menu_comment() -> str:
-    """
-    Create a random Rick-styled menu comment.
-    
-    Returns:
-        str: Random Rick comment
-    """
-    comment = random.choice(RICK_MENU_COMMENTS)
-    
-    # Add burp if not already present
-    if "*burp*" not in comment and random.random() < 0.3:
-        parts = comment.split()
-        if len(parts) > 2:
-            burp_index = random.randint(1, len(parts) - 1)
-            parts.insert(burp_index, "*burp*")
-            comment = " ".join(parts)
-    
-    # Colorize if supported
-    if supports_ansi_color():
-        comment = color_text(comment, "yellow")
-        
-    return comment
-
-# =====================================================================
-# Core Menu Functions
-# =====================================================================
-
-@safe_execute()
-def display_menu(title: str, items: List[Union[MenuItem, str]], width: int = None, 
-                 height: int = None, border_style: str = "portal", 
-                 with_portal_bg: bool = False) -> Optional[Tuple[int, Any]]:
-    """
-    Show a menu with items and get user selection.
-    
-    Args:
-        title: Menu title
-        items: List of MenuItems or strings
-        width: Menu width (uses terminal width if None)
-        height: Menu height (uses terminal height if None)
-        border_style: Border style ('portal', 'simple', 'double')
-        with_portal_bg: Whether to show portal background
-        
-    Returns:
-        Optional[Tuple[int, Any]]: Selected index and item value, or None if cancelled
-    """
-    logger.debug(f"Displaying menu: {title} with {len(items)} items")
-    
-    # Convert string items to MenuItems
-    menu_items = []
-    for item in items:
-        if isinstance(item, str):
-            menu_items.append(MenuItem(text=item, action=None, enabled=True, coming_soon=False))
-        else:
-            menu_items.append(item)
-    
-    # Create menu object
-    menu = Menu(title=title, items=menu_items, width=width, height=height)
-    
-    # Display the menu
-    return navigate_menu(menu, border_style=border_style, with_portal_bg=with_portal_bg)
-
-@safe_execute()
-def navigate_menu(menu: Menu, parent_menu: Menu = None, border_style: str = "slash",
-                  with_portal_bg: bool = False) -> Optional[Tuple[int, Any]]:
-    """
-    Handle menu navigation and selection.
-    
-    Args:
-        menu: Menu object to navigate
-        parent_menu: Parent menu (for back navigation)
-        border_style: Border style to use
-        with_portal_bg: Whether to show portal background
-        
-    Returns:
-        Optional[Tuple[int, Any]]: Selected index and item value, or None if cancelled
-    """
-    logger.debug(f"Navigating menu: {menu.title}")
-    
-    # Get terminal dimensions
-    term_width = get_terminal_width()
-    term_height = get_terminal_height()
-    
-    # Set menu width and height
-    menu.width = menu.width or term_width
-    menu.height = menu.height or term_height
-    
-    # Ensure menu is within terminal bounds
-    menu.width = min(menu.width, term_width - 2)
-    menu.height = min(menu.height, term_height - 2)
-    
-    # Set up key controls
-    controls = {
-        "↑/↓": "Navigate", 
-        "Enter": "Select",
-        "Q": "Exit"
-    }
-    
-    # Add back control if there's a parent menu
-    if parent_menu:
-        controls["B"] = "Back"
-    
-    # Add help control
-    controls["?"] = "Help"
-    
-    # Show portal entry animation
-    animate_transition(to_menu=menu)
-    
-    # Main menu navigation loop
-    while not menu.exit_requested:
-        try:
-            # Clear screen with direct method
-            if sys.platform == 'win32':
-                os.system('cls')
-            else:
-                os.system('clear')
-            
-            # Force terminal cursor to home position
-            print("\033[H", end='', flush=True)
-            
-            # Create menu elements
-            border = create_menu_border(menu.width, menu.height, style=border_style)
-            header = create_menu_header(menu.title, menu.width)
-            footer = create_menu_footer(controls, menu.width)
-            
-            # Get visible items
-            visible_items = menu.get_visible_items()
-            
-            # Calculate available space for items
-            available_height = menu.height - len(header) - len(footer) - 2
-            
-            # Handle scrolling if needed
-            total_items = len(visible_items)
-            if total_items > available_height:
-                # Adjust scroll offset if needed
-                if menu.selected_index < menu.scroll_offset:
-                    menu.scroll_offset = menu.selected_index
-                elif menu.selected_index >= menu.scroll_offset + available_height:
-                    menu.scroll_offset = menu.selected_index - available_height + 1
-                    
-                # Get visible items after scrolling
-                visible_range = visible_items[menu.scroll_offset:menu.scroll_offset + available_height]
-                
-                # Add scroll indicators
-                has_scroll_up = menu.scroll_offset > 0
-                has_scroll_down = menu.scroll_offset + available_height < total_items
-                
-                # Update controls for scrolling
-                if has_scroll_up:
-                    controls["PgUp"] = "Scroll Up"
-                elif "PgUp" in controls:
-                    del controls["PgUp"]
-                    
-                if has_scroll_down:
-                    controls["PgDn"] = "Scroll Down"
-                elif "PgDn" in controls:
-                    del controls["PgDn"]
-            else:
-                visible_range = visible_items
-                menu.scroll_offset = 0
-            
-            # Portal background (if requested)
-            background = None
-            if with_portal_bg:
-                background = create_portal_background(menu.width, menu.height)
-            
-            # Render menu
-            print("\033[H", end='', flush=True)  # Force cursor to home position again
-            
-            # Print top border
-            print(border[0])
-            
-            # Print content (header, items, padding, footer)
-            content = []
-            
-            # Add header
-            for line in header:
-                content.append(line)
-            
-            # Add items
-            for i, item in enumerate(visible_range):
-                # Format the item
-                if isinstance(item, MenuCategory):
-                    formatted = highlight_category(item, i == menu.selected_index - menu.scroll_offset, menu.width-2)
-                else:
-                    formatted = highlight_selection(item, i == menu.selected_index - menu.scroll_offset, menu.width-2)
-                content.append(formatted)
-            
-            # Add padding if needed
-            padding_needed = max(0, available_height - len(visible_range))
-            for _ in range(padding_needed):
-                content.append("")
-            
-            # Add footer
-            for line in footer:
-                content.append(line)
-            
-            # Print the content with borders
-            for line in content:
-                # Add left and right borders
-                padded_line = line.ljust(menu.width - 2)
-                print(f"{border[1][0]}{padded_line}{border[1][-1]}")
-            
-            # Print bottom border
-            print(border[-1])
-            
-            # Flush output to ensure everything is displayed
-            sys.stdout.flush()
-            
-            # Small delay to ensure menu is visible before processing input
-            time.sleep(0.05)
-            
-            # Get key input - use a blocking approach to prevent racing
-            key = get_menu_key()
-            logger.debug(f"Key pressed: '{key}'")
-            
-            # Process key input
-            if key in ('b', 'B') and parent_menu:  # Back
-                # Go back to parent menu
-                logger.debug("'Back' key detected, returning to parent menu")
-                animate_transition(from_menu=menu, to_menu=parent_menu)
-                return (-1, "BACK")
-                
-            elif key in ('?', 'h', 'H'):  # Help
-                logger.debug("Help key detected, showing menu help")
-                show_menu_help(menu, controls)
-                
-            elif key in ('\r', '\n', ' '):  # Enter or space
-                logger.debug("Enter/space key detected, activating selected item")
-                # Activate the selected item
-                result = menu.activate_selected()
-                
-                # If it's a category, just redraw
-                current_item = menu.get_current_item()
-                if isinstance(current_item, MenuCategory):
-                    continue
-                
-                # Otherwise, return the result
-                if result is not None and result != False:
-                    # If the item has a value, return it
-                    logger.debug(f"Menu item activated, returning result: {result}")
-                    animate_transition(from_menu=menu)
-                    return (menu.selected_index, result)
-                elif current_item and hasattr(current_item, 'value') and current_item.value is not None:
-                    # Otherwise return the item's value
-                    logger.debug(f"Menu item selected, returning value: {current_item.value}")
-                    animate_transition(from_menu=menu)
-                    return (menu.selected_index, current_item.value)
-                    
-            elif key == '\x1b' or key in ('q', 'Q', 'ESC'):  # ESC key or q
-                logger.debug(f"ESC/q key detected (key='{key}'), exiting menu")
-                # Exit menu
-                animate_transition(from_menu=menu)
+        if not self.enabled:
                 return None
                     
-            elif key in ('j', 'J', '\x1b[B', 'DOWN'):  # Down arrow or j
-                logger.debug("Down navigation key detected")
-                menu.select_next()
-                
-            elif key in ('k', 'K', '\x1b[A', 'UP'):  # Up arrow or k
-                logger.debug("Up navigation key detected")
-                menu.select_previous()
-                
-            elif key in ('g', '\x1b[H', 'HOME'):  # Home key or g
-                logger.debug("Home key detected")
-                menu.selected_index = 0
-                
-            elif key in ('G', '\x1b[F', 'END'):  # End key or G
-                logger.debug("End key detected")
-                menu.selected_index = len(visible_items) - 1
-                
-            elif key in ('\x1b[5~', 'PGUP'):  # Page up
-                logger.debug("Page Up key detected")
-                # Page up (move multiple items)
-                move_up = min(available_height, menu.selected_index)
-                menu.selected_index -= move_up
-                
-            elif key in ('\x1b[6~', 'PGDN'):  # Page down
-                logger.debug("Page Down key detected")
-                # Page down (move multiple items)
-                items_left = len(visible_items) - menu.selected_index - 1
-                move_down = min(available_height, items_left)
-                menu.selected_index += move_down
+        return self.toggle()
         
-        except Exception as e:
-            logger.error(f"Error in menu navigation loop: {e}")
-            # If there's an error, sleep briefly to prevent tight loop
-            time.sleep(0.2)
-    
-    # Menu was exited via exit_requested
-    return None
-
-@safe_execute()
-def get_selection(items: List[Union[str, Dict[str, Any], MenuItem]], prompt: str = "Select an option", 
-                  default: int = None, numbered: bool = True) -> Optional[int]:
-    """
-    Get user selection from a list of options.
-    
-    Args:
-        items: List of items (strings, dicts, or MenuItems)
-        prompt: Text to display above the menu
-        default: Default selection index
-        numbered: Whether to show item numbers
-        
-    Returns:
-        Optional[int]: Selected index or None if cancelled
-    """
-    logger.debug(f"Getting selection from {len(items)} items")
-    
-    # Convert items to proper format
-    menu_items = []
-    for i, item in enumerate(items):
-        if isinstance(item, MenuItem):
-            menu_items.append(item)
-        elif isinstance(item, dict) and 'text' in item:
-            # Convert dict to MenuItem
-            text = item['text']
-            value = item.get('value', text)
-            enabled = item.get('enabled', True)
-            icon = item.get('icon', None)
-            menu_items.append(MenuItem(text=text, action=None, enabled=enabled, coming_soon=False))
-        else:
-            # Add number prefix if requested
-            prefix = f"{i+1}. " if numbered else ""
-            text = prefix + str(item)
-            menu_items.append(MenuItem(text=text, action=None, enabled=True, coming_soon=False))
-    
-    # Set default selection
-    menu = Menu(title=prompt, items=menu_items)
-    if default is not None and 0 <= default < len(menu_items):
-        menu.selected_index = default
-    
-    # Display menu and get selection
-    result = navigate_menu(menu)
-    
-    # Return just the index
-    if result:
-        return result[0]
-    return None
-
-@safe_execute()
-def show_message(text: str, title: str = "Message", with_animation: bool = True,
-                 message_type: str = "info") -> None:
-    """
-    Display message with animation.
-    
-    Args:
-        text: Message text
-        title: Message title
-        with_animation: Whether to show typing animation
-        message_type: Type of message ('info', 'error', 'warning', 'success')
-    """
-    logger.debug(f"Showing {message_type} message: {text}")
-    
-    # Clear the screen
-    clear_screen()
-    
-    # Get terminal dimensions
-    width = get_terminal_width()
-    height = get_terminal_height()
-    
-    # Create border
-    border = create_menu_border(width, 10, style="portal")
-    
-    # Format title based on message type
-    if message_type == "error":
-        formatted_title = format_error(title)
-    elif message_type == "warning":
-        formatted_title = format_warning(title)
-    elif message_type == "success":
-        formatted_title = format_success(title)
-    else:
-        formatted_title = format_info(title)
-    
-    # Center the title
-    centered_title = formatted_title.center(width - 4)
-    
-    # Format the message text
-    formatted_text = format_text(text, width=width - 8)
-    
-    # Add Rick's touch to messages
-    if message_type == "error" and random.random() < 0.7:
-        formatted_text += "\n\n" + color_text("Nice job breaking things, *burp* genius.", "red")
-    elif message_type == "warning" and random.random() < 0.7:
-        formatted_text += "\n\n" + color_text("You're being warned for a reason, Einstein.", "yellow")
-    elif message_type == "success" and random.random() < 0.7:
-        formatted_text += "\n\n" + color_text("Wow, something actually went right for once!", "green")
-        
-    # Print the message
-    print(border[0])
-    print(f"{border[1][0]}{centered_title.center(width-2)}{border[1][-1]}")
-    print(border[1])
-    
-    # Print the message text with or without animation
-    for line in formatted_text.split('\n'):
-        # Calculate padding for center alignment
-        padding = (width - 2 - len(line)) // 2
-        padded_line = " " * padding + line
-        
-        if with_animation:
-            print(f"{border[1][0]}", end="")
-            animate_typing(padded_line.ljust(width-2), speed=0.01)
-            print(f"{border[1][-1]}")
-        else:
-            print(f"{border[1][0]}{padded_line.ljust(width-2)}{border[1][-1]}")
-    
-    # Add empty space and prompt
-    for _ in range(2):
-        print(f"{border[1][0]}{' ' * (width-2)}{border[1][-1]}")
-        
-    print(f"{border[1][0]}{color_text('Press any key to continue...', 'cyan').center(width-2)}{border[1][-1]}")
-    print(border[-1])
-    
-    # Wait for key press
-    get_single_key()
-
-@safe_execute()
-def confirm_action(prompt: str, default: bool = False) -> bool:
-    """
-    Get yes/no confirmation from user.
-    
-    Args:
-        prompt: Confirmation prompt text
-        default: Default response (True for yes, False for no)
-        
-    Returns:
-        bool: True if confirmed, False otherwise
-    """
-    logger.debug(f"Asking for confirmation: {prompt}")
-    
-    # Get terminal dimensions
-    width = get_terminal_width()
-    
-    # Create border
-    border = create_menu_border(width, 7, style="portal")
-    
-    # Format the prompt with Rick's flair
-    if random.random() < 0.3 and "*burp*" not in prompt:
-        parts = prompt.split()
-        burp_index = random.randint(1, len(parts) - 1)
-        parts.insert(burp_index, "*burp*")
-        prompt = " ".join(parts)
-    
-    formatted_prompt = format_text(prompt, width=width - 8)
-    
-    # Show default in the options
-    yes_text = "[Y]es" if default else "[y]es"
-    no_text = "[n]o" if not default else "[N]o"
-    options_text = f"{yes_text} / {no_text}"
-    
-    # Print confirmation dialog
-    clear_screen()
-    print(border[0])
-    print(f"{border[1][0]}{color_text('Confirmation', 'yellow').center(width-2)}{border[1][-1]}")
-    print(border[1])
-    
-    # Print the prompt text
-    for line in formatted_prompt.split('\n'):
-        # Calculate padding for center alignment
-        padding = (width - 2 - len(line)) // 2
-        padded_line = " " * padding + line
-        print(f"{border[1][0]}{padded_line.ljust(width-2)}{border[1][-1]}")
-    
-    print(border[1])
-    print(f"{border[1][0]}{options_text.center(width-2)}{border[1][-1]}")
-    print(border[-1])
-    
-    # Get user response
-    while True:
-        key = get_single_key().lower()
-        
-        if key in ('y', 'Y', '\r', '\n') and default:
-            return True
-        elif key == 'y':
-            return True
-        elif key in ('n', 'N', '\x1b'):  # n, N, or Escape
-            return False
-        elif key in ('\r', '\n'):  # Enter
-            return default
-
-@safe_execute()
-def show_progress(operation: str, total_steps: int, with_portal: bool = True,
-                  cancel_allowed: bool = True) -> Callable[[int, str], bool]:
-    """
-    Show progress indicator for an operation.
-    
-    Args:
-        operation: Name of the operation
-        total_steps: Total number of steps
-        with_portal: Whether to use portal-themed progress
-        cancel_allowed: Whether the operation can be cancelled
-        
-    Returns:
-        Callable: Function to update progress
-    """
-    logger.debug(f"Creating progress indicator for: {operation}")
-    
-    # Get terminal dimensions
-    width = get_terminal_width()
-    
-    # Setup progress state
-    progress_state = {
-        'current': 0,
-        'total': total_steps,
-        'status': 'Starting...',
-        'cancelled': False
-    }
-    
-    # Create the progress bar width (account for text and borders)
-    bar_width = width - 20
-    
-    # Portal animation characters
-    portal_chars = ['◢', '◣', '◤', '◥'] if supports_unicode() else ['>', 'v', '<', '^']
-    portal_index = 0
-    
-    # Function to update the progress display
-    def update_progress():
-        # Calculate percentage
-        if progress_state['total'] <= 0:
-            percent = 100
-        else:
-            percent = int((progress_state['current'] / progress_state['total']) * 100)
-        
-        # Create progress bar
-        completed_width = int((bar_width * percent) / 100)
-        
-        if with_portal and supports_ansi_color():
-            # Portal-themed progress bar
-            bar = ""
-            for i in range(bar_width):
-                if i < completed_width:
-                    if i == completed_width - 1:
-                        # Add portal character at the end of progress
-                        char = portal_chars[portal_index]
-                        bar += color_text(char, "green")
-                    else:
-                        # Alternate colors for completed section
-                        if i % 3 == 0:
-                            bar += color_text("■", "green")
-                        elif i % 3 == 1:
-                            bar += color_text("■", "cyan")
-                        else:
-                            bar += color_text("■", "blue")
-                else:
-                    # Empty section
-                    bar += "□"
-        else:
-            # Simple progress bar
-            bar = "[" + "■" * completed_width + "□" * (bar_width - completed_width) + "]"
-        
-        # Format status line
-        status_line = f"{percent:3d}% {bar} {progress_state['status']}"
-        
-        # Add cancel instruction if allowed
-        if cancel_allowed:
-            cancel_text = "Press 'Esc' to cancel"
-            if supports_ansi_color():
-                cancel_text = color_text(cancel_text, "red")
-            status_line += f" ({cancel_text})"
-        
-        # Clear line and print
-        sys.stdout.write("\r" + " " * width)  # Clear the line
-        sys.stdout.write("\r" + status_line)
-        sys.stdout.flush()
-    
-    # Function for the caller to update progress
-    def update(step: int, status: str) -> bool:
+    def get_display_text(self) -> str:
         """
-        Update the progress indicator.
+        Get the display text for this item, including toggle state.
         
-        Args:
-            step: Current step (0 to total_steps)
-            status: Status message
-            
-        Returns:
-            bool: False if cancelled, True otherwise
+    Returns:
+            str: Formatted display text with toggle state
         """
-        nonlocal portal_index
-        
-        # Update state
-        progress_state['current'] = step
-        progress_state['status'] = status
-        
-        # Rotate portal character
-        portal_index = (portal_index + 1) % len(portal_chars)
-        
-        # Update display
-        update_progress()
-        
-        # Check for cancellation if allowed
-        if cancel_allowed and sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-            key = sys.stdin.read(1)
-            if key == '\x1b':  # Escape key
-                progress_state['cancelled'] = True
-                print("\nOperation cancelled by user.")
-                return False
-        
-        return not progress_state['cancelled']
-    
-    # Initial display
-    print(f"\n{color_text(operation, 'cyan')}\n")
-    update_progress()
-    
-    return update
+        state = self.get_state()
+        indicator = "[X]" if state else "[ ]"
+        return f"{indicator} {self.text}"
 
-@safe_execute()
-def show_menu_help(menu: Menu, controls: Dict[str, str]) -> None:
+class MultiOptionMenuItem(MenuItem):
     """
-    Show help information about menu controls.
+    Menu item with multiple selectable options.
     
-    Args:
-        menu: Current menu
-        controls: Control key mappings
-    """
-    logger.debug("Showing menu help")
+    This class represents a menu item that can cycle through multiple options.
     
-    # Get terminal dimensions
-    width = get_terminal_width()
-    
-    # Create help content
-    help_content = [
-        "=== Rick Assistant Menu Help ===",
-        "",
-        "Navigation Controls:",
-        "  ↑/k: Move selection up",
-        "  ↓/j: Move selection down",
-        "  Home/g: Go to first item",
-        "  End/G: Go to last item",
-        "  PgUp: Move up one page",
-        "  PgDn: Move down one page",
-        "",
-        "Action Controls:",
-        "  Enter/Space: Select item",
-        "  b: Go back to previous menu",
-        "  Esc/q: Exit current menu",
-        "  ?: Show this help"
-    ]
-    
-    # Add Rick's commentary
-    rick_comments = [
-        "Look at you needing help with a simple *burp* menu. Pathetic.",
-        "It's just a menu, not interdimensional rocket science.",
-        "I've trained lab rats that learned menus faster than you.",
-        "Oh great, you found the help section. What an achievement.",
-        "Yes, you press keys and things happen. Revolutionary concept."
-    ]
-    
-    help_content.append("")
-    help_content.append(random.choice(rick_comments))
-    
-    # Format and display as a message
-    formatted_help = "\n".join(help_content)
-    show_message(formatted_help, title="Menu Help", with_animation=False)
-
-# =====================================================================
-# Integration with Existing Components
-# =====================================================================
-
-@safe_execute()
-def get_menu_key() -> str:
-    """
-    Get keyboard input specific for menu navigation.
-    
-    This function extends get_single_key to better handle special keys
-    like arrows and function keys in menu context.
-    
-    Returns:
-        str: Key pressed by user
-    """
-    try:
-        # Use input system's single key function
-        key = get_single_key()
-        
-        if not key:
-            # If no key is returned, just return an empty string
-            return ""
-        
-        # Process special key sequences
-        if key == '\x1b':  # Escape sequence
-            logger.debug("ESC key detected in get_menu_key")
-            
-            # Check if this is a standalone ESC key or the start of a sequence
-            if not hasattr(sys.stdin, 'fileno'):
-                # Can't check for more input, treat as standalone ESC
-                return 'ESC'
-            
-            # Try to read more with a short timeout
-            ready = select.select([sys.stdin], [], [], 0.05)[0]
-            if not ready:
-                # No more input available, so it's a standalone ESC key
-                return 'ESC'
-            
-            # There's more input, so it's probably an arrow key or function key
-            seq = sys.stdin.read(1)
-            
-            if seq == '[':
-                # ANSI escape sequence
-                next_char = sys.stdin.read(1)
-                
-                # Arrow keys
-                if next_char == 'A':
-                    return 'UP'
-                elif next_char == 'B':
-                    return 'DOWN'
-                elif next_char == 'C':
-                    return 'RIGHT'
-                elif next_char == 'D':
-                    return 'LEFT'
-                elif next_char == 'H':
-                    return 'HOME'
-                elif next_char == 'F':
-                    return 'END'
-                elif next_char == '5':
-                    # PgUp - consume the ~ character
-                    sys.stdin.read(1)
-                    return 'PGUP'
-                elif next_char == '6':
-                    # PgDn - consume the ~ character
-                    sys.stdin.read(1)
-                    return 'PGDN'
-                else:
-                    # Unknown escape sequence
-                    return f"ESC[{next_char}"
-            
-            # Other escape sequences
-            return f"ESC{seq}"
-        
-        # Regular keys for navigation
-        if key in ('j', 'J'):
-            return 'DOWN'
-        elif key in ('k', 'K'):
-            return 'UP'
-        elif key in ('h', 'H'):
-            return 'LEFT'
-        elif key in ('l', 'L'):
-            return 'RIGHT'
-        elif key in ('g'):
-            return 'HOME'
-        elif key in ('G'):
-            return 'END'
-        elif key in ('q', 'Q'):
-            return 'ESC'
-        
-        # Return the key as is
-        return key
-    
-    except Exception as e:
-        logger.error(f"Error in get_menu_key: {e}")
-        # Return a safe default
-        return ''
-
-@safe_execute()
-def process_menu_input(key: str, menu: Menu, selection: int) -> Tuple[bool, int, Any]:
-    """
-    Process key input for menu navigation.
-    
-    Args:
-        key: Key pressed by user
-        menu: Current menu
-        selection: Current selection index
-        
-    Returns:
-        Tuple[bool, int, Any]:
-            - Whether the menu should exit
-            - New selection index
-            - Result value if item selected, or None
-    """
-    logger.debug(f"Processing menu input: {key}")
-    
-    # Get visible items
-    visible_items = menu.get_visible_items()
-    total_items = len(visible_items)
-    
-    # Exit keys
-    if key in ('ESC', 'q', 'Q'):
-        return True, selection, None
-        
-    # Selection keys
-    elif key in ('ENTER', '\r', '\n', ' '):
-        # Get the item
-        if 0 <= selection < total_items:
-            item = visible_items[selection]
-            
-            # If it's a category, just toggle expansion
-            if isinstance(item, MenuCategory):
-                item.expanded = not item.expanded
-                return False, selection, None
-                
-            # If it's a toggle, toggle it
-            elif isinstance(item, MenuToggle):
-                result = item.toggle()
-                return False, selection, None
-                
-            # Otherwise, execute the item
-            else:
-                result = item.activate()
-                return True, selection, result
-                
-    # Navigation keys
-    elif key in ('DOWN', 'j', 'J'):
-        # Move selection down
-        return False, min(selection + 1, total_items - 1), None
-        
-    elif key in ('UP', 'k', 'K'):
-        # Move selection up
-        return False, max(selection - 1, 0), None
-        
-    elif key in ('HOME', 'g'):
-        # Go to first item
-        return False, 0, None
-        
-    elif key in ('END', 'G'):
-        # Go to last item
-        return False, total_items - 1, None
-        
-    elif key in ('PGDN',):
-        # Page down (move 10 items)
-        return False, min(selection + 10, total_items - 1), None
-        
-    elif key in ('PGUP',):
-        # Page up (move 10 items)
-        return False, max(selection - 10, 0), None
-    
-    # For other keys, no change
-    return False, selection, None
-
-@safe_execute()
-def get_animation_preferences() -> dict:
-    """
-    Get user animation preferences from configuration.
-    
-    Returns:
-        dict: Animation settings
-    """
-    # Get configuration values or use defaults
-    return {
-        'enabled': get_config_value('animations_enabled', True),
-        'speed': get_config_value('animation_speed', 1.0),
-        'portal_effects': get_config_value('portal_effects', True),
-        'typing_speed': get_config_value('typing_speed', 0.03),
-        'transitions': get_config_value('menu_transitions', True)
-    }
-
-@safe_execute()
-def should_animate() -> bool:
-    """
-    Check if animations should be displayed.
-    
-    Returns:
-        bool: True if animations are enabled
-    """
-    # Check configuration and terminal capabilities
-    return (get_config_value('animations_enabled', True) and 
-            supports_ansi_color() and 
-            not get_config_value('disable_all_animations', False))
-
-@safe_execute(default_return=None)
-def handle_menu_action(action_item: MenuItem, show_animations: bool = True) -> Any:
-    """
-    Execute menu action with visual feedback.
-    
-    Args:
-        action_item: MenuItem to execute
-        show_animations: Whether to show animations
-        
-    Returns:
-        Any: Result of the action
-    """
-    logger.debug(f"Handling menu action: {action_item.text}")
-    
-    # Skip animations if disabled
-    if not show_animations or not should_animate():
-        return action_item.activate()
-    
-    # Show spinner while executing
-    spinner_stop = create_spinner(f"Executing: {action_item.text}", spinner_type="portal")
-    
-    try:
-        # Execute the action
-        result = action_item.activate()
-        
-        # Stop spinner
-        spinner_stop()
-        
-        # Show success message
-        if action_item.text:
-            show_message(f"Successfully executed: {action_item.text}", 
-                         title="Action Complete", message_type="success")
-            
-        return result
-    except Exception as e:
-        # Stop spinner
-        spinner_stop()
-        
-        # Show error message
-        error_msg = f"Error executing '{action_item.text}': {str(e)}"
-        show_message(error_msg, title="Action Failed", message_type="error")
-        
-        # Re-raise the exception
-        raise
-
-@safe_execute(default_return=None)
-def handle_toggle(toggle_item: MenuToggle, show_animations: bool = True) -> bool:
-    """
-    Toggle a menu item with visual feedback.
-    
-    Args:
-        toggle_item: MenuToggle to toggle
-        show_animations: Whether to show animations
-        
-    Returns:
-        bool: New toggle state
-    """
-    logger.debug(f"Handling menu toggle: {toggle_item.text}")
-    
-    # Skip animations if disabled
-    if not show_animations or not should_animate():
-        return toggle_item.toggle()
-    
-    # Toggle the item with visual feedback
-    old_state = toggle_item.state
-    new_state = toggle_item.toggle()
-    
-    # If state changed, show brief feedback
-    if old_state != new_state:
-        state_text = "ON" if new_state else "OFF"
-        color = "green" if new_state else "red"
-        
-        # Flash brief status (at bottom of terminal to avoid disrupting menu)
-        term_width = get_terminal_width()
-        message = f"'{toggle_item.text}' is now {state_text}"
-        
-        # Save cursor position
-        sys.stdout.write("\033[s")
-        
-        # Move to bottom of screen
-        sys.stdout.write(f"\033[{get_terminal_height()};0H")
-        
-        # Print message
-        sys.stdout.write(color_text(message.center(term_width), color))
-        sys.stdout.flush()
-        
-        # Wait briefly
-        time.sleep(0.5)
-        
-        # Clear line
-        sys.stdout.write("\r" + " " * term_width)
-        
-        # Restore cursor position
-        sys.stdout.write("\033[u")
-        sys.stdout.flush()
-    
-    return new_state
-
-@safe_execute()
-def format_menu_for_p10k(menu_title: str, is_active: bool = True) -> str:
-    """
-    Format menu information for Powerlevel10k segment.
-    
-    Args:
-        menu_title: Title of the current menu
-        is_active: Whether the menu system is active
-        
-    Returns:
-        str: Formatted string for Powerlevel10k
-    """
-    logger.debug(f"Formatting menu for P10k: {menu_title}")
-    
-    # Format for Powerlevel10k segment
-    if is_active:
-        # Active menu - show portal icon and title
-        return f"%F{{green}}🧪%f %F{{cyan}}{menu_title}%f"
-    else:
-        # Inactive menu - just show icon
-        return "%F{gray}🧪%f"
-
-# =====================================================================
-# Advanced Features
-# =====================================================================
-
-@safe_execute()
-def create_submenu(parent: Menu, title: str, items: List[MenuItem] = None) -> Menu:
-    """
-    Create a submenu under a parent menu.
-    
-    Args:
+    Attributes:
+        text (str): Display text for this item
+        key (str): Configuration key
+        options (List[str]): Available options
+        default (str): Default option
         parent: Parent menu
-        title: Submenu title
-        items: List of menu items
-        
-    Returns:
-        Menu: The created submenu
+        enabled (bool): Whether this item is enabled
     """
-    logger.debug(f"Creating submenu: {title} under {parent.title}")
     
-    # Create submenu with parent reference
-    submenu = Menu(title=title, items=items or [], parent=parent)
-    
-    # Inherit width and height from parent
-    submenu.width = parent.width
-    submenu.height = parent.height
-    
-    return submenu
-
-@safe_execute()
-def navigate_hierarchy(root_menu: Menu) -> Optional[Tuple[Menu, int, Any]]:
-    """
-    Navigate through menu hierarchy.
+    def __init__(self, text: str, key: str, options: List[str], 
+                 default: str = None, enabled: bool = True):
+        """
+        Initialize a multi-option menu item.
     
     Args:
-        root_menu: Root menu to start navigation
+            text: Display text for this item
+            key: Configuration key
+            options: Available options
+            default: Default option
+            enabled: Whether this item is enabled
+        """
+        super().__init__(text, None, enabled, key, False, "multi_option")
+        self.options = options
+        self.default = default or (options[0] if options else "")
         
-    Returns:
-        Optional[Tuple[Menu, int, Any]]:
-            - Menu where selection was made
-            - Selected index
-            - Selected value or None if cancelled
-    """
-    logger.debug(f"Starting hierarchical navigation from: {root_menu.title}")
-    
-    # Start with root menu
-    current_menu = root_menu
-    menu_stack = []
-    
-    # Show portal open animation for root menu
-    animate_portal_open()
-    
-    while True:
-        # Display current menu
-        result = navigate_menu(current_menu, 
-                              parent_menu=menu_stack[-1] if menu_stack else None)
-        
-        # Check result
-        if result is None:
-            # Menu was exited/cancelled
-            if not menu_stack:
-                
-                return None
-            else:
-                # Go back to parent menu
-                current_menu = menu_stack.pop()
-                continue
-                
-        if result[0] == -1 and result[1] == "BACK":
-            # Explicit "back" navigation
-            if menu_stack:
-                current_menu = menu_stack.pop()
-                continue
-            else:
-                # At root menu, exit completely
-                return None
-                
-        # Get selected item
-        index, value = result
-        selected_item = current_menu.get_item_at_index(index)
-        
-        # Check if it's a submenu (either old direct Menu format or new typed dict format)
-        if isinstance(selected_item, Menu):
-            # Direct Menu object - old format (shouldn't happen anymore but keep for backwards compatibility)
-            menu_stack.append(current_menu)
-            current_menu = selected_item
-            continue
-        elif isinstance(value, dict) and value.get("type") == "submenu" and "menu" in value:
-            # New typed format with menu in a dict
-            submenu = value.get("menu")
-            if isinstance(submenu, Menu):
-                menu_stack.append(current_menu)
-                current_menu = submenu
-                continue
-            else:
-                logger.error(f"Invalid submenu object: {submenu}")
-                # Skip this invalid item
-                continue
-
-        return (current_menu, index, value)
-
-@safe_execute()
-def create_hierarchical_menu(title: str, structure: Dict, width: int = None, 
-                            height: int = None) -> Menu:
-    """
-    Create a hierarchical menu from a dictionary structure.
-    
-    Args:
-        title: Root menu title
-        structure: Dictionary defining menu structure
-        width: Menu width
-        height: Menu height
-        
-    Example structure:
-    {
-        "General": {  # Category
-            "items": [
-                {"text": "Option 1", "value": "opt1"},
-                {"text": "Option 2", "value": "opt2", "enabled": False}
-            ]
-        },
-        "Advanced": {  # Category
-            "items": [
-                {"text": "Advanced 1", "value": "adv1"},
-                {"text": "Submenu", "submenu": {  # Submenu
-                    "items": [
-                        {"text": "Sub Option 1", "value": "sub1"}
-                    ]
-                }}
-            ]
-        },
-        "Toggle Options": {  # Category
-            "items": [
-                {"text": "Feature 1", "type": "toggle", "key": "feature1", "default": True}
-            ]
-        }
-    }
-    
-    Returns:
-        Menu: Root menu of the hierarchy
-    """
-    logger.debug(f"Creating hierarchical menu: {title}")
-    
-    # Create root menu
-    root_menu = Menu(title=title, width=width, height=height)
-    
-    # Process structure
-    for category_name, category_data in structure.items():
-        # Create category
-        category = root_menu.add_category(category_name)
-        
-        # Add items to category
-        for item_data in category_data.get("items", []):
-            # Check item type
-            item_type = item_data.get("type", "action")
+    def get_current_option(self) -> str:
+        """
+        Get the currently selected option.
             
-            if item_type == "toggle":
-                # Toggle item
-                toggle = MenuToggle(
-                    text=item_data["text"],
-                    key=item_data.get("key"),
-                    default=item_data.get("default", False),
-                    callback=item_data.get("callback"),
-                    enabled=item_data.get("enabled", True)
-                )
-                category.add_item(toggle)
-                
-            elif "submenu" in item_data:
-                # Submenu - recursively create
-                submenu_structure = {
-                    "items": item_data["submenu"].get("items", [])
-                }
-                submenu = create_hierarchical_menu(
-                    title=item_data["text"],
-                    structure={"Items": submenu_structure},
-                    width=width,
-                    height=height
-                )
-                submenu.parent = root_menu
-                
-                # Create a special submenu item with a typed value instead of storing
-                # the Menu object directly in value
-                item = MenuItem(
-                    text=item_data["text"],
-                    value={"type": "submenu", "menu": submenu},  # Use a dict with metadata instead of raw Menu
-                    enabled=item_data.get("enabled", True),
-                    icon=MENU_SYMBOLS["folder"]
-                )
-                category.add_item(item)
-                
-            else:
-                # Regular action item
-                item = MenuItem(
-                    text=item_data["text"],
-                    value=item_data.get("value"),
-                    enabled=item_data.get("enabled", True),
-                    callback=item_data.get("callback"),
-                    icon=item_data.get("icon")
-                )
-                category.add_item(item)
-    
-    return root_menu
-
-@safe_execute()
-def save_menu_state(menu: Menu) -> Dict:
-    """
-    Save current menu state.
-    
-    Args:
-        menu: Menu to save state for
+        Returns:
+            str: Currently selected option
+        """
+        if self.key:
+            return get_config_value(self.key, self.default)
+        return self.default
         
+    def next_option(self) -> str:
+        """
+        Select the next option.
+    
     Returns:
-        Dict: Saved state
-    """
-    logger.debug(f"Saving state for menu: {menu.title}")
-    
-    # Create state dictionary
-    state = {
-        "title": menu.title,
-        "selected_index": menu.selected_index,
-        "scroll_offset": menu.scroll_offset,
-        "categories": {}
-    }
-    
-    # Save category expansion states
-    for i, item in enumerate(menu.items):
-        if isinstance(item, MenuCategory):
-            state["categories"][i] = {
-                "expanded": item.expanded
-            }
-    
-    return state
-
-@safe_execute()
-def restore_menu_state(menu: Menu, state: Dict) -> bool:
-    """
-    Restore saved menu state.
-    
-    Args:
-        menu: Menu to restore state for
-        state: Previously saved state
-        
-    Returns:
-        bool: True if state was restored successfully
-    """
-    logger.debug(f"Restoring state for menu: {menu.title}")
-    
-    # Verify this is the correct menu
-    if state.get("title") != menu.title:
-        logger.warning(f"Menu title mismatch: {menu.title} != {state.get('title')}")
-        return False
-    
-    # Restore selection
-    if "selected_index" in state:
-        menu.selected_index = state["selected_index"]
-        
-    # Restore scroll offset
-    if "scroll_offset" in state:
-        menu.scroll_offset = state["scroll_offset"]
-    
-    # Restore category expansion states
-    for i_str, cat_state in state.get("categories", {}).items():
+            str: New selected option
+        """
+        if not self.options:
+            return self.default
+            
+        current = self.get_current_option()
         try:
-            i = int(i_str)
-            if 0 <= i < len(menu.items) and isinstance(menu.items[i], MenuCategory):
-                menu.items[i].expanded = cat_state.get("expanded", False)
+            index = self.options.index(current)
+            new_index = (index + 1) % len(self.options)
+            new_option = self.options[new_index]
         except (ValueError, IndexError):
-            continue
-    
-    return True
-
-@safe_execute()
-def create_context_menu(items: List[Union[str, Dict, MenuItem]], x: int = None, 
-                      y: int = None, title: str = "Context Menu") -> Optional[Any]:
-    """
-    Create and display a context menu at specified position.
-    
-    Args:
-        items: List of menu items
-        x: X position (uses current cursor position if None)
-        y: Y position (uses current cursor position if None)
-        title: Menu title
+            new_option = self.options[0] if self.options else self.default
+            
+        if self.key:
+            set_config_value(self.key, new_option)
+            
+        return new_option
+        
+    def activate(self):
+        """
+        Activate (cycle) this item.
         
     Returns:
-        Optional[Any]: Selected value or None if cancelled
-    """
-    logger.debug(f"Creating context menu: {title} with {len(items)} items")
+            str: New selected option
+        """
+        if not self.enabled:
+                return None
+            
+        return self.next_option()
+        
+    def get_display_text(self) -> str:
+        """
+        Get the display text for this item, including current option.
     
-    # Convert items to MenuItems if needed
-    menu_items = []
-    for item in items:
-        if isinstance(item, MenuItem):
-            menu_items.append(item)
-        elif isinstance(item, dict) and "text" in item:
-            if item.get("type") == "toggle":
-                # Toggle item
-                menu_items.append(MenuToggle(
-                    text=item["text"],
-                    key=item.get("key"),
-                    default=item.get("default", False),
-                    callback=item.get("callback"),
-                    enabled=item.get("enabled", True)
-                ))
-            else:
-                # Regular item
-                menu_items.append(MenuItem(
-                    text=item["text"],
-                    value=item.get("value", item["text"]),
-                    callback=item.get("callback"),
-                    enabled=item.get("enabled", True),
-                    icon=item.get("icon")
-                ))
-        else:
-            # String item
-            menu_items.append(MenuItem(text=str(item), value=item))
-    
-    # Create menu
-    menu = Menu(title=title, items=menu_items)
-    
-    # Calculate dimensions
-    max_item_width = max(len(item.text) for item in menu_items) if menu_items else 20
-    width = max(max_item_width + 10, len(title) + 10)
-    height = len(menu_items) + 6  # Header + border + padding
-    
-    # Adjust to fit terminal
-    term_width = get_terminal_width()
-    term_height = get_terminal_height()
-    
-    width = min(width, term_width - 4)
-    height = min(height, term_height - 4)
-    
-    menu.width = width
-    menu.height = height
-    
-    # Position menu if coordinates provided
-    # This would require custom terminal control that is beyond the scope
-    # of this implementation. In a real implementation, we would position
-    # the menu using terminal control sequences.
-    
-    # Display menu
-    result = navigate_menu(menu, border_style="portal", with_portal_bg=True)
-    
-    # Return selected value or None if cancelled
-    if result:
-        return result[1]  # Return value
-    return None
+    Returns:
+            str: Formatted display text with current option
+        """
+        option = self.get_current_option()
+        return f"{self.text}: {option}"
 
+# Fix the broken wizard function that was incorrectly added to the file
 @safe_execute()
-def create_wizard(steps: List[Dict], title: str = "Rick's Wizard") -> Optional[Dict]:
+def run_wizard(title: str, steps: List[Dict], result: Dict = None) -> Optional[Dict]:
     """
-    Create a multi-step wizard.
+    Run a multi-step wizard with the given steps.
     
     Args:
-        steps: List of step definitions
         title: Wizard title
+        steps: List of step dictionaries
+        result: Current result dictionary (for resuming)
         
     Returns:
-        Optional[Dict]: Collected data or None if cancelled
-    
-    Example step:
-    {
-        "title": "Step 1: Basic Information",
-        "fields": [
-            {"name": "username", "prompt": "Enter your username", "default": "morty"},
-            {"name": "enable_portal", "type": "toggle", "prompt": "Enable portal gun", "default": True}
-        ],
-        "text": "Welcome to the first step of the wizard."
-    }
+        Dict or None: Result dictionary or None if cancelled
     """
-    logger.debug(f"Creating wizard: {title} with {len(steps)} steps")
-    
     # Initialize result dictionary
-    result = {}
+    result = result or {}
     
-    # Show wizard
-    animate_portal_open()
-    
-    # Process each step
+    # Track current step
     for i, step in enumerate(steps):
-        # Format step title
-        step_title = f"{title} - {step['title']} ({i+1}/{len(steps)})"
+        step_title = step.get('title', f"Step {i+1}/{len(steps)}")
+        step_desc = step.get('description', '')
         
-        # Show step intro if provided
-        if "text" in step:
-            show_message(step["text"], title=step_title, with_animation=True)
+        # Set up the form fields for this step
+        fields = step.get('fields', [])
         
-        # Process fields for this step
-        for field in step.get("fields", []):
-            field_name = field["name"]
-            field_prompt = field.get("prompt", field_name)
-            field_type = field.get("type", "input")
-            field_default = field.get("default")
+        for field in fields:
+            field_name = field.get('name', f"field_{i}")
+            field_type = field.get('type', 'text')
+            field_label = field.get('label', field_name)
+            field_default = field.get('default', '')
+            field_required = field.get('required', True)
+            field_options = field.get('options', [])
             
-            # Add Rick's touch to the prompt
-            if random.random() < 0.3 and "*burp*" not in field_prompt:
-                parts = field_prompt.split()
-                burp_index = random.randint(1, len(parts) - 1)
-                parts.insert(burp_index, "*burp*")
-                field_prompt = " ".join(parts)
+            # Format prompt
+            field_prompt = f"{field_label}"
+            if field_required:
+                field_prompt += " (required)"
+            field_prompt += ": "
             
-            # Get input based on field type
-            if field_type == "toggle":
-                # Toggle field
-                result[field_name] = confirm_action(field_prompt, default=field_default)
-                
-            elif field_type == "selection":
-                # Selection from options
-                options = field.get("options", [])
-                if not options:
-                    continue
-                    
-                # Convert options to proper format
-                menu_items = []
-                for opt in options:
-                    if isinstance(opt, dict) and "text" in opt:
-                        menu_items.append(MenuItem(
-                            text=opt["text"],
-                            value=opt.get("value", opt["text"]),
-                            enabled=opt.get("enabled", True)
-                        ))
-                    else:
-                        menu_items.append(MenuItem(text=str(opt), value=opt))
-                
-                # Create selection menu
-                menu = Menu(title=field_prompt, items=menu_items)
-                
-                # Set default if provided
-                if field_default is not None:
-                    for i, item in enumerate(menu_items):
-                        if item.value == field_default:
-                            menu.selected_index = i
-                            break
-                
-                # Display menu
-                select_result = navigate_menu(menu)
-                
-                if select_result:
-                    result[field_name] = select_result[1]  # Get value
-                else:
-
+            # Handle different field types
+            if field_type == 'select' and field_options:
+                # Selection field
+                value = field_default
+                # Handle selection logic
+                if value is None:
                     return None
-            
+                result[field_name] = value
             else:
                 # Regular input field
                 value = get_input(prompt=field_prompt, default=field_default)
                 
                 if value is None:
-
                     return None
                     
                 result[field_name] = value
@@ -2883,12 +976,10 @@ def create_wizard(steps: List[Dict], title: str = "Rick's Wizard") -> Optional[D
         
     show_message(completion_message, title=f"{title} - Complete", message_type="success")
     
-    
     return result
 
 # =====================================================================
 # Testing & Example Usage
-# =====================================================================
 
 @safe_execute()
 def run_test_menu():
@@ -3172,84 +1263,150 @@ def render_menu(border: List[str], header: List[str], items: List[MenuItem], foo
     sys.stdout.flush()
 
 @safe_execute()
-def create_ricktastic_menu() -> Menu:
+def create_ricktastic_menu(title="Rick Assistant Control Panel", theme=None):
     """
-    Create the main Rick menu with categories and items based on ricktastic_menu.md.
+    Create the main Ricktastic menu structure with categories from MENU_ROADMAP.md.
+    
+    Args:
+        title: Menu title
+        theme: Color theme to use
     
     Returns:
-        Menu: The complete Rick menu structure
+        Menu: The main menu object
     """
     logger.debug("Creating Ricktastic menu")
     
-    # Create the main menu
-    main_menu = Menu(title="🧪 RICK ASSISTANT CONTROL PANEL 🧪")
+    # Use the provided theme or default to portal colors
+    theme = theme or PORTAL_COLORS
     
-    # Add Settings category
-    settings_category = MenuCategory("Settings", expanded=False)
-    settings_category.add_item(MenuItem("Color Scheme", action=lambda: show_submenu_placeholder("Color Scheme")))
-    settings_category.add_item(MenuItem("Interface Options", action=lambda: show_submenu_placeholder("Interface Options")))
-    settings_category.add_item(MenuItem("Sound Effects", action=lambda: show_submenu_placeholder("Sound Effects"), coming_soon=True))
-    settings_category.add_item(MenuItem("Reset to Defaults", action=lambda: confirm_action("Reset all settings to defaults?", reset_all_settings)))
+    # Create main menu
+    main_menu = Menu(title=title, theme=theme)
+    
+    # Brain Module category
+    brain_items = [
+        MenuToggle("Enable Brain Module", "brain.enabled", True),
+        MultiOptionMenuItem("Active Brain Model", "brain.model", 
+                          ["Default", "OpenAI", "Ollama", "Anthropic", "Local LLM", "LM Studio"]),
+        MenuToggle("Enhanced Context", "brain.enhanced_context", True),
+        MenuToggle("Long-term Memory", "brain.memory", True),
+        MultiOptionMenuItem("Personality", "brain.personality", 
+                          ["Rick Sanchez", "Morty Smith", "Beth Smith", "Summer Smith", "Jerry Smith"]),
+        MultiOptionMenuItem("Response Style", "brain.style", 
+                          ["Funny", "Scientific", "Helpful", "Sarcastic", "Mixed"]),
+        MenuToggle("Project Awareness", "brain.project_awareness", True)
+    ]
+    brain_category = MenuCategory("Brain Module", brain_items)
+    main_menu.add_item(brain_category)
+    
+    # Rick Commands category
+    cmd_items = [
+        MenuToggle("Enable Command Suggestions", "commands.suggestions", True),
+        MenuToggle("Shell Command Enhancement", "commands.shell_enhancement", True),
+        MenuToggle("In-terminal File Editing", "commands.file_editing", True),
+        MenuToggle("Code Completion", "commands.code_completion", False, False),
+        MenuToggle("Command History Analysis", "commands.history_analysis", True)
+    ]
+    cmd_category = MenuCategory("Rick Commands", cmd_items)
+    main_menu.add_item(cmd_category)
+    
+    # Settings category
+    settings_items = [
+        MenuCategory("General Settings", [
+            MenuToggle("Auto-start on Terminal", "settings.autostart", True),
+            MenuToggle("Update Checks", "settings.update_checks", True),
+            MultiOptionMenuItem("Log Level", "settings.log_level", 
+                             ["Error", "Warning", "Info", "Debug"]),
+            MenuToggle("Anonymous Usage Stats", "settings.usage_stats", False)
+        ]),
+        MenuCategory("Prompt Settings", [
+            MenuToggle("Show Git Status", "settings.prompt.show_git", True),
+            MenuToggle("Show Python Environment", "settings.prompt.show_python_env", True),
+            MenuToggle("Show Directory", "settings.prompt.show_directory", True),
+            MenuToggle("Show Resource Usage", "settings.prompt.show_resources", True)
+        ])
+    ]
+    settings_category = MenuCategory("Settings", settings_items)
     main_menu.add_item(settings_category)
     
-    # Add Tools category
-    tools_category = MenuCategory("Tools", expanded=False)
-    tools_category.add_item(MenuItem("System Diagnostics", action=lambda: show_system_diagnostics()))
-    tools_category.add_item(MenuItem("Cleanup Temporary Files", action=lambda: confirm_action("Clean up temporary files?", cleanup_temp_files)))
-    tools_category.add_item(MenuItem("Update Check", action=lambda: check_for_updates()))
-    tools_category.add_item(MenuItem("Advanced Terminal Tools", action=lambda: show_submenu_placeholder("Advanced Terminal Tools"), coming_soon=True))
-    main_menu.add_item(tools_category)
+    # Universe Options category
+    universe_items = [
+        MenuToggle("Portal Gun Navigation", "universe.portal_gun", True),
+        MenuToggle("Interdimensional Cable", "universe.cable", True),
+        MenuToggle("Meeseeks AI Helper", "universe.meeseeks", False),
+        MenuToggle("Citadel Connection", "universe.citadel", False, False),
+        MenuToggle("Multiverse Browser", "universe.multiverse", False, False)
+    ]
+    universe_category = MenuCategory("Universe Options", universe_items)
+    main_menu.add_item(universe_category)
     
-    # Add Help & Info category
-    help_category = MenuCategory("Help & Info", expanded=False)
-    help_category.add_item(MenuItem("Quick Tips", action=lambda: show_quick_tips()))
-    help_category.add_item(MenuItem("Command Reference", action=lambda: show_command_reference()))
-    help_category.add_item(MenuItem("About", action=lambda: show_about_info()))
-    help_category.add_item(MenuItem("View Documentation", action=lambda: show_documentation(), coming_soon=True))
-    main_menu.add_item(help_category)
+    # Security & Safety Features category
+    safety_items = [
+        MenuToggle("Command Safety Checks", "safety.command_checks", True),
+        MenuToggle("Suspicious Pattern Detection", "safety.pattern_detection", True),
+        MenuToggle("Destructive Command Confirmation", "safety.destructive_confirm", True),
+        MenuToggle("AI Hallucination Detection", "safety.hallucination_detection", True)
+    ]
+    safety_category = MenuCategory("Security & Safety", safety_items)
+    main_menu.add_item(safety_category)
     
-    # Add Actions category
-    actions_category = MenuCategory("Actions", expanded=False)
-    actions_category.add_item(MenuItem("Restart ZSH", action=lambda: confirm_action("Restart ZSH session?", restart_zsh)))
-    actions_category.add_item(MenuItem("Test Portal Gun", action=lambda: test_portal_gun()))
-    actions_category.add_item(MenuItem("Toggle Debug Mode", action=lambda: toggle_debug_mode()))
-    actions_category.add_item(MenuItem("Portal to Dimension C-137", action=lambda: show_submenu_placeholder("Portal to Dimension C-137"), coming_soon=True))
+    # UI Settings category
+    ui_items = [
+        MultiOptionMenuItem("Color Theme", "ui.theme", 
+                          ["Portal Green", "Morty Yellow", "Rick Blue", "Terminal Default"]),
+        MenuToggle("Show ASCII Rick", "ui.show_ascii_rick", True),
+        MenuToggle("Use Unicode Characters", "ui.use_unicode", True),
+        MenuToggle("Enable Animations", "ui.animations", True),
+        MenuToggle("Compact Display Mode", "ui.compact_mode", False)
+    ]
+    ui_category = MenuCategory("UI Settings", ui_items)
+    main_menu.add_item(ui_category)
+    
+    # Input Handling category
+    input_items = [
+        MenuToggle("Tab Completion", "input.tab_completion", True),
+        MenuToggle("Command Syntax Highlighting", "input.syntax_highlight", True),
+        MenuToggle("Auto-correction", "input.autocorrect", False),
+        MultiOptionMenuItem("Typing Mode", "input.typing_mode", 
+                         ["Standard", "Vim-like", "Emacs-like"])
+    ]
+    input_category = MenuCategory("Input Handling", input_items)
+    main_menu.add_item(input_category)
+    
+    # Advanced Options category
+    advanced_items = [
+        MenuToggle("Developer Mode", "advanced.developer_mode", False),
+        MenuToggle("Performance Mode", "advanced.performance_mode", False),
+        MenuToggle("External API Access", "advanced.external_api", True),
+        MenuToggle("Background Processing", "advanced.background_processing", True),
+        MenuToggle("Debug Logging", "advanced.debug_logging", False)
+    ]
+    advanced_category = MenuCategory("Advanced Options", advanced_items)
+    main_menu.add_item(advanced_category)
+    
+    # System Monitoring category
+    monitoring_items = [
+        MenuToggle("CPU Usage Alerts", "monitoring.cpu_alerts", True),
+        MenuToggle("Memory Usage Alerts", "monitoring.memory_alerts", True),
+        MenuToggle("Temperature Monitoring", "monitoring.temperature", True),
+        MenuToggle("Process Tracking", "monitoring.process_tracking", False),
+        MenuToggle("Network Usage Monitoring", "monitoring.network", False)
+    ]
+    monitoring_category = MenuCategory("System Monitoring", monitoring_items)
+    main_menu.add_item(monitoring_category)
+    
+    # Actions category
+    actions_items = [
+        MenuItem("View System Information", lambda: "system_info"),
+        MenuItem("View Memory Usage", lambda: "memory_usage"),
+        MenuItem("View CPU Status", lambda: "cpu_status"),
+        MenuItem("Reset All Settings", lambda: "reset_settings"),
+        MenuItem("Restart Rick Assistant", lambda: "restart_zsh"),
+        MenuItem("Exit Menu", lambda: "quit")
+    ]
+    actions_category = MenuCategory("Actions", actions_items)
     main_menu.add_item(actions_category)
     
-    # Exit item
-    main_menu.add_item(MenuItem("Exit Menu", action=lambda: exit_menu()))
-    
     return main_menu
-
-# Placeholder functions for menu actions
-@safe_execute()
-def show_submenu_placeholder(submenu_name: str):
-    """Show a placeholder for submenu items"""
-    clear_screen()
-    print(f"\n  {submenu_name} submenu coming soon!\n")
-    time.sleep(1.5)
-    return None
-
-@safe_execute()
-def confirm_action(message: str, action_func) -> Any:
-    """
-    Show a confirmation dialog and execute action if confirmed.
-    
-    Args:
-        message: Confirmation message to display
-        action_func: Function to execute if confirmed
-        
-    Returns:
-        Any: Result of action or None if cancelled
-    """
-    clear_screen()
-    print(f"\n  {message}")
-    print("\n  Press Y to confirm, any other key to cancel.")
-    
-    key = getch()
-    if key.lower() == 'y':
-        return action_func()
-    return None
 
 @safe_execute()
 def reset_all_settings():
@@ -3541,24 +1698,1267 @@ def animate_portal_close(width: int = None, height: int = None, frames: int = 1,
 def getch() -> str:
     """
     Get a single character from the user without requiring Enter.
+    Handles special keys like arrows better than standard implementations.
     
     Returns:
-        str: The character pressed by the user
+        str: The character pressed by the user or a special key code
     """
     if sys.platform == 'win32':
         # Windows implementation
         import msvcrt
-        return msvcrt.getch().decode('utf-8')
+        while True:
+            if msvcrt.kbhit():
+                key = msvcrt.getch()
+                if key == b'\xe0':  # Special key prefix
+                    # Arrow keys
+                    key = msvcrt.getch()
+                    if key == b'H':  # Up
+                        return 'k'
+                    elif key == b'P':  # Down
+                        return 'j'
+                    elif key == b'K':  # Left
+                        return 'h'
+                    elif key == b'M':  # Right
+                        return 'l'
+                elif key == b'\x03':  # Ctrl+C
+                    raise KeyboardInterrupt
+                return key.decode('utf-8', errors='replace')
     else:
         # Unix/Linux/MacOS implementation
         import termios
         import tty
+        import select
         
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         try:
             tty.setraw(fd)
-            ch = sys.stdin.read(1)
+            
+            # Check if input is available (timeout of 0.1 seconds)
+            if select.select([sys.stdin], [], [], 0.1)[0]:
+                # Read first character
+                ch = sys.stdin.read(1)
+                
+                # Handle escape sequences for arrow keys
+                if ch == '\x1b':
+                    # Could be an escape sequence
+                    if select.select([sys.stdin], [], [], 0.1)[0]:
+                        ch2 = sys.stdin.read(1)
+                        if ch2 == '[':
+                            if select.select([sys.stdin], [], [], 0.1)[0]:
+                                ch3 = sys.stdin.read(1)
+                                # Arrow keys
+                                if ch3 == 'A':
+                                    return 'k'  # Up
+                                elif ch3 == 'B':
+                                    return 'j'  # Down
+                                elif ch3 == 'C':
+                                    return 'l'  # Right
+                                elif ch3 == 'D':
+                                    return 'h'  # Left
+                return ch
+            return ''
+        except Exception as e:
+            logger.error(f"Error in getch: {e}")
+            return ''
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        return ch
+
+# Import for handling rick commentary
+import random
+import os
+import json
+from src.utils.logger import get_logger
+
+# Add below the existing imports
+
+# Logger
+logger = get_logger(__name__)
+
+# Rick commentary system
+def load_rick_catchphrases():
+    """
+    Load Rick catchphrases from the data file.
+    
+    Returns:
+        List[str]: List of catchphrases or default catchphrases if file not found
+    """
+    default_catchphrases = [
+        "Wubba lubba dub dub!",
+        "I'm not arguing, I'm just explaining why I'm right.",
+        "Sometimes science is more art than science.",
+        "I turned myself into a menu, Morty!",
+        "What, you think you're better than me because you have a menu?",
+        "This menu interface is primitive. I've seen better UIs in a butter passing robot.",
+        "You know what? I eat menus like this for breakfast!",
+        "I don't have time for a full menu navigation tutorial, Morty!",
+        "Look at all these options, Morty! The possibilities are almost endless!",
+        "Don't just stare at it, Morty! Pick something!",
+        "This menu is the Rick-est Rick that ever Ricked!",
+        "I'm Menu Rick! *burp*",
+        "These are just *burp* settings, Morty! Don't overthink it!",
+        "You're overthinking the menu, Morty! Just pick something!"
+    ]
+    
+    # Ensure data directory exists
+    ensure_data_directory()
+    
+    # Try to load catchphrases from the data file
+    try:
+        catchphrases_path = os.path.expanduser("~/.rick_assistant/data/catchphrases.json")
+        
+        if os.path.isfile(catchphrases_path):
+            with open(catchphrases_path, 'r') as f:
+                data = json.load(f)
+                
+                if 'catchphrases' in data and isinstance(data['catchphrases'], list):
+                    return data['catchphrases']
+    except Exception as e:
+        logger.error(f"Failed to load catchphrases: {e}")
+    
+    # Return default catchphrases if loading failed
+    return default_catchphrases
+
+def get_random_rick_commentary():
+    """
+    Get a random Rick catchphrase.
+    
+    Returns:
+        str: Random Rick catchphrase
+    """
+    catchphrases = load_rick_catchphrases()
+    return random.choice(catchphrases)
+
+# Modify the show_menu function to support pagination
+def show_menu(title="Rick Assistant Control Panel", theme=None):
+    """
+    Display the main Rick menu with the new Ricktastic style.
+    
+    Args:
+        title: Title of the menu
+        theme: Color theme to use (overrides configured theme)
+        
+    Returns:
+        Any: Result from menu navigation
+    """
+    try:
+        logger.debug("Displaying Ricktastic menu")
+        
+        # Use provided theme or get from configuration
+        if theme is None:
+            theme = ThemeManager.get_current_theme()
+        
+        # Create the menu structure
+        menu = create_ricktastic_menu(title=title, theme=theme)
+        
+        # Generate a random Rick commentary
+        rick_commentary = get_random_rick_commentary()
+        
+        # Prepare navigation options
+        navigation_footer = [
+            "Navigate: ↑↓←→ | Select: Enter | Back: Esc | Quit: q"
+        ]
+        
+        result = navigate_menu(
+            menu, 
+            commentary=rick_commentary,
+            footer_text=navigation_footer
+        )
+        
+        # Handle special return values
+        if result == "restart_zsh":
+            logger.info("User requested ZSH restart")
+            return "restart_zsh"
+        elif result == "quit":
+            logger.info("User exited menu")
+            return None
+            
+        return result
+    except Exception as e:
+        logger.error(f"Error showing menu: {e}")
+        print(f"Error showing menu: {e}")
+        return None
+
+# Add the navigate_menu function
+def navigate_menu(menu, commentary=None, footer_text=None):
+    """
+    Navigate through a menu with pagination support.
+    
+    Args:
+        menu: Menu object to navigate
+        commentary: Optional Rick commentary to display
+        footer_text: Optional footer text to display
+        
+    Returns:
+        Any: Result from menu navigation
+    """
+    import curses
+    from curses import wrapper
+    
+    # Create a nested function to store state
+    def _menu_navigation(stdscr):
+        # Using nonlocal to allow modification of outer variables
+        nonlocal commentary
+        
+        # Initialize curses settings
+        curses.curs_set(0)  # Hide cursor
+        curses.start_color()  # Enable colors
+        curses.use_default_colors()  # Use terminal's default colors
+        curses.raw()  # Raw input mode
+        curses.nonl()  # No newline mode
+        stdscr.clear()
+        
+        # Critical: Enable keypad mode for arrow keys
+        stdscr.keypad(True)
+        
+        # Initialize colors based on theme
+        theme = menu.theme or DEFAULT_THEME
+        init_menu_colors(theme)
+        
+        # Main navigation loop
+        current_menu = menu
+        selected_index = 0
+        result = None
+        
+        while True:
+            # Clear screen
+            stdscr.clear()
+            
+            # Get terminal dimensions
+            max_y, max_x = stdscr.getmaxyx()
+            
+            # Calculate available height for menu items
+            header_height = 3  # Title + commentary + separator
+            footer_height = 3  # Navigation help + breadcrumbs + separator
+            available_height = max_y - header_height - footer_height
+            
+            # Set items per page based on available height
+            current_menu.items_per_page = max(1, available_height - 2)
+            
+            # Get current page items
+            page_items = current_menu.get_current_page_items()
+            page_count = current_menu.get_page_count()
+            
+            # Ensure selected index is within bounds
+            if not page_items:
+                selected_index = 0
+            elif selected_index >= len(page_items):
+                selected_index = len(page_items) - 1
+                
+            # Draw header
+            draw_header(stdscr, max_x, current_menu.title, commentary)
+            
+            # Draw menu items
+            draw_menu_items(stdscr, max_x, page_items, selected_index, header_height)
+            
+            # Draw pagination indicators if needed
+            if page_count > 1:
+                draw_pagination(stdscr, max_x, current_menu.current_page, page_count, max_y - footer_height)
+                
+            # Draw footer (navigation help, breadcrumbs)
+            nav_text = "▲▼: Navigate | ◄►: Pages | Enter: Select | Esc: Back | Q: Quit | R: Refresh"
+            draw_footer(stdscr, max_x, max_y, nav_text, current_menu.get_breadcrumbs())
+            
+            # Refresh screen before waiting for input
+            stdscr.refresh()
+            
+            # Get user input - with proper logging for debugging
+            try:
+                key = stdscr.getch()
+                logger.debug(f"Key pressed: {key}")
+                
+                # Handle navigation keys with comprehensive support
+                if key == curses.KEY_UP:
+                    if page_items:
+                        selected_index = (selected_index - 1) % len(page_items)
+                
+                elif key == curses.KEY_DOWN:
+                    if page_items:
+                        selected_index = (selected_index + 1) % len(page_items)
+                
+                elif key == curses.KEY_LEFT:
+                    current_menu.prev_page()
+                    selected_index = 0
+                
+                elif key == curses.KEY_RIGHT:
+                    current_menu.next_page()
+                    selected_index = 0
+                
+                elif key == curses.KEY_ENTER or key == 10 or key == 13:  # Enter key variations
+                    # Activate selected item
+                    if page_items and selected_index < len(page_items):
+                        selected_item = page_items[selected_index]
+                        action_result = selected_item.activate()
+                        
+                        # Handle special return values
+                        if isinstance(selected_item, MenuCategory):
+                            # Navigate to submenu
+                            submenu = selected_item.create_submenu()
+                            submenu_result = navigate_menu(submenu, commentary, footer_text)
+                            
+                            if submenu_result in ["restart_zsh", "quit"]:
+                                return submenu_result
+                        else:
+                            # Process normal menu item activation
+                            if action_result == "restart_zsh":
+                                return "restart_zsh"
+                            elif action_result == "quit":
+                                return "quit"
+                            elif action_result == "back":
+                                if current_menu.parent:
+                                    current_menu = current_menu.parent
+                                    selected_index = 0
+                
+                elif key == 27:  # Escape key
+                    # Go back to parent menu if available
+                    if current_menu.parent:
+                        current_menu = current_menu.parent
+                        selected_index = 0
+                    else:
+                        return None  # Exit menu if at root
+                
+                elif key in [ord('q'), ord('Q')]:
+                    # Quit menu
+                    return "quit"
+                
+                elif key in [ord('r'), ord('R')]:
+                    # Refresh commentary
+                    commentary = get_random_rick_commentary()
+                
+                # Number key support for direct selection
+                elif ord('1') <= key <= ord('9'):
+                    # Direct selection by number (1-9)
+                    index = key - ord('1')  # Convert to 0-based index
+                    if index < len(page_items):
+                        selected_index = index
+                
+                elif key == ord('0'):
+                    # Handle 0 key as item 10
+                    if 9 < len(page_items):
+                        selected_index = 9
+                
+            except Exception as e:
+                # Log the error but continue navigation
+                logger.error(f"Error processing key input: {e}")
+                # Add error message to commentary temporarily
+                commentary = f"Menu error: {str(e)}"
+                
+        return result
+    
+    # Run the menu navigation in curses wrapper
+    return wrapper(_menu_navigation)
+
+# Helper functions for the navigate_menu function
+def init_menu_colors(theme):
+    """
+    Initialize curses color pairs based on the theme.
+    
+    Args:
+        theme: Color theme to use
+    """
+    import curses
+    
+    try:
+        # Define color map for terminal colors
+        color_map = {
+            "black": curses.COLOR_BLACK,
+            "red": curses.COLOR_RED,
+            "green": curses.COLOR_GREEN,
+            "yellow": curses.COLOR_YELLOW,
+            "blue": curses.COLOR_BLUE,
+            "magenta": curses.COLOR_MAGENTA,
+            "cyan": curses.COLOR_CYAN,
+            "white": curses.COLOR_WHITE,
+            "default": -1,  # Terminal default color
+        }
+        
+        # Initialize color pairs for the theme
+        if not theme:
+            # Default theme - Portal colors
+            theme = {
+                "normal": {"fg": "green", "bg": "black"},
+                "highlight": {"fg": "cyan", "bg": "black"},
+                "selected": {"fg": "black", "bg": "green"},
+                "disabled": {"fg": "white", "bg": "black"},
+                "header": {"fg": "green", "bg": "black"},
+                "footer": {"fg": "cyan", "bg": "black"},
+                "border": {"fg": "green", "bg": "black"},
+                "error": {"fg": "red", "bg": "black"},
+                "success": {"fg": "green", "bg": "black"},
+                "warning": {"fg": "yellow", "bg": "black"}
+            }
+        
+        # Define color pair numbers
+        COLOR_NORMAL = 1
+        COLOR_HIGHLIGHT = 2
+        COLOR_SELECTED = 3
+        COLOR_DISABLED = 4
+        COLOR_HEADER = 5
+        COLOR_FOOTER = 6
+        COLOR_BORDER = 7
+        COLOR_ERROR = 8
+        COLOR_SUCCESS = 9
+        COLOR_WARNING = 10
+        
+        # Initialize color pairs
+        # Default to standard colors if theme colors not available
+        curses.init_pair(COLOR_NORMAL, 
+                         color_map.get(theme.get("normal", {}).get("fg", "green"), curses.COLOR_GREEN),
+                         color_map.get(theme.get("normal", {}).get("bg", "black"), curses.COLOR_BLACK))
+                         
+        curses.init_pair(COLOR_HIGHLIGHT, 
+                         color_map.get(theme.get("highlight", {}).get("fg", "cyan"), curses.COLOR_CYAN),
+                         color_map.get(theme.get("highlight", {}).get("bg", "black"), curses.COLOR_BLACK))
+                         
+        curses.init_pair(COLOR_SELECTED, 
+                         color_map.get(theme.get("selected", {}).get("fg", "black"), curses.COLOR_BLACK),
+                         color_map.get(theme.get("selected", {}).get("bg", "green"), curses.COLOR_GREEN))
+                         
+        curses.init_pair(COLOR_DISABLED, 
+                         color_map.get(theme.get("disabled", {}).get("fg", "white"), curses.COLOR_WHITE),
+                         color_map.get(theme.get("disabled", {}).get("bg", "black"), curses.COLOR_BLACK))
+                         
+        curses.init_pair(COLOR_HEADER, 
+                         color_map.get(theme.get("header", {}).get("fg", "green"), curses.COLOR_GREEN),
+                         color_map.get(theme.get("header", {}).get("bg", "black"), curses.COLOR_BLACK))
+                         
+        curses.init_pair(COLOR_FOOTER, 
+                         color_map.get(theme.get("footer", {}).get("fg", "cyan"), curses.COLOR_CYAN),
+                         color_map.get(theme.get("footer", {}).get("bg", "black"), curses.COLOR_BLACK))
+                         
+        curses.init_pair(COLOR_BORDER, 
+                         color_map.get(theme.get("border", {}).get("fg", "green"), curses.COLOR_GREEN),
+                         color_map.get(theme.get("border", {}).get("bg", "black"), curses.COLOR_BLACK))
+                         
+        curses.init_pair(COLOR_ERROR, 
+                         color_map.get(theme.get("error", {}).get("fg", "red"), curses.COLOR_RED),
+                         color_map.get(theme.get("error", {}).get("bg", "black"), curses.COLOR_BLACK))
+                         
+        curses.init_pair(COLOR_SUCCESS, 
+                         color_map.get(theme.get("success", {}).get("fg", "green"), curses.COLOR_GREEN),
+                         color_map.get(theme.get("success", {}).get("bg", "black"), curses.COLOR_BLACK))
+                         
+        curses.init_pair(COLOR_WARNING, 
+                         color_map.get(theme.get("warning", {}).get("fg", "yellow"), curses.COLOR_YELLOW),
+                         color_map.get(theme.get("warning", {}).get("bg", "black"), curses.COLOR_BLACK))
+        
+        # Return constant-like attributes for use elsewhere
+        return {
+            "NORMAL": curses.color_pair(COLOR_NORMAL),
+            "HIGHLIGHT": curses.color_pair(COLOR_HIGHLIGHT),
+            "SELECTED": curses.color_pair(COLOR_SELECTED),
+            "DISABLED": curses.color_pair(COLOR_DISABLED),
+            "HEADER": curses.color_pair(COLOR_HEADER),
+            "FOOTER": curses.color_pair(COLOR_FOOTER),
+            "BORDER": curses.color_pair(COLOR_BORDER),
+            "ERROR": curses.color_pair(COLOR_ERROR),
+            "SUCCESS": curses.color_pair(COLOR_SUCCESS),
+            "WARNING": curses.color_pair(COLOR_WARNING)
+        }
+    except Exception as e:
+        # Graceful fallback if color initialization fails
+        logger.error(f"Error initializing colors: {e}")
+        return {}  # Return empty dict as fallback
+
+def draw_header(stdscr, width, title, commentary=None):
+    """
+    Draw the menu header.
+    
+    Args:
+        stdscr: Curses screen
+        width: Screen width
+        title: Menu title
+        commentary: Optional Rick commentary
+    """
+    import curses
+    
+    # Draw title
+    title_text = f"=== {title} ==="
+    x = max(0, (width - len(title_text)) // 2)
+    stdscr.addstr(0, x, title_text, curses.color_pair(1) | curses.A_BOLD)
+    
+    # Draw commentary if provided
+    if commentary:
+        comment_text = f"Rick says: {commentary}"
+        
+        # Truncate if too long
+        if len(comment_text) > width - 4:
+            comment_text = comment_text[:width - 7] + "..."
+            
+        x = max(0, (width - len(comment_text)) // 2)
+        stdscr.addstr(1, x, comment_text, curses.color_pair(2))
+    
+    # Draw separator
+    try:
+        stdscr.addstr(2, 0, "=" * width, curses.color_pair(1))
+    except curses.error:
+        # Handle edge case when drawing at bottom-right corner
+        pass
+
+def draw_menu_items(stdscr, width, items, selected_index, start_y):
+    """
+    Draw menu items with appropriate highlighting.
+    
+    Args:
+        stdscr: Curses window
+        width: Available width
+        items: List of menu items to display
+        selected_index: Index of the selected item
+        start_y: Starting Y position
+    """
+    import curses
+    
+    try:
+        # Get color pairs from theme initialization
+        colors = init_menu_colors(None)  # Use default theme if needed
+        
+        # Set default attributes for fallback
+        normal_attr = curses.A_NORMAL
+        selected_attr = curses.A_REVERSE
+        disabled_attr = curses.A_DIM
+        
+        # Use theme colors if available
+        if colors:
+            normal_attr = colors.get("NORMAL", curses.A_NORMAL)
+            selected_attr = colors.get("SELECTED", curses.A_REVERSE)
+            disabled_attr = colors.get("DISABLED", curses.A_DIM)
+        
+        # Calculate item positioning
+        for i, item in enumerate(items):
+            # Get item display text
+            item_text = item.get_display_text()
+            
+            # Truncate if too long for display
+            if len(item_text) > width - 4:
+                item_text = item_text[:width - 7] + "..."
+                
+            # Center item text
+            padding = (width - len(item_text)) // 2
+            
+            # Set attributes based on item state
+            if i == selected_index:
+                if not item.enabled:
+                    attr = disabled_attr | curses.A_REVERSE
+                else:
+                    attr = selected_attr
+            else:
+                if not item.enabled:
+                    attr = disabled_attr
+                else:
+                    # Special handling for different item types
+                    if item.item_type == "category":
+                        attr = colors.get("HIGHLIGHT", curses.A_BOLD)
+                    else:
+                        attr = normal_attr
+            
+            # Draw the item with appropriate attributes
+            y_pos = start_y + i + 1
+            try:
+                stdscr.addstr(y_pos, padding, item_text, attr)
+            except curses.error:
+                # Handle potential out-of-bounds errors
+                pass
+                
+    except Exception as e:
+        # Log error but continue
+        logger.error(f"Error drawing menu items: {e}")
+        
+        # Fallback: Draw items in plain text if possible
+        try:
+            for i, item in enumerate(items):
+                y_pos = start_y + i + 1
+                if y_pos < stdscr.getmaxyx()[0]:
+                    text = f"{'> ' if i == selected_index else '  '}{item.get_display_text()}"
+                    stdscr.addstr(y_pos, 2, text[:width-4])
+        except:
+            # If all else fails, just continue without drawing items
+            pass
+
+def draw_pagination(stdscr, width, current_page, total_pages, y_pos):
+    """
+    Draw pagination indicators.
+    
+    Args:
+        stdscr: Curses screen
+        width: Screen width
+        current_page: Current page number (0-based)
+        total_pages: Total number of pages
+        y_pos: Y position to draw at
+    """
+    import curses
+    
+    if total_pages <= 1:
+        return
+    
+    # Create pagination text
+    if supports_unicode():
+        pagination = []
+        
+        # Add left arrow if not on first page
+        if current_page > 0:
+            pagination.append("◀")
+        else:
+            pagination.append(" ")
+        
+        # Add page numbers
+        for i in range(total_pages):
+            if i == current_page:
+                pagination.append(f"[{i+1}]")
+            else:
+                pagination.append(f" {i+1} ")
+        
+        # Add right arrow if not on last page
+        if current_page < total_pages - 1:
+            pagination.append("▶")
+        else:
+            pagination.append(" ")
+    else:
+        # ASCII fallback
+        pagination = []
+        
+        # Add left arrow if not on first page
+        if current_page > 0:
+            pagination.append("<")
+        else:
+            pagination.append(" ")
+        
+        # Add page numbers
+        for i in range(total_pages):
+            if i == current_page:
+                pagination.append(f"[{i+1}]")
+            else:
+                pagination.append(f" {i+1} ")
+        
+        # Add right arrow if not on last page
+        if current_page < total_pages - 1:
+            pagination.append(">")
+        else:
+            pagination.append(" ")
+    
+    # Join and center the pagination text
+    pagination_text = " ".join(pagination)
+    x = max(0, (width - len(pagination_text)) // 2)
+    
+    # Make sure we don't draw outside the screen
+    if y_pos < stdscr.getmaxyx()[0]:
+        try:
+            # Draw pagination
+            stdscr.addstr(y_pos, x, pagination_text, curses.color_pair(1))
+        except curses.error:
+            # Handle edge case when drawing at bottom-right corner
+            pass
+
+def draw_footer(stdscr, width, height, nav_text=None, breadcrumbs=None):
+    """
+    Draw menu footer with navigation help and breadcrumbs.
+    
+    Args:
+        stdscr: Curses window
+        width: Available width
+        height: Total screen height
+        nav_text: Navigation help text
+        breadcrumbs: Breadcrumb path
+    """
+    import curses
+    
+    try:
+        # Get colors from theme
+        colors = init_menu_colors(None)
+        
+        # Set default attributes
+        footer_attr = curses.A_NORMAL
+        breadcrumb_attr = curses.A_NORMAL
+        
+        # Use theme colors if available
+        if colors:
+            footer_attr = colors.get("FOOTER", curses.A_NORMAL)
+            breadcrumb_attr = colors.get("NORMAL", curses.A_NORMAL)
+        
+        # Calculate positions
+        footer_y = height - 2
+        breadcrumb_y = height - 1
+        
+        # Default navigation text if not provided
+        if nav_text is None:
+            nav_text = "↑↓: Navigate | ←→: Pages | Enter: Select | Esc: Back | Q: Quit"
+        
+        # Ensure text isn't too long
+        if len(nav_text) > width - 4:
+            nav_text = nav_text[:width - 7] + "..."
+        
+        # Center the navigation text
+        nav_x = (width - len(nav_text)) // 2
+        
+        # Draw navigation help
+        try:
+            stdscr.addstr(footer_y, nav_x, nav_text, footer_attr)
+        except curses.error:
+            # Handle out-of-bounds errors
+            pass
+        
+        # Draw breadcrumbs if provided
+        if breadcrumbs:
+            # Format breadcrumbs with separator
+            breadcrumb_text = " > ".join(breadcrumbs)
+            
+            # Truncate if too long
+            if len(breadcrumb_text) > width - 4:
+                breadcrumb_text = "..." + breadcrumb_text[-(width - 7):]
+            
+            # Center the breadcrumb text
+            breadcrumb_x = (width - len(breadcrumb_text)) // 2
+            
+            try:
+                stdscr.addstr(breadcrumb_y, breadcrumb_x, breadcrumb_text, breadcrumb_attr)
+            except curses.error:
+                # Handle out-of-bounds errors
+                pass
+    
+    except Exception as e:
+        # Log error but continue
+        logger.error(f"Error drawing footer: {e}")
+        
+        # Fallback: Draw simple footer
+        try:
+            footer_simple = "Use arrows to navigate, Enter to select"
+            simple_x = (width - len(footer_simple)) // 2
+            stdscr.addstr(height - 1, simple_x, footer_simple)
+        except:
+            # If all else fails, just continue
+            pass
+
+# Add these functions after the imports but before the classes
+
+# Configuration utils
+def get_config_value(key, default=None):
+    """
+    Get a configuration value from the config system.
+    
+    Args:
+        key: Configuration key (e.g., "ui.theme")
+        default: Default value if key not found
+        
+    Returns:
+        Any: Configuration value or default
+    """
+    try:
+        # Import here to avoid circular imports
+        from src.utils.config import get_config_value as get_config
+        
+        # Get the value from config
+        return get_config(key, default)
+    except Exception as e:
+        logger.error(f"Failed to get config value for {key}: {e}")
+        return default
+
+def set_config_value(key, value):
+    """
+    Set a configuration value in the config system.
+    
+    Args:
+        key: Configuration key (e.g., "ui.theme")
+        value: Value to set
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        # Import here to avoid circular imports
+        from src.utils.config import set_config_value as set_config
+        
+        # Set the value in config
+        set_config(key, value)
+        logger.debug(f"Updated config: {key} = {value}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to set config value for {key}: {e}")
+        return False
+
+def toggle_config_value(key, default=False):
+    """
+    Toggle a boolean configuration value.
+    
+    Args:
+        key: Configuration key
+        default: Default value if key not found
+        
+    Returns:
+        bool: New value
+    """
+    current = get_config_value(key, default)
+    
+    if not isinstance(current, bool):
+        current = bool(current)
+        
+    new_value = not current
+    set_config_value(key, new_value)
+    return new_value
+
+# Add after the configuration utils
+
+def ensure_data_directory():
+    """
+    Ensure the data directory for Rick Assistant exists.
+    Creates directories if they don't exist.
+    """
+    try:
+        # Get home directory
+        home_dir = os.path.expanduser("~")
+        
+        # Define paths
+        rick_dir = os.path.join(home_dir, ".rick_assistant")
+        data_dir = os.path.join(rick_dir, "data")
+        
+        # Create directories if they don't exist
+        if not os.path.exists(rick_dir):
+            os.makedirs(rick_dir)
+            logger.debug(f"Created directory: {rick_dir}")
+            
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+            logger.debug(f"Created directory: {data_dir}")
+            
+        # Create default catchphrases file if it doesn't exist
+        catchphrases_path = os.path.join(data_dir, "catchphrases.json")
+        if not os.path.exists(catchphrases_path):
+            default_catchphrases = {
+                "catchphrases": [
+                    "Wubba lubba dub dub!",
+                    "I'm not arguing, I'm just explaining why I'm right.",
+                    "Sometimes science is more art than science.",
+                    "I turned myself into a menu, Morty!",
+                    "What, you think you're better than me because you have a menu?",
+                    "This menu interface is primitive. I've seen better UIs in a butter passing robot.",
+                    "You know what? I eat menus like this for breakfast!",
+                    "I don't have time for a full menu navigation tutorial, Morty!",
+                    "Look at all these options, Morty! The possibilities are almost endless!",
+                    "Don't just stare at it, Morty! Pick something!",
+                    "This menu is the Rick-est Rick that ever Ricked!",
+                    "I'm Menu Rick! *burp*",
+                    "These are just *burp* settings, Morty! Don't overthink it!",
+                    "You're overthinking the menu, Morty! Just pick something!"
+                ]
+            }
+            
+            with open(catchphrases_path, 'w') as f:
+                json.dump(default_catchphrases, f, indent=2)
+                
+            logger.debug(f"Created default catchphrases file: {catchphrases_path}")
+            
+        return True
+    except Exception as e:
+        logger.error(f"Failed to ensure data directory: {e}")
+        return False
+
+# Fix the missing confirm_action function
+@safe_execute()
+def confirm_action(message, default=True):
+    """
+    Show a confirmation prompt with yes/no options.
+    
+    Args:
+        message: Message to display
+        default: Default value (True for yes, False for no)
+        
+    Returns:
+        bool: True if confirmed, False if not
+    """
+    # No animation as per requirements
+    if not message.endswith('?'):
+        message += '?'
+        
+    prompt = f"{message} [{'Y/n' if default else 'y/N'}]: "
+    
+    try:
+        response = input(prompt).strip().lower()
+        
+        if not response:
+            return default
+            
+        if response in ['y', 'yes']:
+            return True
+            
+        if response in ['n', 'no']:
+            return False
+            
+        # Invalid response, use default
+        return default
+    except KeyboardInterrupt:
+        print("\nOperation cancelled.")
+        return False
+    except Exception as e:
+        logger.error(f"Error in confirm_action: {e}")
+        return default
+
+# Fix the missing show_message function
+@safe_execute()
+def show_message(message, title=None, message_type="info"):
+    """
+    Show a message to the user.
+    
+    Args:
+        message: Message to display
+        title: Optional title
+        message_type: Type of message (info, success, warning, error)
+    """
+    # No animation as per requirements
+    try:
+        # Clear screen
+        clear_screen()
+        
+        # Format based on message type
+        formatted_message = message
+        
+        if message_type == "info":
+            formatted_message = format_info(message)
+        elif message_type == "success":
+            formatted_message = format_success(message)
+        elif message_type == "warning":
+            formatted_message = format_warning(message)
+        elif message_type == "error":
+            formatted_message = format_error(message)
+            
+        # Print title if provided
+        if title:
+            print(f"\n  {title}")
+            print(f"  {'=' * len(title)}")
+            
+        # Print message
+        print(f"\n  {formatted_message}")
+        
+        # Wait for keypress
+        print("\n  Press any key to continue...")
+        getch()
+    except Exception as e:
+        logger.error(f"Error showing message: {e}")
+        print(f"\nError: {e}")
+        # Wait briefly
+        time.sleep(1)
+
+# Fix the missing create_hierarchical_menu function
+@safe_execute()
+def create_hierarchical_menu(title, structure):
+    """
+    Create a hierarchical menu from a dictionary structure.
+    
+    Args:
+        title: Menu title
+        structure: Dictionary with category and item definitions
+        
+    Returns:
+        Menu: The created menu
+    """
+    # Create the main menu
+    main_menu = Menu(title=title)
+    
+    # Process each category
+    for category_name, category_data in structure.items():
+        # Create items list
+        items = []
+        
+        # Add items to the category
+        for item_data in category_data.get("items", []):
+            # Extract item data
+            item_text = item_data.get("text", "")
+            item_value = item_data.get("value", None)
+            item_type = item_data.get("type", "standard")
+            item_key = item_data.get("key", None)
+            item_default = item_data.get("default", None)
+            item_enabled = item_data.get("enabled", True)
+            item_options = item_data.get("options", [])
+            
+            # Handle submenu
+            if "submenu" in item_data:
+                # Create a submenu category
+                submenu_items = []
+                
+                # Process submenu items
+                for submenu_item in item_data["submenu"].get("items", []):
+                    sub_text = submenu_item.get("text", "")
+                    sub_value = submenu_item.get("value", None)
+                    sub_type = submenu_item.get("type", "standard")
+                    
+                    # Create submenu item based on type
+                    if sub_type == "toggle":
+                        sub_item = MenuToggle(sub_text, submenu_item.get("key"), 
+                                           submenu_item.get("default", False))
+                    elif sub_type == "multi_option":
+                        sub_item = MultiOptionMenuItem(sub_text, submenu_item.get("key"),
+                                                    submenu_item.get("options", []),
+                                                    submenu_item.get("default", None))
+                    else:
+                        # Standard menu item
+                        action = None
+                        if sub_value:
+                            action = lambda v=sub_value: v
+                        sub_item = MenuItem(sub_text, action)
+                        
+                    submenu_items.append(sub_item)
+                
+                # Create the submenu category
+                submenu_category = MenuCategory(item_text, submenu_items)
+                items.append(submenu_category)
+            else:
+                # Create item based on type
+                if item_type == "toggle":
+                    item = MenuToggle(item_text, item_key, item_default, item_enabled)
+                elif item_type == "multi_option":
+                    item = MultiOptionMenuItem(item_text, item_key, item_options, item_default, item_enabled)
+                else:
+                    # Standard menu item
+                    action = None
+                    if item_value:
+                        # Use lambda with default value to capture current value
+                        action = lambda v=item_value: v
+                    item = MenuItem(item_text, action, item_enabled)
+                    
+                items.append(item)
+        
+        # Create category and add to menu
+        category = MenuCategory(category_name, items)
+        main_menu.add_item(category)
+    
+    return main_menu
+
+# Fix the missing navigate_hierarchy function
+@safe_execute()
+def navigate_hierarchy(menu):
+    """
+    Navigate a hierarchical menu.
+    
+    Args:
+        menu: Menu to navigate
+        
+    Returns:
+        tuple: (menu, index, value) or None if cancelled
+    """
+    # Current menu starts as the provided one
+    current_menu = menu
+    current_index = 0
+    
+    while True:
+        # Clear screen
+        clear_screen()
+        
+        # Display menu title
+        print(f"\n  {current_menu.title}")
+        print(f"  {'=' * len(current_menu.title)}")
+        
+        # Display breadcrumbs if available
+        if current_menu.breadcrumbs:
+            path = " > ".join(current_menu.breadcrumbs)
+            print(f"  Location: {path} > {current_menu.title}")
+            print()
+        
+        # Get current page items
+        items = current_menu.get_current_page_items()
+        
+        # Display items with numbers
+        for i, item in enumerate(items):
+            # Format based on item type and selection
+            if i == current_index:
+                # Selected item
+                if isinstance(item, MenuCategory):
+                    display = highlight_category(item, True)
+                else:
+                    display = highlight_selection(item, True)
+            else:
+                # Unselected item
+                if isinstance(item, MenuCategory):
+                    display = highlight_category(item, False)
+                else:
+                    display = highlight_selection(item, False)
+                    
+            # Print the item
+            print(f"  {i+1}. {display}")
+        
+        # Display pagination if needed
+        if current_menu.get_page_count() > 1:
+            print(f"\n  Page {current_menu.current_page + 1}/{current_menu.get_page_count()}")
+            print("  Use Left/Right arrows to navigate pages")
+        
+        # Display navigation help
+        print("\n  Navigate: ↑↓ | Select: Enter | Back: Esc | Quit: q")
+        
+        # Get user input
+        key = getch()
+        
+        # Handle navigation keys
+        if key in ['q', 'Q']:
+            # Quit
+            return None
+        elif key in ['\x1b', '\x03']:  # ESC or Ctrl+C
+            # Go back or quit
+            if current_menu.parent:
+                # Go back to parent
+                current_menu = current_menu.parent
+                current_index = 0
+            else:
+                # Quit if at root
+                return None
+        elif key in ['\r', '\n']:  # Enter
+            # Activate selected item
+            if items and current_index < len(items):
+                selected_item = items[current_index]
+                result = selected_item.activate()
+                
+                # Handle category activation (submenu navigation)
+                if isinstance(selected_item, MenuCategory):
+                    # Navigate to submenu
+                    submenu = selected_item.create_submenu()
+                    submenu_result = navigate_hierarchy(submenu)
+                    
+                    if submenu_result:
+                        return submenu_result
+                elif result is not None:
+                    # Return the result and selected item info
+                    return (current_menu, current_index, result)
+        elif key in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
+            # Direct selection by number
+            selected = int(key) - 1
+            if selected < len(items):
+                current_index = selected
+        elif key in ['j', 'J'] or key == '\x1b[B':  # Down arrow, j
+            # Move selection down
+            current_index = (current_index + 1) % len(items) if items else 0
+        elif key in ['k', 'K'] or key == '\x1b[A':  # Up arrow, k
+            # Move selection up
+            current_index = (current_index - 1) % len(items) if items else 0
+        elif key in ['h', 'H'] or key == '\x1b[D':  # Left arrow, h
+            # Previous page
+            current_menu.prev_page()
+            current_index = 0
+        elif key in ['l', 'L'] or key == '\x1b[C':  # Right arrow, l
+            # Next page
+            current_menu.next_page()
+            current_index = 0
+
+# Fix the missing highlight functions
+@safe_execute()
+def highlight_category(category, is_selected, width=None):
+    """
+    Format a category menu item with appropriate highlighting.
+    
+    Args:
+        category: MenuCategory to format
+        is_selected: Whether this category is selected
+        width: Optional width for padding
+        
+    Returns:
+        str: Formatted display text
+    """
+    # Get the display text
+    text = category.get_display_text()
+    
+    # Simple highlighting with brackets if selected
+    if is_selected:
+        if supports_ansi_color():
+            # Use color if supported
+            return f"\033[7m{text}\033[0m"  # Reversed colors
+        else:
+            # Fallback to brackets
+            return f"[{text}]"
+    else:
+        return text
+
+@safe_execute()
+def highlight_selection(item, is_selected, width=None):
+    """
+    Format a menu item with appropriate highlighting.
+    
+    Args:
+        item: MenuItem to format
+        is_selected: Whether this item is selected
+        width: Optional width for padding
+        
+    Returns:
+        str: Formatted display text
+    """
+    # Get the display text
+    text = item.get_display_text()
+    
+    # Apply disabled styling if needed
+    if not item.enabled:
+        if supports_ansi_color():
+            # Use dim text for disabled items
+            return f"\033[2m{text}\033[0m"  # Dim
+        else:
+            # Fallback for disabled items
+            return f"(disabled) {text}"
+    
+    # Apply selected styling
+    if is_selected:
+        if supports_ansi_color():
+            # Use reversed colors for selection
+            return f"\033[7m{text}\033[0m"  # Reversed colors
+        else:
+            # Fallback to brackets
+            return f"[{text}]"
+    else:
+        return text
+
+# Add a no-op version of animate_portal_open since we don't want animations
+@safe_execute()
+def animate_portal_open():
+    """
+    Stub for portal opening animation.
+    Per requirements, we don't want animations, so this just displays a static portal.
+    """
+    display_static_portal_open()
+
+# Add the missing create_wizard function
+@safe_execute()
+def create_wizard(title, steps, callback=None):
+    """
+    Create a wizard with multiple steps.
+    
+    Args:
+        title: Wizard title
+        steps: List of step dictionaries
+        callback: Function to call with wizard results
+        
+    Returns:
+        Dict: Wizard configuration
+    """
+    return {
+        "title": title,
+        "steps": steps,
+        "callback": callback,
+        "current_step": 0,
+        "results": {}
+    }
+
+# Add the missing create_context_menu function
+@safe_execute()
+def create_context_menu(items, title="Context Menu"):
+    """
+    Create a context menu with the given items.
+    
+    Args:
+        items: List of items (either strings or MenuItem objects)
+        title: Menu title
+        
+    Returns:
+        Menu: The created context menu
+    """
+    menu = Menu(title)
+    
+    # Process each item
+    for item in items:
+        if isinstance(item, str):
+            # Create a simple menu item from string
+            menu_item = MenuItem(item, lambda text=item: text)
+            menu.add_item(menu_item)
+        elif isinstance(item, MenuItem):
+            # Use the MenuItem directly
+            menu.add_item(item)
+        elif isinstance(item, dict):
+            # Create from dictionary
+            text = item.get("text", "")
+            action = item.get("action", None)
+            enabled = item.get("enabled", True)
+            
+            menu_item = MenuItem(text, action, enabled)
+            menu.add_item(menu_item)
+    
+    return menu
