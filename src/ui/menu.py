@@ -443,17 +443,6 @@ STATIC_PORTAL_ART_CLOSED = """
     `'-......-'´
 """
 
-# Original braille art portal (just for backwards compatibility)
-STATIC_PORTAL_ART = """
-    .-'""""""-.
-  ,'           `.
- /               \\
-|                 |
-|   RICK MENU     |
- \\   SYSTEM      /
-  `.             ,'
-    `'-......-'´
-"""
 
 # Rick's menu commentary phrases
 RICK_MENU_COMMENTS = [
@@ -1157,14 +1146,6 @@ __all__ = [
     'confirm_action',
     'show_progress',
     
-    # Animation functions
-    'animate_portal_open',
-    'animate_portal_close',
-    'animate_transition',
-    'animate_item_selection',
-    'animate_typing',
-    'create_spinner',
-    
     # Menu creation and rendering
     'create_menu_border',
     'create_menu_header',
@@ -1263,7 +1244,7 @@ def render_menu(border: List[str], header: List[str], items: List[MenuItem], foo
     sys.stdout.flush()
 
 @safe_execute()
-def create_ricktastic_menu(title="Rick Assistant Control Panel", theme=None):
+def create_ricktastic_menu(title="🧪 Rick Assistant Control Panel 🧪", theme=None):
     """
     Create the main Ricktastic menu structure with categories from MENU_ROADMAP.md.
     
@@ -1295,7 +1276,7 @@ def create_ricktastic_menu(title="Rick Assistant Control Panel", theme=None):
                           ["Funny", "Scientific", "Helpful", "Sarcastic", "Mixed"]),
         MenuToggle("Project Awareness", "brain.project_awareness", True)
     ]
-    brain_category = MenuCategory("Brain Module", brain_items)
+    brain_category = MenuCategory("🧠 Brain Module", brain_items)
     main_menu.add_item(brain_category)
     
     # Rick Commands category
@@ -1306,12 +1287,12 @@ def create_ricktastic_menu(title="Rick Assistant Control Panel", theme=None):
         MenuToggle("Code Completion", "commands.code_completion", False, False),
         MenuToggle("Command History Analysis", "commands.history_analysis", True)
     ]
-    cmd_category = MenuCategory("Rick Commands", cmd_items)
+    cmd_category = MenuCategory("💻 Rick Commands", cmd_items)
     main_menu.add_item(cmd_category)
     
     # Settings category
     settings_items = [
-        MenuCategory("General Settings", [
+        MenuCategory("⚙️ General Settings", [
             MenuToggle("Auto-start on Terminal", "settings.autostart", True),
             MenuToggle("Update Checks", "settings.update_checks", True),
             MultiOptionMenuItem("Log Level", "settings.log_level", 
@@ -1325,7 +1306,7 @@ def create_ricktastic_menu(title="Rick Assistant Control Panel", theme=None):
             MenuToggle("Show Resource Usage", "settings.prompt.show_resources", True)
         ])
     ]
-    settings_category = MenuCategory("Settings", settings_items)
+    settings_category = MenuCategory("⚙️  Settings", settings_items)
     main_menu.add_item(settings_category)
     
     # Universe Options category
@@ -1336,7 +1317,7 @@ def create_ricktastic_menu(title="Rick Assistant Control Panel", theme=None):
         MenuToggle("Citadel Connection", "universe.citadel", False, False),
         MenuToggle("Multiverse Browser", "universe.multiverse", False, False)
     ]
-    universe_category = MenuCategory("Universe Options", universe_items)
+    universe_category = MenuCategory("🌀 Universe Options", universe_items)
     main_menu.add_item(universe_category)
     
     # Security & Safety Features category
@@ -1346,7 +1327,7 @@ def create_ricktastic_menu(title="Rick Assistant Control Panel", theme=None):
         MenuToggle("Destructive Command Confirmation", "safety.destructive_confirm", True),
         MenuToggle("AI Hallucination Detection", "safety.hallucination_detection", True)
     ]
-    safety_category = MenuCategory("Security & Safety", safety_items)
+    safety_category = MenuCategory("🛡️ Security & Safety", safety_items)
     main_menu.add_item(safety_category)
     
     # UI Settings category
@@ -1358,7 +1339,7 @@ def create_ricktastic_menu(title="Rick Assistant Control Panel", theme=None):
         MenuToggle("Enable Animations", "ui.animations", True),
         MenuToggle("Compact Display Mode", "ui.compact_mode", False)
     ]
-    ui_category = MenuCategory("UI Settings", ui_items)
+    ui_category = MenuCategory("🎨 UI Settings", ui_items)
     main_menu.add_item(ui_category)
     
     # Input Handling category
@@ -1369,7 +1350,7 @@ def create_ricktastic_menu(title="Rick Assistant Control Panel", theme=None):
         MultiOptionMenuItem("Typing Mode", "input.typing_mode", 
                          ["Standard", "Vim-like", "Emacs-like"])
     ]
-    input_category = MenuCategory("Input Handling", input_items)
+    input_category = MenuCategory("⌨️  Input Handling", input_items)
     main_menu.add_item(input_category)
     
     # Advanced Options category
@@ -1380,7 +1361,7 @@ def create_ricktastic_menu(title="Rick Assistant Control Panel", theme=None):
         MenuToggle("Background Processing", "advanced.background_processing", True),
         MenuToggle("Debug Logging", "advanced.debug_logging", False)
     ]
-    advanced_category = MenuCategory("Advanced Options", advanced_items)
+    advanced_category = MenuCategory("🔧 Advanced Options", advanced_items)
     main_menu.add_item(advanced_category)
     
     # System Monitoring category
@@ -1391,7 +1372,7 @@ def create_ricktastic_menu(title="Rick Assistant Control Panel", theme=None):
         MenuToggle("Process Tracking", "monitoring.process_tracking", False),
         MenuToggle("Network Usage Monitoring", "monitoring.network", False)
     ]
-    monitoring_category = MenuCategory("System Monitoring", monitoring_items)
+    monitoring_category = MenuCategory("📊 System Monitoring", monitoring_items)
     main_menu.add_item(monitoring_category)
     
     # Actions category
@@ -1403,7 +1384,7 @@ def create_ricktastic_menu(title="Rick Assistant Control Panel", theme=None):
         MenuItem("Restart Rick Assistant", lambda: "restart_zsh"),
         MenuItem("Exit Menu", lambda: "quit")
     ]
-    actions_category = MenuCategory("Actions", actions_items)
+    actions_category = MenuCategory("🔧 Actions", actions_items)
     main_menu.add_item(actions_category)
     
     return main_menu
@@ -1516,15 +1497,6 @@ def restart_zsh():
     return "restart_zsh"  # Special return value to trigger ZSH restart
 
 @safe_execute()
-def test_portal_gun():
-    """Test the portal gun"""
-    # Display portal animation
-    animate_portal_open()
-    time.sleep(0.5)
-    animate_portal_close()
-    return None
-
-@safe_execute()
 def toggle_debug_mode():
     """Toggle debug mode"""
     clear_screen()
@@ -1582,117 +1554,6 @@ def show_menu() -> Optional[str]:
         return None
 
 @safe_execute()
-def animate_portal_close(width: int = None, height: int = None, frames: int = 1, 
-                         frame_duration: float = 0.2) -> None:
-    """
-    Animate a portal closing with simplified animation.
-    
-    Args:
-        width: Terminal width (auto-detected if None)
-        height: Terminal height (auto-detected if None)
-        frames: Number of animation frames (default: 1)
-        frame_duration: Duration of each frame in seconds (default: 0.2)
-    """
-    logger.debug("Animating portal close")
-    
-    # Skip animation if static portal is preferred
-    if USE_STATIC_PORTAL:
-        display_static_portal_closed()
-        return
-    
-    try:
-        # Get terminal dimensions if not provided
-        width = width or get_terminal_width()
-        height = height or get_terminal_height()
-        
-        # Clear screen
-        clear_screen()
-        
-        # Create portal closing animation frames
-        portal_frames = []
-        
-        # Frame 1: Portal starting to close
-        portal_frame1 = [
-            "     /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\     ",
-            "   /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\   ",
-            "  /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  ",
-            " /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ ",
-            "/\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
-            "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//",
-            " \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\// ",
-            "  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//  ",
-            "   \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//   ",
-            "     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//     "
-        ]
-        
-        # Frame 2: Portal closed
-        portal_frame2 = [
-            "     /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\     ",
-            "   /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\   ",
-            "  /\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  ",
-            " /\\\\\\\\\\\\\\\\PORTAL\\\\\\\\\\\\\\\\\\\ ",
-            "/\\\\\\\\\\\\\\\\\\CLOSED\\\\\\\\\\\\\\\\\\\\",
-            "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//",
-            " \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\// ",
-            "  \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//  ",
-            "   \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//   ",
-            "     \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//     "
-        ]
-        
-        # Add frames to animation
-        portal_frames.append(portal_frame1)
-        portal_frames.append(portal_frame2)
-        
-        # Animate the portal closing
-        for frame in portal_frames:
-            # Clear screen
-            clear_screen()
-            
-            # Calculate centering
-            frame_width = len(frame[0])
-            frame_height = len(frame)
-            
-            x_offset = (width - frame_width) // 2
-            y_offset = (height - frame_height) // 2
-            
-            # Print empty lines for top padding
-            for _ in range(y_offset):
-                print()
-            
-            # Print the frame with colors
-            for line in frame:
-                # Add left padding
-                padding = " " * x_offset
-                
-                # Colorize the line
-                colored_line = ""
-                for char in line:
-                    if char == "/":
-                        # Green for outer portal
-                        colored_line += "\033[32m/\033[0m" if supports_ansi_color() else "/"
-                    elif char == "\\":
-                        # Green for outer portal
-                        colored_line += "\033[32m\\\033[0m" if supports_ansi_color() else "\\"
-                    elif char in "PORTALCLOSED":
-                        # Cyan for text
-                        colored_line += "\033[36m" + char + "\033[0m" if supports_ansi_color() else char
-                    else:
-                        # Blue for inner portal
-                        colored_line += "\033[34m" + char + "\033[0m" if supports_ansi_color() else char
-                
-                # Print the line
-                print(padding + colored_line)
-            
-            # Wait for the specified duration
-            time.sleep(frame_duration)
-        
-        # Small pause at the end
-        time.sleep(0.3)
-        
-    except Exception as e:
-        logger.error(f"Error in animate_portal_close: {str(e)}")
-        # Fallback to static display
-        display_static_portal_closed()
 
 @safe_execute()
 def getch() -> str:
@@ -1830,7 +1691,7 @@ def get_random_rick_commentary():
     return random.choice(catchphrases)
 
 # Modify the show_menu function to support pagination
-def show_menu(title="Rick Assistant Control Panel", theme=None):
+def show_menu(title="🧪 Rick Assistant Control Panel 🧪", theme=None):
     """
     Display the main Rick menu with the new Ricktastic style.
     
@@ -2179,7 +2040,7 @@ def draw_header(stdscr, width, title, commentary=None):
     
     # Draw commentary if provided
     if commentary:
-        comment_text = f"Rick says: {commentary}"
+        comment_text = f"{commentary}"
         
         # Truncate if too long
         if len(comment_text) > width - 4:
@@ -2896,15 +2757,6 @@ def highlight_selection(item, is_selected, width=None):
             return f"[{text}]"
     else:
         return text
-
-# Add a no-op version of animate_portal_open since we don't want animations
-@safe_execute()
-def animate_portal_open():
-    """
-    Stub for portal opening animation.
-    Per requirements, we don't want animations, so this just displays a static portal.
-    """
-    display_static_portal_open()
 
 # Add the missing create_wizard function
 @safe_execute()

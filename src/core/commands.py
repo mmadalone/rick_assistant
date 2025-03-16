@@ -154,7 +154,7 @@ def process_rick_command(args_str: str) -> Dict[str, Any]:
         return {
             "type": ASSISTANT_COMMAND,
             "success": True,
-            "output": f"🧪 Rick says: {get_catchphrase()}",
+            "output": f"🧪 {get_catchphrase()}",
             "command": command,
             "args": args
         }
@@ -164,7 +164,7 @@ def process_rick_command(args_str: str) -> Dict[str, Any]:
             "type": ASSISTANT_COMMAND,
             "success": False,
             "error": f"Unknown Rick command: {command}",
-            "output": f"🧪 Rick says: I don't know what '{command}' is supposed to mean. Try !help.",
+            "output": f"🧪 I don't know what '{command}' is supposed to mean. Try !help.",
             "command": command,
             "args": args
         }
@@ -557,7 +557,7 @@ def create_warning_message(cmd: str, reason: str) -> str:
     message = random.choice(messages)
     
     # Format the full warning
-    return f"🧪 Rick says: {message}\n🛑 Command: {cmd}"
+    return f"🧪 {message}\n🛑 Command: {cmd}"
 
 def format_suggestion(original: str, suggestion: str) -> str:
     """
@@ -583,7 +583,7 @@ def format_suggestion(original: str, suggestion: str) -> str:
     message = random.choice(messages)
     
     # Format the full suggestion
-    return f"🧪 Rick says: {message}"
+    return f"🧪 {message}"
 
 @safe_execute()
 def check_rm_rf_command(cmd: str) -> Tuple[bool, Optional[str]]:
@@ -933,7 +933,7 @@ def format_improvement_suggestion(original: str, suggestion: str, reason: str) -
     message = random.choice(messages)
     
     # Format the full suggestion
-    return f"🧪 Rick says: {message}"
+    return f"🧪 {message}"
 
 @safe_execute()
 def remember_user_preference(cmd: str, accept_suggestion: bool) -> None:
@@ -1019,7 +1019,7 @@ def execute_assistant_cmd(cmd: str) -> Dict[str, Any]:
         return {
             "success": False,
             "error": "Empty or invalid command",
-            "output": "🧪 Rick says: What do you expect me to do with *burp* nothing?"
+            "output": "🧪 What do you expect me to do with *burp* nothing?"
         }
     
     # Parse the command
@@ -1050,7 +1050,7 @@ def execute_assistant_cmd(cmd: str) -> Dict[str, Any]:
     return {
         "success": False,
         "error": f"Unknown Rick command: {command}",
-        "output": f"🧪 Rick says: What the *burp* is '{command}'? Try one of these instead: {valid_commands}"
+        "output": f"🧪 What the *burp* is '{command}'? Try one of these instead: {valid_commands}"
     }
 
 # Rick command handlers
@@ -1110,7 +1110,7 @@ def handle_rick_quote_command(args: List[str]) -> Dict[str, Any]:
     
     return {
         "success": True,
-        "output": f"🧪 Rick says: \"{quote}\""
+        "output": f"🧪 \"{quote}\""
     }
 
 @safe_execute()
@@ -1126,13 +1126,13 @@ def handle_config_command(args: List[str]) -> Dict[str, Any]:
         # Will support: rick config set key value, rick config get key, rick config list
         return {
             "success": False,
-            "output": f"🧪 Rick says: Config editing not implemented yet. *burp* Edit the file manually at {config_path}"
+            "output": f"🧪 Config editing not implemented yet. *burp* Edit the file manually at {config_path}"
         }
     
     # Otherwise just show config location
     return {
         "success": True,
-        "output": f"🧪 Rick says: Config file located at: {config_path}\nEdit it with your favorite text editor, genius."
+        "output": f"🧪 Config file located at: {config_path}\nEdit it with your favorite text editor, genius."
     }
 
 @safe_execute()
@@ -1164,7 +1164,7 @@ def handle_stats_command(args: List[str]) -> Dict[str, Any]:
     if not stats:
         return {
             "success": True,
-            "output": "🧪 Rick says: No statistics available yet. *burp* Use me more!"
+            "output": "🧪 No statistics available yet. *burp* Use me more!"
         }
     
     commands_run = stats.get("commands_run", 0)
@@ -1190,7 +1190,7 @@ def handle_clear_command(args: List[str]) -> Dict[str, Any]:
     """Handle !clear command to clear history"""
     return {
         "success": True,
-        "output": "🧪 Rick says: History cleared. *burp* Your shameful commands are gone!"
+        "output": "🧪 History cleared. *burp* Your shameful commands are gone!"
     }
     
 def handle_status_command(args: List[str]) -> Dict[str, Any]:
@@ -1203,7 +1203,7 @@ def handle_status_command(args: List[str]) -> Dict[str, Any]:
     
     return {
         "success": True,
-        "output": f"🧪 Rick says: Rick Assistant is currently {status}. {'Ready to judge your commands!' if enabled else 'Taking a break from your stupidity.'}"
+        "output": f"🧪 Rick Assistant is currently {status}. {'Ready to judge your commands!' if enabled else 'Taking a break from your stupidity.'}"
     }
     
 def handle_about_command(args: List[str]) -> Dict[str, Any]:
@@ -1252,7 +1252,7 @@ def handle_tip_command(args: List[str]) -> Dict[str, Any]:
     
     return {
         "success": True,
-        "output": f"🧪 Rick says: Here's a tip, *burp* genius!\n\n{tip}\n\nNot that you'll remember it..."
+        "output": f"🧪 Here's a tip, *burp* genius!\n\n{tip}\n\nNot that you'll remember it..."
     }
     
 def handle_toggle_command(args: List[str]) -> Dict[str, Any]:
@@ -1260,7 +1260,7 @@ def handle_toggle_command(args: List[str]) -> Dict[str, Any]:
     if not args:
         return {
             "success": False,
-            "output": "🧪 Rick says: Toggle what exactly? Try !toggle [feature] where feature is one of: typos, dangerous, suggestions, all"
+            "output": "🧪 Toggle what exactly? Try !toggle [feature] where feature is one of: typos, dangerous, suggestions, all"
         }
     
     feature = args[0].lower()
@@ -1270,7 +1270,7 @@ def handle_toggle_command(args: List[str]) -> Dict[str, Any]:
         features_list = ", ".join(valid_features)
         return {
             "success": False,
-            "output": f"🧪 Rick says: Invalid feature '{feature}'. *burp* Choose from: {features_list}"
+            "output": f"🧪 Invalid feature '{feature}'. *burp* Choose from: {features_list}"
         }
     
     from src.utils.config import load_config, save_config
@@ -1313,7 +1313,7 @@ def handle_toggle_command(args: List[str]) -> Dict[str, Any]:
     
     return {
         "success": True,
-        "output": f"🧪 Rick says: {message}. {response_text}"
+        "output": f"🧪 {message}. {response_text}"
     }
 
 @safe_execute()
@@ -1328,7 +1328,7 @@ def format_command_output(result: Dict[str, Any]) -> str:
         Formatted output string
     """
     if not result or not isinstance(result, dict):
-        return "🧪 Rick says: Got some *burp* garbage data. Can't work with this!"
+        return "🧪 Got some *burp* garbage data. Can't work with this!"
     
     # If there's already output, just return it
     if "output" in result and result["output"]:
@@ -1342,7 +1342,7 @@ def format_command_output(result: Dict[str, Any]) -> str:
     # Handle errors
     if not success and "error" in result and result["error"]:
         error_msg = result["error"]
-        return f"🧪 Rick says: {get_error_message(error_msg)}"
+        return f"🧪 {get_error_message(error_msg)}"
     
     # Handle different command types
     if cmd_type == ASSISTANT_COMMAND:
@@ -1362,10 +1362,10 @@ def format_command_output(result: Dict[str, Any]) -> str:
                 )
         
         # Generic success message for non-intercepted command
-        return f"🧪 Rick says: Running command, *burp* obviously!"
+        return f"🧪 Running command, *burp* obviously!"
     
     # Default fallback
-    return "🧪 Rick says: Command processed. Don't ask me how it went."
+    return "🧪 Command processed. Don't ask me how it went."
 
 @safe_execute()
 def format_assistant_output(result: Dict[str, Any]) -> str:
@@ -1386,10 +1386,10 @@ def format_assistant_output(result: Dict[str, Any]) -> str:
     
     if not success:
         error = result.get("error", "unknown error")
-        return f"🧪 Rick says: Couldn't process '{command}'. {error}"
+        return f"🧪 Couldn't process '{command}'. {error}"
     
     # Generic success message
-    return f"🧪 Rick says: Processed '{command}'. What do you want, a medal?"
+    return f"🧪 Processed '{command}'. What do you want, a medal?"
 
 @safe_execute()
 def get_error_message(error: str) -> str:
@@ -1513,7 +1513,7 @@ def handle_empty_command() -> Dict[str, Any]:
     return {
         "success": False,
         "error": "Empty command",
-        "output": f"🧪 Rick says: {message}",
+        "output": f"🧪 {message}",
         "type": SHELL_COMMAND,
         "intercepted": True
     }
@@ -1553,7 +1553,7 @@ def handle_very_long_command(cmd: str) -> Dict[str, Any]:
         "type": SHELL_COMMAND,
         "intercepted": True,
         "long_command": True,
-        "output": f"🧪 Rick says: {message}"
+        "output": f"🧪 {message}"
     }
     
     if is_danger:
@@ -1580,7 +1580,7 @@ def handle_special_command(cmd: str) -> Dict[str, Any]:
             "processed_command": cmd,
             "type": SPECIAL_COMMAND,
             "intercepted": True,
-            "output": "🧪 Rick says: Ah, the classic 'sudo !!' move. Trying to compensate for something?"
+            "output": "🧪 Ah, the classic 'sudo !!' move. Trying to compensate for something?"
         }
     
     if cmd == "cd -":
@@ -1589,7 +1589,7 @@ def handle_special_command(cmd: str) -> Dict[str, Any]:
             "processed_command": cmd,
             "type": SPECIAL_COMMAND,
             "intercepted": True,
-            "output": "🧪 Rick says: Going back, huh? Can't blame you for wanting to *burp* escape your current mistakes."
+            "output": "🧪 Going back, huh? Can't blame you for wanting to *burp* escape your current mistakes."
         }
     
     if cmd == "cd ~" or cmd == "cd":
@@ -1598,7 +1598,7 @@ def handle_special_command(cmd: str) -> Dict[str, Any]:
             "processed_command": cmd,
             "type": SPECIAL_COMMAND,
             "intercepted": True,
-            "output": "🧪 Rick says: Scurrying back to your home directory like a scared little mouse?"
+            "output": "🧪 Scurrying back to your home directory like a scared little mouse?"
         }
     
     # Handle exit/logout with a goodbye message
@@ -1608,7 +1608,7 @@ def handle_special_command(cmd: str) -> Dict[str, Any]:
             "processed_command": cmd,
             "type": SPECIAL_COMMAND,
             "intercepted": True,
-            "output": "🧪 Rick says: Running away already? Typical. *burp* See ya later, loser!"
+            "output": "🧪 Running away already? Typical. *burp* See ya later, loser!"
         }
     
     return {
@@ -1906,7 +1906,7 @@ def run_command_metrics(args: Optional[List[str]] = None) -> Dict[str, Any]:
         
         # Get a Rick comment
         comments = temp_info.get('commentary', '*burp* This is fine.')
-        print(f"\nRick says: \"{comments}\"")
+        print(f"\n\"{comments}\"")
         
         return 0
     except Exception as e:
@@ -2051,7 +2051,7 @@ def run_command_prompt(args: Optional[List[str]] = None) -> Dict[str, Any]:
     # Return placeholder message
     return {
         "success": False,
-        "output": "🧪 Rick says: Prompt customization not implemented yet. *burp* I'll get to it when I feel like it."
+        "output": "🧪 Prompt customization not implemented yet. *burp* I'll get to it when I feel like it."
     }
 
 @safe_execute()
@@ -2073,7 +2073,7 @@ def run_command_update(args: Optional[List[str]] = None) -> Dict[str, Any]:
     # Return placeholder message
     return {
         "success": False,
-        "output": "🧪 Rick says: Update check not implemented yet. *burp* You think I have time for this?"
+        "output": "🧪 Update check not implemented yet. *burp* You think I have time for this?"
     }
 
 @safe_execute()

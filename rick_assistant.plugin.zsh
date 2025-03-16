@@ -225,7 +225,7 @@ alias rickm='rick menu'
 
 # Print welcome message
 if [[ -z $RICK_ASSISTANT_QUIET ]]; then
-  echo "Rick Assistant v${RICK_ASSISTANT_VERSION} loaded. Type 'rick menu' or 'rickm' to start."
+  echo "Rick Assistant v${RICK_ASSISTANT_VERSION} loaded. Wubba lubba dub dub!"
 fi
 
 # Restore rm alias if it was temporarily unaliased

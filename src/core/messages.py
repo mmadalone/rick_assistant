@@ -842,7 +842,7 @@ def integrate_with_hook_system() -> None:
             # Only show catchphrases occasionally (5% chance)
             if random.random() < 0.05:
                 catchphrase = get_random_catchphrase()
-                print(f"\n🧪 Rick says: {catchphrase}\n")
+                print(f"\n🧪 {catchphrase}\n")
         
         # Register the hook
         register_precmd_hook(show_random_catchphrase)

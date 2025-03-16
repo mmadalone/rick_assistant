@@ -795,14 +795,14 @@ def register_with_hook_system() -> None:
             # Only show idle comments very rarely (1% chance)
             if random.random() < 0.01:
                 comment = get_response(IDLE_COMMENTS)
-                print(f"\n🧪 Rick says: {comment}\n")
+                print(f"\n🧪 {comment}\n")
         
         # Register a hook to show command feedback
         def show_command_feedback(command):
             # Only show feedback occasionally (10% chance)
             if random.random() < 0.1 and command.strip():
                 feedback = get_response(COMMAND_FEEDBACK, {"command": command, "username": os.environ.get("USER", "human")})
-                print(f"\n🧪 Rick says: {feedback}\n")
+                print(f"\n🧪 {feedback}\n")
         
         # Register the hooks
         register_precmd_hook(show_idle_comment)
